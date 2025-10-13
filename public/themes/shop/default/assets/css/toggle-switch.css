@@ -1,0 +1,112 @@
+/* Toggle Switch Styles for Product Attributes */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
+    margin: 0 10px 10px 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background-color: #2196F3;
+}
+
+.toggle-switch input:focus + .toggle-slider {
+    box-shadow: 0 0 1px #2196F3;
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}
+
+.toggle-option {
+    display: inline-flex;
+    align-items: center;
+    margin: 5px 15px 5px 0;
+    padding: 8px 12px;
+    border: 2px solid #e5e5e5;
+    border-radius: 8px;
+    background-color: #fff;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.toggle-option:hover {
+    border-color: #2196F3;
+    background-color: #f8f9fa;
+}
+
+.toggle-option.selected {
+    border-color: #2196F3;
+    background-color: #e3f2fd;
+}
+
+.toggle-option-label {
+    margin-left: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #333;
+}
+
+.toggle-option.selected .toggle-option-label {
+    color: #2196F3;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .toggle-switch {
+        width: 50px;
+        height: 28px;
+        margin: 0 8px 8px 0;
+    }
+    
+    .toggle-slider:before {
+        height: 20px;
+        width: 20px;
+        left: 4px;
+        bottom: 4px;
+    }
+    
+    .toggle-switch input:checked + .toggle-slider:before {
+        transform: translateX(22px);
+    }
+    
+    .toggle-option {
+        margin: 5px 10px 5px 0;
+        padding: 6px 10px;
+    }
+    
+    .toggle-option-label {
+        font-size: 13px;
+    }
+}

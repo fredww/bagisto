@@ -1,0 +1,29 @@
+{
+    "name": "webkul/security-payment",
+    "description": "Security Payment Gateway for Bagisto",
+    "type": "bagisto-package",
+    "version": "1.0.0",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Webkul",
+            "email": "support@webkul.com"
+        }
+    ],
+    "require": {
+        "php": "^8.1",
+        "bagisto/bagisto": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Webkul\\SecurityPayment\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Webkul\\SecurityPayment\\Providers\\SecurityPaymentServiceProvider"
+            ]
+        }
+    }
+}

@@ -1,0 +1,1031 @@
+<?php
+
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Webkul\Product\Repositories\ProductRepository;
+use Webkul\Category\Repositories\CategoryRepository;
+use Webkul\Attribute\Repositories\AttributeFamilyRepository;
+use Webkul\Attribute\Repositories\AttributeRepository;
+use Webkul\Attribute\Repositories\AttributeOptionRepository;
+use Webkul\Core\Repositories\ChannelRepository;
+use Webkul\Inventory\Repositories\InventorySourceRepository;
+use Laravel\Sanctum\PersonalAccessToken;
+
+/**
+ * 从Shopify导入产品到Bagisto的命令
+ * Command to import products from Shopify to Bagisto
+ */
+class ImportShopifyProducts extends Command
+{
+    /**
+     * The name and signature of the console command.
+     * php artisan shopify:import-products https://kiaoa.com --collection=spinning-reel --limit=1
+     * @var string
+     */
+    protected $signature = 'shopify:import-products 
+                            {shopify_url : The Shopify store URL (e.g., https://kiaoa.com/)}
+                            {--collection=* : Specific collections to import (optional)}
+                            {--limit=50 : Number of products to import per collection}
+                            {--dry-run : Run without actually importing}';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Import products from Shopify store to Bagisto';
+
+    protected $productRepository;
+    protected $categoryRepository;
+    protected $attributeFamilyRepository;
+    protected $attributeRepository;
+    protected $attributeOptionRepository;
+    protected $channelRepository;
+    protected $inventorySourceRepository;
+    
+    /**
+     * 管理员token缓存
+     * Admin token cache
+     */
+    private $adminToken = null;
+
+    /**
+     * 构造函数
+     * Constructor
+     */
+    public function __construct(
+        ProductRepository $productRepository,
+        CategoryRepository $categoryRepository,
+        AttributeFamilyRepository $attributeFamilyRepository,
+        AttributeRepository $attributeRepository,
+        AttributeOptionRepository $attributeOptionRepository,
+        ChannelRepository $channelRepository,
+        InventorySourceRepository $inventorySourceRepository
+    ) {
+        parent::__construct();
+        
+        $this->productRepository = $productRepository;
+        $this->categoryRepository = $categoryRepository;
+        $this->attributeFamilyRepository = $attributeFamilyRepository;
+        $this->attributeRepository = $attributeRepository;
+        $this->attributeOptionRepository = $attributeOptionRepository;
+        $this->channelRepository = $channelRepository;
+        $this->inventorySourceRepository = $inventorySourceRepository;
+    }
+
+    /**
+     * 执行命令
+     * Execute the console command
+     */
+    public function handle()
+    {
+        $shopifyUrl = rtrim($this->argument('shopify_url'), '/');
+        $collections = $this->option('collection');
+        $limit = $this->option('limit');
+        $dryRun = $this->option('dry-run');
+
+        $this->info("开始从 {$shopifyUrl} 导入产品...");
+        $this->info("Starting product import from {$shopifyUrl}...");
+
+        try {
+            // 获取所有集合或指定集合
+            // Get all collections or specified collections
+            if (empty($collections)) {
+                $collections = $this->getShopifyCollections($shopifyUrl);
+            }
+
+            $totalImported = 0;
+            $totalErrors = 0;
+
+            foreach ($collections as $collection) {
+                $this->info("处理集合: {$collection}");
+                $this->info("Processing collection: {$collection}");
+
+                $result = $this->importCollectionProducts($shopifyUrl, $collection, $limit, $dryRun);
+                $totalImported += $result['imported'];
+                $totalErrors += $result['errors'];
+            }
+
+            $this->info("导入完成! 成功: {$totalImported}, 错误: {$totalErrors}");
+            $this->info("Import completed! Success: {$totalImported}, Errors: {$totalErrors}");
+
+        } catch (\Exception $e) {
+            $this->error("导入失败: " . $e->getMessage());
+            $this->error("Import failed: " . $e->getMessage());
+            return 1;
+        }
+
+        return 0;
+    }
+
+    /**
+     * 获取Shopify商店的所有集合
+     * Get all collections from Shopify store
+     */
+    protected function getShopifyCollections($shopifyUrl)
+    {
+        // 这里可以实现获取所有集合的逻辑
+        // 暂时返回一些常见的集合名称
+        // Here we can implement logic to get all collections
+        // For now, return some common collection names
+        return [
+            'spinning-reel',
+            'fishing-rod',
+            'fishing-line',
+            'fishing-tackle',
+            'fishing-accessories'
+        ];
+    }
+
+    /**
+     * 导入指定集合的产品
+     * Import products from specified collection
+     */
+    protected function importCollectionProducts($shopifyUrl, $collection, $limit, $dryRun)
+    {
+        $imported = 0;
+        $errors = 0;
+        $page = 1;
+
+        while ($imported < $limit) {
+            $productsUrl = "{$shopifyUrl}/collections/{$collection}/products.json?limit=50&page={$page}";
+            
+            $this->info("正在获取: {$productsUrl}");
+            $this->info("Fetching: {$productsUrl}");
+            
+            try {
+                $response = Http::timeout(60) // 增加超时时间到60秒
+                    ->withHeaders([
+                        'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+                        'Accept' => 'application/json, text/plain, */*',
+                    ])
+                    ->get($productsUrl);
+                
+                $this->info("响应状态码: {$response->status()}");
+                $this->info("Response status: {$response->status()}");
+                
+                if (!$response->successful()) {
+                    $this->warn("无法获取集合 {$collection} 的产品 (页面 {$page}) - 状态码: {$response->status()}");
+                    $this->warn("Failed to fetch products for collection {$collection} (page {$page}) - Status: {$response->status()}");
+                    
+                    // 如果是404，尝试不同的URL格式
+                    // If 404, try different URL format
+                    if ($response->status() === 404) {
+                        $this->info("尝试不同的URL格式...");
+                        $this->info("Trying different URL format...");
+                        
+                        // 尝试使用示例URL的格式
+                        // Try using example URL format
+                        if (strpos($shopifyUrl, 'kiaoa.com') !== false) {
+                            $productsUrl = "https://kiaoa.com/collections/{$collection}/products.json";
+                            $response = Http::timeout(60) // 增加超时时间
+                                ->withHeaders([
+                                    'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+                                    'Accept' => 'application/json, text/plain, */*',
+                                ])
+                                ->get($productsUrl);
+                                
+                            if (!$response->successful()) {
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+                    } else {
+                        break;
+                    }
+                }
+
+                $data = $response->json();
+                
+                if (empty($data['products'])) {
+                    $this->info("集合 {$collection} 没有更多产品");
+                    $this->info("No more products in collection {$collection}");
+                    break;
+                }
+                
+                $this->info("找到 " . count($data['products']) . " 个产品");
+                $this->info("Found " . count($data['products']) . " products");
+
+                foreach ($data['products'] as $shopifyProduct) {
+                    if ($imported >= $limit) {
+                        break;
+                    }
+
+                    try {
+                        if ($dryRun) {
+                            $this->line("DRY RUN: 将导入产品 - {$shopifyProduct['title']}");
+                            $this->line("DRY RUN: Would import product - {$shopifyProduct['title']}");
+                        } else {
+                            $this->importSingleProduct($shopifyProduct, $collection);
+                            $this->info("✓ 导入产品: {$shopifyProduct['title']}");
+                            $this->info("✓ Imported product: {$shopifyProduct['title']}");
+                        }
+                        $imported++;
+                    } catch (\Exception $e) {
+                        $this->error("✗ 导入产品失败 {$shopifyProduct['title']}: " . $e->getMessage());
+                        $this->error("✗ Failed to import product {$shopifyProduct['title']}: " . $e->getMessage());
+                        $errors++;
+                    }
+                }
+
+                $page++;
+                
+            } catch (\Exception $e) {
+                $this->error("获取产品数据失败: " . $e->getMessage());
+                $this->error("Failed to fetch product data: " . $e->getMessage());
+                $errors++;
+                break;
+            }
+        }
+
+        return ['imported' => $imported, 'errors' => $errors];
+    }
+
+    /**
+     * 导入单个产品
+     * Import a single product
+     */
+    protected function importSingleProduct($shopifyProduct, $collectionName)
+    {
+        DB::beginTransaction();
+
+        try {
+            // 生成 SKU - 使用连字符而不是下划线以符合Bagisto的slug验证规则
+            // Generate SKU - use hyphens instead of underscores to comply with Bagisto's slug validation rules
+            $sku = 'shopify-' . $shopifyProduct['handle'];
+            
+            // 确保SKU符合Bagisto的slug规则：只允许字母、数字和连字符
+            // Ensure SKU complies with Bagisto's slug rules: only letters, numbers, and hyphens allowed
+            $sku = preg_replace('/[^a-zA-Z0-9-]/', '-', $sku);
+            $sku = preg_replace('/-+/', '-', $sku); // 合并多个连字符
+            $sku = trim($sku, '-'); // 移除首尾的连字符
+            
+            // 检查产品是否已存在
+            // Check if product already exists
+            $existingProduct = $this->productRepository->where('sku', $sku)->first();
+            if ($existingProduct) {
+                $this->warn("产品已存在，跳过: {$shopifyProduct['title']}");
+                $this->warn("Product already exists, skipping: {$shopifyProduct['title']}");
+                DB::rollBack();
+                throw new \Exception("Product already exists: {$shopifyProduct['title']}");
+            }
+
+            // 获取或创建分类
+            // Get or create category
+            $category = $this->getOrCreateCategory($collectionName);
+
+            // 获取默认属性族
+            // Get default attribute family
+            $attributeFamily = $this->attributeFamilyRepository->first();
+            
+            // 获取默认渠道
+            // Get default channel
+            $channel = $this->channelRepository->first();
+
+            // 获取默认库存源
+            // Get default inventory source
+            $inventorySource = $this->inventorySourceRepository->first();
+
+            // 处理产品变体
+            // Handle product variants
+            if (!empty($shopifyProduct['variants']) && count($shopifyProduct['variants']) > 1) {
+                $this->createConfigurableProduct($shopifyProduct, $category, $attributeFamily, $channel, $inventorySource, $sku);
+            } else {
+                $this->createSimpleProduct($shopifyProduct, $category, $attributeFamily, $channel, $inventorySource, $sku);
+            }
+
+            DB::commit();
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    /**
+     * 创建简单产品 - 使用REST API
+     * Create simple product using REST API
+     */
+    protected function createSimpleProduct($shopifyProduct, $category, $attributeFamily, $channel, $inventorySource, $sku)
+    {
+        // 获取管理员token
+        // Get admin token
+        $token = $this->getAdminToken();
+        
+        // Step 1: 创建基本产品结构 (POST)
+        // Step 1: Create basic product structure (POST)
+        $basicProductData = [
+            'type' => 'simple',
+            'attribute_family_id' => $attributeFamily->id,
+            'sku' => $sku,
+        ];
+
+        // 通过REST API创建产品
+        // Create product via REST API
+        $apiUrl = config('app.url') . '/api/v1/admin/catalog/products';
+        $this->info("Step 1: Creating basic product structure");
+        $this->info("Making API request to: " . $apiUrl);
+        
+        $response = Http::withToken($token)
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ])
+            ->timeout(30)
+            ->post($apiUrl, $basicProductData);
+
+        $this->info("Step 1 Response status: " . $response->status());
+        $this->info("Step 1 Response body: " . $response->body());
+
+        if (!$response->successful()) {
+            // 如果是401错误，重新生成token并重试
+            if ($response->status() === 401) {
+                $this->warn("Token expired or invalid, regenerating...");
+                $this->adminToken = null; // 清除缓存的token
+                $newToken = $this->getAdminToken();
+                
+                $retryResponse = Http::withToken($newToken)
+                    ->withHeaders([
+                        'Accept' => 'application/json',
+                        'Content-Type' => 'application/json',
+                    ])
+                    ->timeout(30)
+                    ->post($apiUrl, $basicProductData);
+                
+                if (!$retryResponse->successful()) {
+                    throw new \Exception('Failed to create product via API after retry: ' . $retryResponse->body());
+                }
+                
+                $response = $retryResponse;
+            } else {
+                throw new \Exception('Failed to create product via API: ' . $response->body());
+            }
+        }
+
+        $productResponse = $response->json();
+        $productId = $productResponse['data']['id'];
+
+        // Step 2: 更新产品详细信息 (PUT)
+        // Step 2: Update product details (PUT)
+        $detailedProductData = [
+            'sku' => $sku,
+            'name' => $shopifyProduct['title'],
+            'url_key' => Str::slug($shopifyProduct['title']),
+            'short_description' => $this->truncateText($shopifyProduct['body_html'] ?? '', 255),
+            'description' => $shopifyProduct['body_html'] ?? '',
+            'meta_title' => $shopifyProduct['title'],
+            'meta_keywords' => is_array($shopifyProduct['tags'] ?? []) ? implode(',', $shopifyProduct['tags']) : ($shopifyProduct['tags'] ?? ''),
+            'meta_description' => $this->truncateText(strip_tags($shopifyProduct['body_html'] ?? ''), 160),
+            'price' => $this->getProductPrice($shopifyProduct),
+            'weight' => $this->getProductWeight($shopifyProduct),
+            'status' => 1,
+            'visible_individually' => 1,
+            'guest_checkout' => 1,
+            'featured' => 0,
+            'new' => 1,
+            'manage_stock' => 1,
+            'categories' => [$category->id],
+            'channels' => [$channel->id],
+            'inventories' => [
+                $inventorySource->id => $this->getProductQuantity($shopifyProduct)
+            ],
+        ];
+
+        $updateApiUrl = config('app.url') . '/api/v1/admin/catalog/products/' . $productId;
+        $this->info("Step 2: Updating product details");
+        $this->info("Making PUT request to: " . $updateApiUrl);
+
+        $updateResponse = Http::withToken($token)
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ])
+            ->timeout(30)
+            ->put($updateApiUrl, $detailedProductData);
+
+        $this->info("Step 2 Response status: " . $updateResponse->status());
+        $this->info("Step 2 Response body: " . $updateResponse->body());
+
+        if (!$updateResponse->successful()) {
+            $this->warn("Failed to update product details: " . $updateResponse->body());
+        }
+
+        $product = $this->productRepository->find($productId);
+
+        // 检查产品是否成功创建
+        // Check if product was successfully created
+        if (!$product) {
+            $this->warn("产品创建成功但无法从数据库中检索，产品ID: {$productId}，尝试直接处理图片");
+            $this->warn("Product created successfully but could not be retrieved from database, Product ID: {$productId}, trying direct image handling");
+            
+            // 创建一个简单的产品对象用于图片处理
+            // Create a simple product object for image handling
+            $product = (object) ['id' => $productId];
+        }
+
+        // 处理产品图片
+        // Handle product images
+        if ($product && isset($product->id)) {
+            $this->handleProductImages($product, $shopifyProduct);
+        } else {
+            $this->error("产品创建失败或产品ID不存在");
+            $this->error("Product creation failed or product ID not available");
+        }
+
+        return $product;
+    }
+
+
+
+    /**
+     * 创建可配置产品（带变体）
+     * Create configurable product (with variants)
+     */
+    protected function createConfigurableProduct($shopifyProduct, $category, $attributeFamily, $channel, $inventorySource, $sku)
+    {
+        $this->info("检测到产品变体，创建可配置产品: {$shopifyProduct['title']}");
+        $this->info("Detected product variants, creating configurable product: {$shopifyProduct['title']}");
+        
+        try {
+            // 1. 分析Shopify产品的选项和变体
+            // 1. Analyze Shopify product options and variants
+            $options = $shopifyProduct['options'] ?? [];
+            $variants = $shopifyProduct['variants'] ?? [];
+            
+            if (empty($options) || empty($variants)) {
+                $this->warn("产品没有有效的选项或变体，创建为简单产品");
+                $this->warn("Product has no valid options or variants, creating as simple product");
+                return $this->createSimpleProduct($shopifyProduct, $category, $attributeFamily, $channel, $inventorySource, $sku);
+            }
+            
+            // 2. 创建或获取属性
+            // 2. Create or get attributes
+            $superAttributes = [];
+            $variantMapping = [];
+            
+            foreach ($options as $option) {
+                $optionName = $option['name'];
+                $optionValues = $option['values'];
+                
+                // 创建或获取属性
+                // Create or get attribute
+                $attribute = $this->createOrGetAttribute($optionName, $optionValues);
+                
+                // 创建或获取属性选项
+                // Create or get attribute options
+                $attributeOptions = [];
+                foreach ($optionValues as $value) {
+                    $attributeOption = $this->getOrCreateAttributeOption($attribute, $value);
+                    $attributeOptions[] = $attributeOption->id;
+                    $variantMapping[$attribute->code][$value] = $attributeOption->id;
+                }
+                
+                $superAttributes[$attribute->code] = $attributeOptions;
+                
+                $this->info("属性 '{$optionName}' 创建成功，包含 " . count($attributeOptions) . " 个选项");
+                $this->info("Attribute '{$optionName}' created successfully with " . count($attributeOptions) . " options");
+            }
+            
+            // 3. 创建可配置产品基础数据
+            // 3. Create base data for configurable product
+            $baseProductData = [
+                'type' => 'configurable',
+                'attribute_family_id' => $attributeFamily->id,
+                'sku' => $sku,
+                'super_attributes' => $superAttributes,
+                'en' => [
+                    'name' => $shopifyProduct['title'],
+                    'url_key' => Str::slug($shopifyProduct['title']) . '-' . time(),
+                    'description' => strip_tags($shopifyProduct['body_html'] ?? ''),
+                    'short_description' => $this->truncateText($shopifyProduct['body_html'] ?? '', 160),
+                    'meta_title' => $shopifyProduct['title'],
+                    'meta_keywords' => implode(', ', explode(' ', $shopifyProduct['title'])),
+                    'meta_description' => $this->truncateText($shopifyProduct['body_html'] ?? '', 160),
+                ],
+                'zh_CN' => [
+                    'name' => $shopifyProduct['title'],
+                    'url_key' => Str::slug($shopifyProduct['title']) . '-' . time(),
+                    'description' => strip_tags($shopifyProduct['body_html'] ?? ''),
+                    'short_description' => $this->truncateText($shopifyProduct['body_html'] ?? '', 160),
+                    'meta_title' => $shopifyProduct['title'],
+                    'meta_keywords' => implode(', ', explode(' ', $shopifyProduct['title'])),
+                    'meta_description' => $this->truncateText($shopifyProduct['body_html'] ?? '', 160),
+                ],
+                'status' => 1,
+                'weight' => 1,
+                'categories' => [$category->id],
+                'channels' => [$channel->id],
+                'inventories' => [
+                    $inventorySource->id => 0 // 可配置产品本身库存为0
+                ],
+            ];
+            
+            $this->info("创建可配置产品，包含 " . count($superAttributes) . " 个超级属性");
+            $this->info("Creating configurable product with " . count($superAttributes) . " super attributes");
+            
+            // 4. 创建可配置产品（Bagisto会自动创建变体）
+            // 4. Create configurable product (Bagisto will auto-create variants)
+            $configurableProduct = $this->productRepository->create($baseProductData);
+            
+            if (!$configurableProduct) {
+                throw new \Exception("Failed to create configurable product");
+            }
+            
+            $this->info("可配置产品创建成功，ID: {$configurableProduct->id}");
+            $this->info("Configurable product created successfully, ID: {$configurableProduct->id}");
+            
+            // 保存产品属性值（包括名称）
+            // Save product attribute values (including name)
+            $attributeValueRepository = app(\Webkul\Product\Repositories\ProductAttributeValueRepository::class);
+            
+            // 为名称属性添加locale信息
+            // Add locale information for name attribute
+            $baseProductDataWithLocale = array_merge($baseProductData, [
+                'locale' => 'en',
+                'channel' => $channel->code
+            ]);
+            
+            $this->info("保存属性值，产品名称: " . $baseProductDataWithLocale['name']['en']);
+            $this->info("Saving attribute values, product name: " . $baseProductDataWithLocale['name']['en']);
+            
+            $attributeValueRepository->saveValues($baseProductDataWithLocale, $configurableProduct, $configurableProduct->attribute_family->custom_attributes);
+            
+            // 刷新产品实例以获取最新数据
+            // Refresh product instance to get latest data
+            $configurableProduct = $this->productRepository->find($configurableProduct->id);
+            
+            // 5. 更新自动创建的变体数据
+            // 5. Update auto-created variant data
+            $this->updateVariantsWithShopifyData($configurableProduct, $variants, $variantMapping, $channel, $inventorySource);
+            
+            // 6. 处理图片
+            // 6. Handle images
+            if (!empty($shopifyProduct['images'])) {
+                $this->processProductImages($configurableProduct, $shopifyProduct['images']);
+            }
+            
+            return $configurableProduct;
+            
+        } catch (\Exception $e) {
+            $this->error("创建可配置产品失败: " . $e->getMessage());
+            $this->error("Failed to create configurable product: " . $e->getMessage());
+            
+            // 回退到创建简单产品
+            // Fallback to creating simple product
+            $this->warn("回退到创建简单产品");
+            $this->warn("Falling back to creating simple product");
+            return $this->createSimpleProduct($shopifyProduct, $category, $attributeFamily, $channel, $inventorySource, $sku);
+        }
+    }
+    
+    /**
+     * 更新自动创建的变体数据
+     * Update auto-created variant data with Shopify data
+     */
+    protected function updateVariantsWithShopifyData($configurableProduct, $shopifyVariants, $variantMapping, $channel, $inventorySource)
+    {
+        $this->info("开始更新 " . count($shopifyVariants) . " 个变体的数据");
+        $this->info("Starting to update data for " . count($shopifyVariants) . " variants");
+        
+        // 获取自动创建的变体
+        // Get auto-created variants
+        $autoCreatedVariants = $configurableProduct->variants()->get();
+        
+        $this->info("Bagisto自动创建了 " . count($autoCreatedVariants) . " 个变体");
+        $this->info("Bagisto auto-created " . count($autoCreatedVariants) . " variants");
+        
+        // 为每个Shopify变体找到对应的Bagisto变体并更新
+        // Find corresponding Bagisto variant for each Shopify variant and update
+        foreach ($shopifyVariants as $shopifyVariant) {
+            try {
+                // 构建变体的属性组合
+                // Build variant attribute combination
+                $variantAttributes = [];
+                $variantTitle = $shopifyVariant['title'] ?? $configurableProduct->name;
+                
+                // 如果Shopify变体有自己的标题，使用它；否则构建标题
+                // If Shopify variant has its own title, use it; otherwise build title
+                if (empty($shopifyVariant['title']) || $shopifyVariant['title'] === 'Default Title') {
+                    $variantTitle = $configurableProduct->name;
+                    
+                    // 处理选项值
+                    // Process option values
+                    for ($i = 1; $i <= 3; $i++) {
+                        $optionKey = "option{$i}";
+                        if (!empty($shopifyVariant[$optionKey])) {
+                            $optionValue = $shopifyVariant[$optionKey];
+                            
+                            // 在variantMapping中查找对应的属性和选项ID
+                            // Find corresponding attribute and option ID in variantMapping
+                            foreach ($variantMapping as $attributeCode => $valueMapping) {
+                                if (isset($valueMapping[$optionValue])) {
+                                    $variantAttributes[$attributeCode] = $valueMapping[$optionValue];
+                                    $variantTitle .= " - {$optionValue}";
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    // 使用Shopify的变体标题，但仍需要构建属性映射
+                    // Use Shopify's variant title, but still need to build attribute mapping
+                    for ($i = 1; $i <= 3; $i++) {
+                        $optionKey = "option{$i}";
+                        if (!empty($shopifyVariant[$optionKey])) {
+                            $optionValue = $shopifyVariant[$optionKey];
+                            
+                            // 在variantMapping中查找对应的属性和选项ID
+                            // Find corresponding attribute and option ID in variantMapping
+                            foreach ($variantMapping as $attributeCode => $valueMapping) {
+                                if (isset($valueMapping[$optionValue])) {
+                                    $variantAttributes[$attributeCode] = $valueMapping[$optionValue];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                // 找到匹配的自动创建变体
+                // Find matching auto-created variant
+                $matchingVariant = null;
+                foreach ($autoCreatedVariants as $autoVariant) {
+                    $matches = true;
+                    foreach ($variantAttributes as $attrCode => $optionId) {
+                        $attrValue = $autoVariant->attribute_values()
+                            ->whereHas('attribute', function($q) use ($attrCode) {
+                                $q->where('code', $attrCode);
+                            })
+                            ->first();
+                        
+                        if (!$attrValue || $attrValue->integer_value != $optionId) {
+                            $matches = false;
+                            break;
+                        }
+                    }
+                    
+                    if ($matches) {
+                        $matchingVariant = $autoVariant;
+                        break;
+                    }
+                }
+                
+                if ($matchingVariant) {
+                    // 更新变体数据
+                    // Update variant data
+                    $updateData = [
+                        'en' => [
+                            'name' => $variantTitle,
+                            'url_key' => Str::slug($variantTitle) . '-' . time(),
+                        ],
+                        'zh_CN' => [
+                            'name' => $variantTitle,
+                            'url_key' => Str::slug($variantTitle) . '-' . time(),
+                        ],
+                        'price' => $shopifyVariant['price'] ?? 0,
+                        'weight' => $shopifyVariant['weight'] ?? 1,
+                        'inventories' => [
+                            $inventorySource->id => $shopifyVariant['inventory_quantity'] ?? 0
+                        ],
+                    ];
+                    
+                    // 使用ProductRepository更新变体
+                    // Update variant using ProductRepository
+                    $this->productRepository->update($updateData, $matchingVariant->id);
+                    
+                    $this->info("变体更新成功: {$variantTitle} (ID: {$matchingVariant->id})");
+                    $this->info("Variant updated successfully: {$variantTitle} (ID: {$matchingVariant->id})");
+                } else {
+                    $this->warn("未找到匹配的变体: " . json_encode($variantAttributes));
+                    $this->warn("No matching variant found: " . json_encode($variantAttributes));
+                }
+                
+            } catch (\Exception $e) {
+                $this->error("更新变体失败: " . $e->getMessage());
+                $this->error("Failed to update variant: " . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * 获取管理员API token
+     * Get admin API token
+     */
+    protected function getAdminToken()
+    {
+        // 如果已经有缓存的token，直接返回
+        // If we already have a cached token, return it
+        if ($this->adminToken) {
+            return $this->adminToken;
+        }
+
+        // 获取管理员用户信息
+        // Get admin user information
+        $admin = \Webkul\User\Models\Admin::first();
+        
+        if (!$admin) {
+            throw new \Exception('No admin user found. Please create an admin user first.');
+        }
+
+        $this->info("Authenticating admin: {$admin->email}");
+
+        // 使用正确的API登录端点获取token
+        // Use the correct API login endpoint to get token
+        $loginResponse = \Illuminate\Support\Facades\Http::withHeaders([
+            'Accept' => 'application/json',
+            'Content-Type' => 'application/json',
+        ])->post(config('app.url') . '/api/v1/admin/login', [
+            'email' => $admin->email,
+            'password' => 'admin123', // 默认密码，实际使用中应该从配置获取
+            'device_name' => 'shopify-import-script'
+        ]);
+
+        if ($loginResponse->status() !== 200) {
+            $this->error("Login failed with status: " . $loginResponse->status());
+            $this->error("Response: " . $loginResponse->body());
+            throw new \Exception('Admin login failed: ' . $loginResponse->body());
+        }
+
+        $loginData = $loginResponse->json();
+        
+        if (!isset($loginData['token'])) {
+            throw new \Exception('No token received from login response: ' . $loginResponse->body());
+        }
+
+        $token = $loginData['token'];
+        
+        $this->info("Successfully authenticated admin: {$admin->email}");
+        $this->info("Token length: " . strlen($token));
+        
+        // 测试token是否有效
+        // Test if token is valid
+        $testResponse = \Illuminate\Support\Facades\Http::withToken($token)
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+            ])
+            ->get(config('app.url') . '/api/v1/admin/catalog/products');
+        
+        $this->info("Token test status: " . $testResponse->status());
+        
+        if ($testResponse->status() !== 200) {
+            $this->error("Token validation failed: " . $testResponse->body());
+            throw new \Exception('Generated token is not valid: ' . $testResponse->body());
+        }
+        
+        $this->info("Token validation successful!");
+        
+        // 缓存token
+        // Cache the token
+        $this->adminToken = $token;
+        
+        return $token;
+    }
+
+    /**
+     * 获取或创建分类
+     * Get or create category
+     */
+    protected function getOrCreateCategory($collectionName)
+    {
+        // 查找现有分类
+        // Find existing category
+        $category = $this->categoryRepository->whereTranslation('name', $this->formatCategoryName($collectionName))->first();
+        
+        if (!$category) {
+            // 创建新分类
+            // Create new category
+            $categoryData = [
+                'parent_id' => 1, // 假设1是根分类 / Assume 1 is root category
+                'position' => 1,
+                'status' => 1,
+                'display_mode' => 'products_and_description',
+                'name' => $this->formatCategoryName($collectionName),
+                'slug' => Str::slug($collectionName),
+                'description' => "Products from {$collectionName} collection",
+                'meta_title' => $this->formatCategoryName($collectionName),
+                'meta_description' => "Browse our {$collectionName} collection",
+                'meta_keywords' => $collectionName,
+            ];
+
+            $category = $this->categoryRepository->create($categoryData);
+        }
+
+        return $category;
+    }
+
+    /**
+     * 格式化分类名称
+     * Format category name
+     */
+    protected function formatCategoryName($collectionName)
+    {
+        return ucwords(str_replace(['-', '_'], ' ', $collectionName));
+    }
+
+    /**
+     * 获取产品价格
+     * Get product price
+     */
+    protected function getProductPrice($shopifyProduct)
+    {
+        if (!empty($shopifyProduct['variants'])) {
+            return (float) $shopifyProduct['variants'][0]['price'];
+        }
+        return 0.00;
+    }
+
+    /**
+     * 获取产品重量
+     * Get product weight
+     */
+    protected function getProductWeight($shopifyProduct)
+    {
+        if (!empty($shopifyProduct['variants'])) {
+            return (float) ($shopifyProduct['variants'][0]['weight'] ?? 0);
+        }
+        return 0;
+    }
+
+    /**
+     * 获取产品库存数量
+     * Get product quantity
+     */
+    protected function getProductQuantity($shopifyProduct)
+    {
+        if (!empty($shopifyProduct['variants'])) {
+            return (int) ($shopifyProduct['variants'][0]['inventory_quantity'] ?? 0);
+        }
+        return 0;
+    }
+
+    /**
+     * 处理产品图片
+     * Process product images
+     */
+    protected function processProductImages($product, $images)
+    {
+        if (empty($images)) {
+            return;
+        }
+
+        $this->info("开始处理 " . count($images) . " 张产品图片");
+        $this->info("Starting to process " . count($images) . " product images");
+
+        foreach ($images as $index => $imageData) {
+            try {
+                $imageUrl = $imageData['src'] ?? null;
+                if (!$imageUrl) {
+                    continue;
+                }
+
+                // 下载并保存图片
+                // Download and save image
+                $imageContent = file_get_contents($imageUrl);
+                if ($imageContent === false) {
+                    $this->warn("无法下载图片: {$imageUrl}");
+                    $this->warn("Failed to download image: {$imageUrl}");
+                    continue;
+                }
+
+                // 生成文件名
+                // Generate filename
+                $extension = pathinfo(parse_url($imageUrl, PHP_URL_PATH), PATHINFO_EXTENSION) ?: 'jpg';
+                $filename = 'product_' . $product->id . '_' . ($index + 1) . '.' . $extension;
+                
+                // 保存到storage目录
+                // Save to storage directory
+                $storagePath = 'product/' . $product->id;
+                $fullPath = storage_path('app/public/' . $storagePath);
+                
+                if (!file_exists($fullPath)) {
+                    mkdir($fullPath, 0755, true);
+                }
+                
+                $filePath = $fullPath . '/' . $filename;
+                file_put_contents($filePath, $imageContent);
+
+                // 创建产品图片记录
+                // Create product image record
+                $imageRecord = [
+                    'product_id' => $product->id,
+                    'type' => $index === 0 ? 'image' : 'gallery',
+                    'path' => $storagePath . '/' . $filename,
+                    'position' => $index + 1
+                ];
+
+                // 这里需要根据Bagisto的实际图片模型来调整
+                // This needs to be adjusted based on Bagisto's actual image model
+                // $this->productImageRepository->create($imageRecord);
+
+                $this->info("图片处理成功: {$filename}");
+                $this->info("Image processed successfully: {$filename}");
+
+            } catch (\Exception $e) {
+                $this->error("处理图片失败: " . $e->getMessage());
+                $this->error("Failed to process image: " . $e->getMessage());
+            }
+        }
+    }
+
+    /**
+     * 截断文本
+     * Truncate text
+     */
+    protected function truncateText($text, $length)
+    {
+        $text = strip_tags($text);
+        return Str::limit($text, $length);
+    }
+
+    /**
+     * 创建或获取属性
+     * Create or get attribute
+     */
+    protected function createOrGetAttribute($optionName, $optionValues)
+    {
+        // 检查属性是否已存在
+        // Check if attribute already exists
+        $attribute = $this->attributeRepository->findOneByField('code', strtolower($optionName));
+        
+        if ($attribute) {
+            $this->info("属性已存在: {$optionName}");
+            $this->info("Attribute already exists: {$optionName}");
+            return $attribute;
+        }
+
+        // 创建新属性
+        // Create new attribute
+        $attributeData = [
+            'code' => strtolower($optionName),
+            'admin_name' => $optionName,
+            'type' => 'select',
+            'is_required' => false,
+            'is_unique' => false,
+            'is_filterable' => true,
+            'is_configurable' => true,
+            'is_user_defined' => true,
+            'is_visible_on_front' => true,
+            'position' => 1,
+            'options' => []
+        ];
+
+        // 添加多语言标签
+        // Add multilingual labels
+        $attributeData['en'] = ['name' => $optionName];
+        $attributeData['zh_CN'] = ['name' => $optionName];
+
+        // 为每个选项值创建选项
+        // Create options for each option value
+        foreach ($optionValues as $index => $value) {
+            $attributeData['options'][] = [
+                'admin_name' => $value,
+                'sort_order' => $index + 1,
+                'en' => ['label' => $value],
+                'zh_CN' => ['label' => $value]
+            ];
+        }
+
+        $this->info("创建新属性: {$optionName}，包含 " . count($optionValues) . " 个选项");
+        $this->info("Creating new attribute: {$optionName} with " . count($optionValues) . " options");
+
+        return $this->attributeRepository->create($attributeData);
+    }
+
+    /**
+     * 获取或创建属性选项
+     * Get or create attribute option
+     */
+    protected function getOrCreateAttributeOption($attribute, $optionValue)
+    {
+        // 查找现有选项
+        // Find existing option
+        $option = $attribute->options()->where('admin_name', $optionValue)->first();
+        
+        if ($option) {
+            return $option;
+        }
+
+        // 创建新选项
+        // Create new option
+        $optionData = [
+            'attribute_id' => $attribute->id,
+            'admin_name' => $optionValue,
+            'sort_order' => $attribute->options()->count() + 1,
+            'en' => ['label' => $optionValue],
+            'zh_CN' => ['label' => $optionValue]
+        ];
+
+        $this->info("为属性 {$attribute->admin_name} 创建新选项: {$optionValue}");
+        $this->info("Creating new option for attribute {$attribute->admin_name}: {$optionValue}");
+
+        return $this->attributeOptionRepository->create($optionData);
+    }
+
+}
