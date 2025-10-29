@@ -25,23 +25,54 @@
     <div class="flex justify-between gap-x-6 gap-y-8 p-[60px] max-1060:flex-col-reverse max-md:gap-5 max-md:p-8 max-sm:px-4 max-sm:py-5">
         <!-- For Desktop View -->
         <div class="flex flex-wrap items-start gap-24 max-1180:gap-6 max-1060:hidden">
-            @if ($customization?->options)
-                @foreach ($customization->options as $footerLinkSection)
-                    <ul class="grid gap-5 text-sm">
-                        @php
-                            usort($footerLinkSection, function ($a, $b) {
-                                return $a['sort_order'] - $b['sort_order'];
-                            });
-                        @endphp
 
-                        @foreach ($footerLinkSection as $link)
-                            <li>
-                                <a href="{{ $link['url'] }}">
-                                    {{ $link['title'] }}
-                                </a>
-                            </li>
-                        @endforeach
-                    </ul>
+            <div class="grid gap-5">
+                <ul class="grid gap-3 text-sm">
+                    <li><img src="/themes/shop/default/build/assets/logo.png"></li>
+                    <li>Store Name:Kiaoa</li>
+                    <li>Hours: Monday - Friday : 9am-5pm</li>
+                    <li>Saturday - Sunday : Closed</li>
+                    <li>Address:715 S Washington St</li>
+                    <li>apt c2,Alexandria,VA,22314</li>
+                    <li>Phoen:+1（703）356-7108</li>
+                    <li>Email:help@kiaoa.com</li>
+                </ul>
+            </div>
+
+            @if ($customization?->options)
+                @foreach ($customization->options as $columnKey => $footerLinkSection)
+                    <div class="grid gap-5">
+                        <!-- 分组标题 -->
+                        @php
+                            $columnTitles = [
+                                'column_1' => 'Customer Service',
+                                'column_2' => 'Information', 
+                                'column_3' => 'Company'
+                            ];
+                        @endphp
+                        
+                        @if (isset($columnTitles[$columnKey]))
+                            <h3 class="text-base font-semibold text-gray-800 mb-2">
+                                {{ $columnTitles[$columnKey] }}
+                            </h3>
+                        @endif
+
+                        <ul class="grid gap-3 text-sm">
+                            @php
+                                usort($footerLinkSection, function ($a, $b) {
+                                    return $a['sort_order'] - $b['sort_order'];
+                                });
+                            @endphp
+
+                            @foreach ($footerLinkSection as $link)
+                                <li>
+                                    <a href="{{ $link['url'] }}" class="text-gray-600 hover:text-gray-800 transition-colors">
+                                        {{ $link['title'] }}
+                                    </a>
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
                 @endforeach
             @endif
         </div>
@@ -57,24 +88,41 @@
 
             <x-slot:content class="flex justify-between !bg-transparent !p-4">
                 @if ($customization?->options)
-                    @foreach ($customization->options as $footerLinkSection)
-                        <ul class="grid gap-5 text-sm">
+                    @foreach ($customization->options as $columnKey => $footerLinkSection)
+                        <div class="grid gap-3">
+                            <!-- 移动端分组标题 -->
                             @php
-                                usort($footerLinkSection, function ($a, $b) {
-                                    return $a['sort_order'] - $b['sort_order'];
-                                });
+                                $columnTitles = [
+                                    'column_1' => 'Customer Service',
+                                    'column_2' => 'Information', 
+                                    'column_3' => 'Company'
+                                ];
                             @endphp
+                            
+                            @if (isset($columnTitles[$columnKey]))
+                                <h4 class="text-sm font-semibold text-gray-800 mb-1">
+                                    {{ $columnTitles[$columnKey] }}
+                                </h4>
+                            @endif
 
-                            @foreach ($footerLinkSection as $link)
-                                <li>
-                                    <a
-                                        href="{{ $link['url'] }}"
-                                        class="text-sm font-medium max-sm:text-xs">
-                                        {{ $link['title'] }}
-                                    </a>
-                                </li>
-                            @endforeach
-                        </ul>
+                            <ul class="grid gap-3 text-sm">
+                                @php
+                                    usort($footerLinkSection, function ($a, $b) {
+                                        return $a['sort_order'] - $b['sort_order'];
+                                    });
+                                @endphp
+
+                                @foreach ($footerLinkSection as $link)
+                                    <li>
+                                        <a
+                                            href="{{ $link['url'] }}"
+                                            class="text-sm font-medium max-sm:text-xs text-gray-600 hover:text-gray-800 transition-colors">
+                                            {{ $link['title'] }}
+                                        </a>
+                                    </li>
+                                @endforeach
+                            </ul>
+                        </div>
                     @endforeach
                 @endif
             </x-slot>

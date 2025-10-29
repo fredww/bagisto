@@ -67,8 +67,10 @@
         >
             <div class="container px-[60px] max-lg:px-8 max-md:px-4">
                 <div class="flex items-start gap-10 max-lg:gap-5 md:mt-10">
-                    <!-- Product Listing Filters -->
-                    @include('shop::categories.filters')
+                    @if(1==2)
+                        <!-- Product Listing Filters -->
+                        @include('shop::categories.filters')
+                    @endif
 
                     <!-- Product Listing Container -->
                     <div class="flex-1">
@@ -126,7 +128,7 @@
                         <div v-else class="mt-8 max-md:mt-5">
                             <!-- Product Card Shimmer Effect -->
                             <template v-if="isLoading">
-                                <div class="grid grid-cols-3 gap-8 max-1060:grid-cols-2 max-md:justify-items-center max-md:gap-x-4">
+                                <div class="grid grid-cols-4 gap-8 max-1060:grid-cols-2 max-md:justify-items-center max-md:gap-x-4">
                                     <x-shop::shimmer.products.cards.grid count="12" />
                                 </div>
                             </template>
@@ -136,7 +138,7 @@
                             <!-- Product Card Listing -->
                             <template v-else>
                                 <template v-if="products.length">
-                                    <div class="grid grid-cols-3 gap-8 max-1060:grid-cols-2 max-md:justify-items-center max-md:gap-x-4">
+                                    <div class="grid grid-cols-4 gap-8 max-1060:grid-cols-2 max-md:justify-items-center max-md:gap-x-4">
                                         <x-shop::products.card
                                             ::mode="'grid'"
                                             v-for="product in products"
@@ -196,6 +198,10 @@
                 </div>
             </div>
         </script>
+
+        <style>
+        .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+       </style>
 
         <script type="module">
             app.component('v-category', {

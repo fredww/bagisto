@@ -2,14 +2,18 @@
 
 return [
     'paypal_smart_button' => [
-        'code'             => 'paypal_smart_button',
-        'title'            => 'PayPal Smart Button',
-        'description'      => 'PayPal',
-        'client_id'        => 'sb',
-        'class'            => 'Webkul\Paypal\Payment\SmartButton',
-        'sandbox'          => true,
-        'active'           => true,
-        'sort'             => 4,
+        'code'                  => 'paypal_smart_button',
+        'title'                 => 'PayPal Smart Button',
+        'description'           => 'PayPal with Apple Pay support',
+        'client_id'             => 'sb',
+        'client_secret'         => '',
+        'class'                 => 'Webkul\Paypal\Payment\SmartButton',
+        'sandbox'               => true,
+        'active'                => true,
+        'sort'                  => 4,
+        'enable_apple_pay'      => false,
+        'apple_pay_merchant_id' => '',
+        'accepted_currencies'   => 'USD,EUR,GBP',
     ],
 
     'paypal_standard' => [

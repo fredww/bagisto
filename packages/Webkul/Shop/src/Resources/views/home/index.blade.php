@@ -64,6 +64,7 @@
                 @break
             @case ($customization::CATEGORY_CAROUSEL)
                 <!-- Categories carousel -->
+                @break <!-- 不显示分类 -->
                 <x-shop::categories.carousel
                     :title="$data['title'] ?? ''"
                     :src="route('shop.api.categories.index', $data['filters'] ?? [])"

@@ -24,19 +24,14 @@ use Laravel\Sanctum\PersonalAccessToken;
 class ImportShopifyProducts extends Command
 {
     /**
-     * The name and signature of the console command.
-     * php artisan shopify:import-products https://kiaoa.com --collection=spinning-reel --limit=1
-     * 
-     * # 测试运行
-     * php artisan shopify:import-products https://kiaoa.com --collection=spinning-reel --limit=1 --dry-run
      * # 导入单个产品
-     * php artisan shopify:import-products https://kiaoa.com --collection=spinning-reel --limit=1
+     * php artisan shopify:import-products https://7pp15d-mn.myshopify.com --collection=spinning-reel --limit=1
      * # 批量导入
-     * php artisan shopify:import-products https://kiaoa.com --collection=spinning-reel --limit=50
+     * php artisan shopify:import-products https://7pp15d-mn.myshopify.com --collection=spinning-reel --limit=50
      * @var string
     */
     protected $signature = 'shopify:import-products 
-                            {shopify_url : The Shopify store URL (e.g., https://kiaoa.com/)}
+                            {shopify_url : The Shopify store URL (e.g., https://7pp15d-mn.myshopify.com/)}
                             {--collection=* : Specific collections to import (optional)}
                             {--limit=50 : Number of products to import per collection}
                             {--dry-run : Run without actually importing}';
@@ -95,7 +90,6 @@ class ImportShopifyProducts extends Command
         $shopifyUrl = rtrim($this->argument('shopify_url'), '/');
         $collections = $this->option('collection');
         $limit = $this->option('limit');
-        $dryRun = $this->option('dry-run');
         $this->info("开始从 {$shopifyUrl} 导入产品...");
 
         try {
@@ -109,7 +103,7 @@ class ImportShopifyProducts extends Command
             $totalErrors = 0;
             foreach ($collections as $collection) {
                 $this->info("处理集合: {$collection}");
-                $result = $this->importCollectionProducts($shopifyUrl, $collection, $limit, $dryRun);
+                $result = $this->importCollectionProducts($shopifyUrl, $collection, $limit);
                 $totalImported += $result['imported'];
                 $totalErrors += $result['errors'];
             }
@@ -124,29 +118,26 @@ class ImportShopifyProducts extends Command
     }
 
     /**
-     * 获取Shopify商店的所有集合
      * Get all collections from Shopify store
      */
     protected function getShopifyCollections($shopifyUrl)
     {
-        // 这里可以实现获取所有集合的逻辑
-        // 暂时返回一些常见的集合名称
-        // Here we can implement logic to get all collections
-        // For now, return some common collection names
         return [
             'spinning-reel',
-            'fishing-rod',
-            'fishing-line',
-            'fishing-tackle',
-            'fishing-accessories'
+            'baitcasting-reels',
+            'pencil-lure',
+            'metal-lures',
+            'hard-baits',
+            'fishing-jigs',
+            'soft-plastics'
         ];
+        
     }
 
     /**
-     * 导入指定集合的产品
      * Import products from specified collection
      */
-    protected function importCollectionProducts($shopifyUrl, $collection, $limit, $dryRun)
+    protected function importCollectionProducts($shopifyUrl, $collection, $limit)
     {
         $imported = 0;
         $errors = 0;
@@ -166,35 +157,13 @@ class ImportShopifyProducts extends Command
                 
                 if (!$response->successful()) {
                     $this->warn("无法获取集合 {$collection} 的产品 (页面 {$page}) - 状态码: {$response->status()}");
-                    
-                    // 如果是404，尝试不同的URL格式
-                    // If 404, try different URL format
-                    if ($response->status() === 404) {
-                        $this->info("尝试不同的URL格式...");
-                        
-                        // 尝试使用示例URL的格式
-                        // Try using example URL format
-                        if (strpos($shopifyUrl, 'kiaoa.com') !== false) {
-                            $productsUrl = "https://kiaoa.com/collections/{$collection}/products.json";
-                            $response = Http::timeout(60) // 增加超时时间
-                                ->withHeaders([
-                                    'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
-                                    'Accept' => 'application/json, text/plain, */*',
-                                ])
-                                ->get($productsUrl);
-                                
-                            if (!$response->successful()) {
-                                break;
-                            }
-                        } else {
-                            break;
-                        }
-                    } else {
-                        break;
-                    }
+                    break;
                 }
 
                 $data = $response->json();
+
+                // $data = file_get_contents('/Users/niaoqing/Sites/pt/bagisto/public_html/shopify_products.json');
+                // $data = json_decode($data, true);
                 
                 if (empty($data['products'])) {
                     $this->info("集合 {$collection} 没有更多产品");
@@ -209,12 +178,8 @@ class ImportShopifyProducts extends Command
                     }
 
                     try {
-                        if ($dryRun) {
-                            $this->line("DRY RUN: 将导入产品 - {$shopifyProduct['title']}");
-                        } else {
-                            $this->importSingleProduct($shopifyProduct, $collection);
-                            $this->info("✓ 导入产品: {$shopifyProduct['title']}");
-                        }
+                        $this->importSingleProduct($shopifyProduct, $collection);
+                        $this->info("✓ 导入产品: {$shopifyProduct['title']}");
                         $imported++;
                     } catch (\Exception $e) {
                         $this->error("✗ 导入产品失败 {$shopifyProduct['title']}: " . $e->getMessage());
@@ -243,18 +208,9 @@ class ImportShopifyProducts extends Command
         DB::beginTransaction();
 //print_r($shopifyProduct);exit();
         try {
-            // 生成 SKU - 使用连字符而不是下划线以符合Bagisto的slug验证规则
             // Generate SKU - use hyphens instead of underscores to comply with Bagisto's slug validation rules
-            //$sku = 'shopify-' . $shopifyProduct['handle'];
             $sku = $shopifyProduct['id'];
             
-            // 确保SKU符合Bagisto的slug规则：只允许字母、数字和连字符
-            // Ensure SKU complies with Bagisto's slug rules: only letters, numbers, and hyphens allowed
-            //$sku = preg_replace('/[^a-zA-Z0-9-]/', '-', $sku);
-            //$sku = preg_replace('/-+/', '-', $sku); // 合并多个连字符
-            //$sku = trim($sku, '-'); // 移除首尾的连字符
-            
-            // 检查产品是否已存在
             // Check if product already exists
             $existingProduct = $this->productRepository->where('sku', $sku)->first();
             if ($existingProduct) {
@@ -263,19 +219,15 @@ class ImportShopifyProducts extends Command
                 throw new \Exception("Product already exists: {$shopifyProduct['title']}");
             }
 
-            // 获取或创建分类
             // Get or create category
             $category = $this->getOrCreateCategory($collectionName);
 
-            // 获取默认属性族
             // Get default attribute family
             $attributeFamily = $this->attributeFamilyRepository->first();
             
-            // 获取默认渠道
             // Get default channel
             $channel = $this->channelRepository->first();
 
-            // 获取默认库存源
             // Get default inventory source
             $inventorySource = $this->inventorySourceRepository->first();
 
@@ -319,7 +271,7 @@ class ImportShopifyProducts extends Command
             //'url_key' => Str::slug($shopifyProduct['title']) . '-' . time(),
             'url_key' => $shopifyProduct['handle'],
             'short_description' => $this->truncateText(strip_tags($shopifyProduct['body_html'] ?? ''), 255),
-            'description' => strip_tags($shopifyProduct['body_html'] ?? ''),
+            'description' => $this->cleanHtml($shopifyProduct['body_html'] ?? ''),
             'meta_title' => $shopifyProduct['title'],
             'meta_keywords' => is_array($shopifyProduct['tags'] ?? []) ? implode(',', $shopifyProduct['tags']) : ($shopifyProduct['tags'] ?? ''),
             'meta_description' => $this->truncateText(strip_tags($shopifyProduct['body_html'] ?? ''), 160),
@@ -407,7 +359,6 @@ class ImportShopifyProducts extends Command
         $this->info("检测到产品变体，创建可配置产品: {$shopifyProduct['title']}");
         
         try {
-            // 1. 分析Shopify产品的选项和变体
             // 1. Analyze Shopify product options and variants
             $options = $shopifyProduct['options'] ?? [];
             $variants = $shopifyProduct['variants'] ?? [];
@@ -454,7 +405,7 @@ class ImportShopifyProducts extends Command
                 'name' => $shopifyProduct['title'],
                 //'url_key' => Str::slug($shopifyProduct['title']) . '-' . time(),
                 'url_key' => $shopifyProduct['handle'],
-                'description' => strip_tags($shopifyProduct['body_html'] ?? ''),
+                'description' => $this->cleanHtml($shopifyProduct['body_html'] ?? ''),
                 'short_description' => $this->truncateText(strip_tags($shopifyProduct['body_html'] ?? ''), 255),
                 'meta_title' => $shopifyProduct['title'],
                 'meta_keywords' => implode(', ', explode(' ', $shopifyProduct['title'])),
@@ -572,6 +523,7 @@ class ImportShopifyProducts extends Command
         // 为每个Shopify变体找到对应的Bagisto变体并更新
         // Find corresponding Bagisto variant for each Shopify variant and update
         foreach ($shopifyVariants as $shopifyVariantIndex => $shopifyVariant) {
+            //print_r($shopifyVariant);exit();
             try {
                 // 构建变体的属性组合
                 // Build variant attribute combination
@@ -678,7 +630,7 @@ class ImportShopifyProducts extends Command
                         'url_key' => $configurableProduct->url_key . '-' . $matchingVariant->id,
                         'price' => $variantPrice,
                         'weight' => $variantWeight,
-                        'sku' => $shopifyVariant['sku'] ?? ($matchingVariant->sku . '-' . $shopifyVariantIndex),
+                        'sku' => $shopifyVariant['id'] ?? ($matchingVariant->sku . '-' . $shopifyVariantIndex),
                         'status' => 1, // 确保变体启用 / Ensure variant is enabled
                         'visible_individually' => 0, // 变体不单独显示 / Variants not individually visible
                         'parent_id' => $configurableProduct->id, // 确保正确关联父产品 / Ensure correct parent association
@@ -1549,6 +1501,25 @@ class ImportShopifyProducts extends Command
         ]);
 
         return $option;
+    }
+
+    /**
+     * 清理HTML内容，保留基本标签但移除所有属性
+     * Clean HTML content, keep basic tags but remove all attributes
+     */
+    private function cleanHtml($html)
+    {
+        if (empty($html)) {
+            return '';
+        }
+
+        // 解码Unicode转义序列
+        $html = html_entity_decode($html, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        
+        // 移除所有HTML标签的属性，只保留标签本身
+        $cleanHtml = preg_replace('/<(\w+)[^>]*>/', '<$1>', $html);
+        
+        return $cleanHtml;
     }
 
 }
