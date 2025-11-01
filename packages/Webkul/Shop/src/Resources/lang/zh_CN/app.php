@@ -805,6 +805,8 @@ return [
             'buy-now'                => '立即购买',
             'compare'                => '比较',
             'description'            => '描述',
+            'shipping-policy'        => '运输政策',
+            'return-terms'           => '退货条款',
             'related-product-title'  => '相关产品',
             'review'                 => '评论',
             'tax-inclusive'          => '含税',

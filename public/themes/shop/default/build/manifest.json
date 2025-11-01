@@ -1,21 +1,21 @@
 {
-  "_veeValidate-AStS9x6w.js": {
-    "file": "assets/veeValidate-AStS9x6w.js",
+  "_veeValidate-BnSi22_q.js": {
+    "file": "assets/veeValidate-BnSi22_q.js",
     "name": "veeValidate",
     "imports": [
-      "_vue-BpIHnJ7o.js"
+      "_vue-DaFNcYaj.js"
     ]
   },
-  "_vendor-DIwtuusy.js": {
-    "file": "assets/vendor-DIwtuusy.js",
+  "_vendor-CW6uOYFM.js": {
+    "file": "assets/vendor-CW6uOYFM.js",
     "name": "vendor"
   },
-  "_vue-BpIHnJ7o.js": {
-    "file": "assets/vue-BpIHnJ7o.js",
+  "_vue-DaFNcYaj.js": {
+    "file": "assets/vue-DaFNcYaj.js",
     "name": "vue"
   },
   "src/Resources/assets/css/app.css": {
-    "file": "assets/app-BoUQhNYM.css",
+    "file": "assets/app-BIgFjiKi.css",
     "src": "src/Resources/assets/css/app.css",
     "isEntry": true
   },
@@ -75,6 +75,10 @@
     "file": "assets/review-ZWqERyaT.png",
     "src": "src/Resources/assets/images/review.png"
   },
+  "src/Resources/assets/images/security-payment.png": {
+    "file": "assets/security-payment-BBB2eQSx.png",
+    "src": "src/Resources/assets/images/security-payment.png"
+  },
   "src/Resources/assets/images/small-product-placeholder.webp": {
     "file": "assets/small-product-placeholder-CMT26fOX.webp",
     "src": "src/Resources/assets/images/small-product-placeholder.webp"
@@ -96,14 +100,14 @@
     "src": "src/Resources/assets/images/wishlist.png"
   },
   "src/Resources/assets/js/app.js": {
-    "file": "assets/app-C4XCDcMP.js",
+    "file": "assets/app-h2RhPG73.js",
     "name": "app",
     "src": "src/Resources/assets/js/app.js",
     "isEntry": true,
     "imports": [
-      "_vue-BpIHnJ7o.js",
-      "_vendor-DIwtuusy.js",
-      "_veeValidate-AStS9x6w.js"
+      "_vue-DaFNcYaj.js",
+      "_vendor-CW6uOYFM.js",
+      "_veeValidate-BnSi22_q.js"
     ],
     "css": [
       "assets/app-DsP8OK1c.css"

@@ -87,13 +87,104 @@
                     :is-selected="true"
                 >
                     <div class="container mt-[60px] max-1180:px-5">
-                        <p class="text-lg text-zinc-500 max-1180:text-sm">
+
+                        @php
+                            // 功能：在描述区域展示运输时间预估与免运费门槛
+                            // Purpose: Show estimated delivery date range and free shipping threshold
+
+                            // Compute date range using Carbon
+                            $startDate = \Carbon\Carbon::now()->addDays(7);
+                            $endDate = \Carbon\Carbon::now()->addDays(15);
+
+                            // Format like "Nov 10" - concise, English month short name
+                            $startFormatted = $startDate->format('M j');
+                            $endFormatted = $endDate->format('M j');
+
+                            // Free shipping threshold amount
+                            $freeShippingThreshold = 59.99;
+                        @endphp
+
+                        <div class="mt-6 grid gap-3 text-black">
+                            <div class="flex items-center gap-2 text-base">
+                                <span class="icon-truck text-xl"></span>
+                                <span>
+                                    Estimated Delivery: {{ $startFormatted }} - {{ $endFormatted }}
+                                </span>
+                            </div>
+
+                            <div class="flex items-center gap-2 text-base">
+                                <span class="icon-box-fill text-xl"></span>
+                                <span>
+                                    Free Shipping & Returns: On all orders over ${{ number_format($freeShippingThreshold, 2) }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <p class="text-lg text-zinc-500 max-1180:text-sm" style="margin-top:20px">
                             {!! $product->description !!}
                         </p>
                     </div>
                 </x-shop::tabs.item>
 
                 {!! view_render_event('bagisto.shop.products.view.description.after', ['product' => $product]) !!}
+
+                {{-- 这里添加“运输政策”和“退货条款”两个Tab，显示对应CMS页面内容 --}}
+                @php
+                    // 通过 CMS 仓库查询当前渠道的对应页面（跨语言匹配 url_key，内容按当前语言或回退语言渲染）
+                    /** Fetch Shipping Policy and Return Terms CMS pages for current channel */
+                    $pageRepository = app(\Webkul\CMS\Repositories\PageRepository::class);
+                    $channelId = core()->getCurrentChannel()->id;
+
+                    $shippingPage = $pageRepository->getModel()
+                        ->whereHas('translations', function ($q) {
+                            $q->where('url_key', 'product-shipping-policy');
+                        })
+                        ->whereHas('channels', function ($q) use ($channelId) {
+                            $q->where('channel_id', $channelId);
+                        })
+                        ->first();
+
+                    $returnPage = $pageRepository->getModel()
+                        ->whereHas('translations', function ($q) {
+                            $q->where('url_key', 'product-return-policy');
+                        })
+                        ->whereHas('channels', function ($q) use ($channelId) {
+                            $q->where('channel_id', $channelId);
+                        })
+                        ->first();
+                @endphp
+
+                @if ($shippingPage)
+                    <!-- Shipping Policy Tab -->
+                    <x-shop::tabs.item
+                        id="shipping-policy-tab"
+                        class="container mt-[60px] !p-0"
+                        :title="trans('shop::app.products.view.shipping-policy')"
+                        :is-selected="false"
+                    >
+                        <div class="container mt-[60px] max-1180:px-5">
+                            <div class="text-lg text-zinc-500 max-1180:text-sm">
+                                {!! $shippingPage->html_content !!}
+                            </div>
+                        </div>
+                    </x-shop::tabs.item>
+                @endif
+
+                @if ($returnPage)
+                    <!-- Return Terms Tab -->
+                    <x-shop::tabs.item
+                        id="return-terms-tab"
+                        class="container mt-[60px] !p-0"
+                        :title="trans('shop::app.products.view.return-terms')"
+                        :is-selected="false"
+                    >
+                        <div class="container mt-[60px] max-1180:px-5">
+                            <div class="text-lg text-zinc-500 max-1180:text-sm">
+                                {!! $returnPage->html_content !!}
+                            </div>
+                        </div>
+                    </x-shop::tabs.item>
+                @endif
 
                 <!-- Additional Information Tab -->
                 @if(count($attributeData))
@@ -174,8 +265,86 @@
                 <div class="mb-5 text-lg text-zinc-500 max-1180:text-sm max-md:mb-1 max-md:px-4">
                     {!! $product->description !!}
                 </div>
+
+                @php
+                    // 功能：在移动端描述折叠面板展示运输时间预估与免运费门槛
+                    // Purpose: Show estimated delivery date range and free shipping threshold on mobile
+
+                    // Compute date range using Carbon
+                    $mStartDate = \Carbon\Carbon::now()->addDays(7);
+                    $mEndDate = \Carbon\Carbon::now()->addDays(15);
+
+                    // Format like "Nov 10"
+                    $mStartFormatted = $mStartDate->format('M j');
+                    $mEndFormatted = $mEndDate->format('M j');
+
+                    // Free shipping threshold amount
+                    $mFreeShippingThreshold = 59.99;
+                @endphp
+
+                <div class="mb-5 grid gap-3 max-md:mb-1 max-md:px-4 text-black">
+                    <div class="flex items-center gap-2 text-base">
+                        <span class="icon-truck text-xl"></span>
+                        <span>
+                            Estimated Delivery: {{ $mStartFormatted }} - {{ $mEndFormatted }}
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-2 text-base">
+                        <span class="icon-box-fill text-xl"></span>
+                        <span>
+                            Free Shipping & Returns: On all orders over ${{ number_format($mFreeShippingThreshold, 2) }}
+                        </span>
+                    </div>
+                </div>
             </x-slot>
         </x-shop::accordion>
+
+        {{-- 这里添加移动端“运输政策”和“退货条款”折叠面板 --}}
+        @php
+            // 移动端复用已获取的 CMS 页面对象，无需重复查询
+            $pageRepository = $pageRepository ?? app(\Webkul\CMS\Repositories\PageRepository::class);
+        @endphp
+
+        @if ($shippingPage)
+            <!-- Shipping Policy Accordion -->
+            <x-shop::accordion
+                class="max-md:border-none"
+                :is-active="false"
+            >
+                <x-slot:header class="bg-gray-100 max-md:!py-3 max-sm:!py-2">
+                    <p class="text-base font-medium 1180:hidden">
+                        @lang('shop::app.products.view.shipping-policy')
+                    </p>
+                </x-slot>
+
+                <x-slot:content class="max-sm:px-0">
+                    <div class="mb-5 text-lg text-zinc-500 max-1180:text-sm max-md:mb-1 max-md:px-4">
+                        {!! $shippingPage->html_content !!}
+                    </div>
+                </x-slot>
+            </x-shop::accordion>
+        @endif
+
+        @if ($returnPage)
+            <!-- Return Terms Accordion -->
+            <x-shop::accordion
+                class="max-md:border-none"
+                :is-active="false"
+            >
+                <x-slot:header class="bg-gray-100 max-md:!py-3 max-sm:!py-2">
+                    <p class="text-base font-medium 1180:hidden">
+                        @lang('shop::app.products.view.return-terms')
+                    </p>
+                </x-slot>
+
+                <x-slot:content class="max-sm:px-0">
+                    <div class="mb-5 text-lg text-zinc-500 max-1180:text-sm max-md:mb-1 max-md:px-4">
+                        {!! $returnPage->html_content !!}
+                    </div>
+                </x-slot>
+            </x-shop::accordion>
+        @endif
 
         <!-- Additional Information Accordion -->
         @if (count($attributeData))
@@ -360,7 +529,7 @@
 
                                 {!! view_render_event('bagisto.shop.products.short_description.before', ['product' => $product]) !!}
 
-                                <p class="mt-6 text-lg text-zinc-500 max-sm:mt-1.5 max-sm:text-sm">
+                                <p class="mt-6 text-lg text-zinc-500 max-sm:mt-1.5 max-sm:text-sm pdp_short_description">
                                     {!! $product->short_description !!}
                                 </p>
 
@@ -436,7 +605,7 @@
                                 {!! view_render_event('bagisto.shop.products.view.additional_actions.before', ['product' => $product]) !!}
 
                                 <!-- Share Buttons -->
-                                <div class="mt-10 flex gap-9 max-md:mt-4 max-md:flex-wrap max-sm:justify-center max-sm:gap-3">
+                                <div class="mt-10 flex gap-9 max-md:mt-4 max-md:flex-wrap max-sm:justify-center max-sm:gap-3 pdp_compare">
                                     {!! view_render_event('bagisto.shop.products.view.compare.before', ['product' => $product]) !!}
 
                                     <div

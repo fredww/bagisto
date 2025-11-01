@@ -805,6 +805,8 @@ return [
             'buy-now'                => 'Buy Now',
             'compare'                => 'Compare',
             'description'            => 'Description',
+            'shipping-policy'        => 'Shipping Policy',
+            'return-terms'           => 'Return Terms',
             'related-product-title'  => 'Related Products',
             'review'                 => 'Reviews',
             'tax-inclusive'          => 'Inclusive of all taxes',

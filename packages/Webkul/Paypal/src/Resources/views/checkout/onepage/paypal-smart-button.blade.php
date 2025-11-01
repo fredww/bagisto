@@ -69,7 +69,7 @@
             <div class="w-full">
                 @if ($applePayEnabled)
                     <!-- Apple Pay Button Container -->
-                    <div class="paypal-applepay-button-container mb-3" v-show="showApplePayButton"></div>
+                    <div class="paypal-applepay-button-container mb-3"></div>
                 @endif
 
                 <!-- Standard PayPal Button Container -->
@@ -90,7 +90,6 @@
 
                 mounted() {
                     this.register();
-                    this.checkApplePayAvailability();
                 },
 
                 methods: {
@@ -130,14 +129,16 @@
                     },
 
                     renderApplePayButton() {
-                        if (!this.isApplePayAvailable()) return;
-
                         const applePayOptions = this.getApplePayOptions();
-                        if (applePayOptions) {
-                            paypal.Buttons({
-                                ...applePayOptions,
-                                fundingSource: 'applepay'
-                            }).render('.paypal-applepay-button-container');
+                        if (!applePayOptions) return;
+
+                        const applePayButton = paypal.Buttons({
+                            fundingSource: paypal.FUNDING.APPLEPAY,
+                            ...applePayOptions,
+                        });
+
+                        if (applePayButton.isEligible && applePayButton.isEligible()) {
+                            applePayButton.render('.paypal-applepay-button-container');
                         }
                     },
 
@@ -206,7 +207,10 @@
                                 shape: 'rect',
                             },
 
-                            fundingSource: undefined, // Show all available funding sources except Apple Pay
+                            // Explicitly disallow Apple Pay so it doesn't render in standard container
+                            funding: {
+                                disallowed: [paypal.FUNDING.APPLEPAY],
+                            },
 
                             alertBox: (message) => {
                                 this.$emitter.emit('add-flash', { type: 'error', message: message });
