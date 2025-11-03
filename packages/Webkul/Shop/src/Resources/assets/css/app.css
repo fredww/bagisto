@@ -528,6 +528,18 @@ img.lazy {
     }
 }
 
-.pdp_short_description,.pdp_compare{
+.pdp-short-description,.pdp-compare{
     display: none;
+}
+.pdp-information,.pdp-information div{
+    line-height: 1.8rem;
+}
+.pdp-information ul{
+    list-style: inside;
+}
+.static-container h3{
+    margin-top: 20pt;font-weight: bold;
+}
+.static-container p{
+    margin: 10pt auto;
 }

@@ -16,6 +16,20 @@ return [
         'accepted_currencies'   => 'USD,EUR,GBP',
     ],
 
+    'paypal_apple_pay' => [
+        'code'               => 'paypal_apple_pay',
+        'title'              => 'Apple Pay via PayPal',
+        'description'        => 'Pay with Apple Touch ID or Face ID',
+        'client_id'          => 'sb',
+        'client_secret'      => '',
+        'merchant_id'        => '',
+        'class'              => 'Webkul\Paypal\Payment\ApplePay',
+        'sandbox'            => true,
+        'active'             => false,
+        'sort'               => 5,
+        'accepted_currencies' => 'USD,EUR,GBP',
+    ],
+
     'paypal_standard' => [
         'code'             => 'paypal_standard',
         'title'            => 'PayPal Standard',

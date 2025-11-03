@@ -118,6 +118,15 @@
                                 {!! view_render_event('bagisto.shop.checkout.onepage.summary.paypal_smart_button.after') !!}
                             </template>
 
+                            <template v-else-if="cart.payment_method == 'paypal_apple_pay'">
+                                {!! view_render_event('bagisto.shop.checkout.onepage.summary.apple_pay.before') !!}
+
+                                <!-- Apple Pay Vue Component -->
+                                <v-apple-pay></v-apple-pay>
+
+                                {!! view_render_event('bagisto.shop.checkout.onepage.summary.apple_pay.after') !!}
+                            </template>
+
                             <template v-else>
                                 <x-shop::button
                                     type="button"

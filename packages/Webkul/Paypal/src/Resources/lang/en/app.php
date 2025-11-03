@@ -16,10 +16,14 @@ return [
         'something-went-wrong' => 'Something went wrong with the PayPal payment method. Please contact the store owner for assistance.',
         'apple-pay-not-available' => 'Apple Pay is not available on this device or browser.',
         'apple-pay-disabled' => 'Apple Pay is currently disabled. Please contact the store owner for assistance.',
+        'currency-not-supported'  => 'The current currency is not supported by Apple Pay.',
+        'invalid-order-id'        => 'Invalid PayPal order ID provided.',
+        'capture-failed'          => 'Failed to capture Apple Pay payment. Please try again.',
     ],
 
     'messages' => [
         'apple-pay-available' => 'Apple Pay is available on this device.',
         'processing-payment'  => 'Processing payment...',
+        'payment-successful'  => 'Payment completed successfully.',
     ],
 ];

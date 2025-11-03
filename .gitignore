@@ -39,3 +39,6 @@ yarn-error.log
 /public/themes/admin/default/build/assets/
 /public/themes/installer/default/build/assets/
 /public/themes/*/build/manifest.json
+public/themes/admin/default/build/manifest.json
+public/themes/installer/default/build/manifest.json
+public/themes/shop/default/build/manifest.json

@@ -71,7 +71,7 @@
     </v-product>
 
     <!-- Information Section -->
-    <div class="1180:mt-20">
+    <div class="1180:mt-20 pdp-information">
         <div class="max-1180:hidden">
             <x-shop::tabs
                 position="center"
@@ -249,7 +249,7 @@
     </div>
 
     <!-- Information Section -->
-    <div class="container mt-6 grid gap-3 !p-0 max-1180:px-5 1180:hidden">
+    <div class="container mt-6 grid gap-3 !p-0 max-1180:px-5 1180:hidden pdp-information">
         <!-- Description Accordion -->
         <x-shop::accordion
             class="max-md:border-none"
@@ -529,7 +529,7 @@
 
                                 {!! view_render_event('bagisto.shop.products.short_description.before', ['product' => $product]) !!}
 
-                                <p class="mt-6 text-lg text-zinc-500 max-sm:mt-1.5 max-sm:text-sm pdp_short_description">
+                                <p class="mt-6 text-lg text-zinc-500 max-sm:mt-1.5 max-sm:text-sm pdp-short-description">
                                     {!! $product->short_description !!}
                                 </p>
 
@@ -605,7 +605,7 @@
                                 {!! view_render_event('bagisto.shop.products.view.additional_actions.before', ['product' => $product]) !!}
 
                                 <!-- Share Buttons -->
-                                <div class="mt-10 flex gap-9 max-md:mt-4 max-md:flex-wrap max-sm:justify-center max-sm:gap-3 pdp_compare">
+                                <div class="mt-10 flex gap-9 max-md:mt-4 max-md:flex-wrap max-sm:justify-center max-sm:gap-3 pdp-compare">
                                     {!! view_render_event('bagisto.shop.products.view.compare.before', ['product' => $product]) !!}
 
                                     <div
