@@ -34,3 +34,8 @@ yarn-error.log
 .DS_Store
 .qoder/
 /public/build/assets/
+/public/build/manifest.json
+/public/themes/shop/default/build/assets/
+/public/themes/admin/default/build/assets/
+/public/themes/installer/default/build/assets/
+/public/themes/*/build/manifest.json
