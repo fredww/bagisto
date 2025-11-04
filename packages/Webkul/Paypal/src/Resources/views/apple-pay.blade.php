@@ -118,7 +118,7 @@
                 
                 // 启动Apple Pay流程
                 await this.applePayComponent.confirmOrder({
-                    orderId: orderData.id,
+                    orderId: orderData.order_id,
                     onApprove: (data) => this.onApprove(data),
                     onCancel: (data) => this.onCancel(data),
                     onError: (error) => this.onError(error)
@@ -177,7 +177,7 @@
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
                     body: JSON.stringify({
-                        orderID: data.orderID
+                        order_id: data.orderID
                     })
                 });
 

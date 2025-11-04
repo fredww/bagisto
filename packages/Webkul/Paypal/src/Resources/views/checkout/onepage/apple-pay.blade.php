@@ -89,6 +89,19 @@
             <div class="w-full">
                 <!-- Apple Pay Button Container -->
                 <div class="apple-pay-button-container"></div>
+
+                <!-- Fallback Place Order Button when Apple Pay unavailable -->
+                <div v-if="showFallback" class="mt-3">
+                    {{-- Chinese: 当设备/浏览器不支持Apple Pay时显示回退下单按钮 --}}
+                    <button
+                        type="button"
+                        class="primary-button w-max rounded-2xl bg-navyBlue px-11 py-3 max-md:mb-4 max-md:w-full max-md:max-w-full max-md:rounded-lg max-sm:py-1.5"
+                        @click="placeOrderFallback"
+                        :disabled="isProcessing"
+                    >
+                        @lang('shop::app.checkout.onepage.summary.place-order')
+                    </button>
+                </div>
             </div>
         </script>
 
@@ -100,6 +113,8 @@
                     return {
                         isProcessing: false,
                         authorizationFailed: false,
+                        // Chinese: 控制是否显示回退的下单按钮
+                        showFallback: false,
                     };
                 },
 
@@ -114,12 +129,16 @@
                                 type: 'error', 
                                 message: '@lang('paypal::app.errors.invalid-configs')' 
                             });
+                            // Chinese: PayPal SDK不可用时，显示回退下单按钮
+                            this.showFallback = true;
                             return;
                         }
 
                         // Check if Apple Pay is available
                         if (!this.isApplePayAvailable()) {
                             console.log('Apple Pay is not available on this device');
+                            // Chinese: 设备不支持Apple Pay，显示回退下单按钮
+                            this.showFallback = true;
                             return;
                         }
 
@@ -154,10 +173,12 @@
                             createOrder: (data, actions) => {
                                 this.isProcessing = true;
                                 
-                                return this.$axios.get("{{ route('paypal.apple-pay.create-order') }}")
+                                return this.$axios.post("{{ route('paypal.apple_pay.create_order') }}", {
+                                        _token: "{{ csrf_token() }}"
+                                    })
                                     .then(response => {
-                                        if (response.data && response.data.result) {
-                                            return response.data.result.id;
+                                        if (response.data && response.data.order_id) {
+                                            return response.data.order_id;
                                         }
                                         throw new Error('Invalid order response');
                                     })
@@ -178,9 +199,9 @@
                             },
 
                             onApprove: (data, actions) => {
-                                return this.$axios.post("{{ route('paypal.apple-pay.capture-order') }}", {
+                                return this.$axios.post("{{ route('paypal.apple_pay.capture_order') }}", {
                                     _token: "{{ csrf_token() }}",
-                                    orderData: data
+                                    order_id: data.orderID
                                 })
                                 .then(response => {
                                     this.isProcessing = false;
@@ -227,6 +248,8 @@
                                     console.error('Apple Pay error:', error);
                                     this.showError('@lang('paypal::app.apple-pay.errors.something-went-wrong')');
                                 }
+                                // Chinese: 渲染或处理出错时，显示回退下单按钮
+                                this.showFallback = true;
                             },
                         });
 
@@ -238,10 +261,35 @@
                                 })
                                 .catch(error => {
                                     console.error('Failed to render Apple Pay button:', error);
+                                    this.showFallback = true;
                                 });
                         } else {
                             console.log('Apple Pay button is not eligible for rendering');
+                            this.showFallback = true;
                         }
+                    },
+
+                    // Chinese: 回退下单逻辑，模拟父组件placeOrder
+                    placeOrderFallback() {
+                        this.isProcessing = true;
+
+                        this.$axios.post('{{ route('shop.checkout.onepage.orders.store') }}')
+                            .then(response => {
+                                const payload = response.data?.data ?? response.data;
+
+                                if (payload?.redirect) {
+                                    window.location.href = payload.redirect_url;
+                                } else {
+                                    window.location.href = '{{ route('shop.checkout.onepage.success') }}';
+                                }
+                            })
+                            .catch(error => {
+                                const message = error?.response?.data?.message ?? 'Order failed';
+                                this.$emitter.emit('add-flash', { type: 'error', message });
+                            })
+                            .finally(() => {
+                                this.isProcessing = false;
+                            });
                     },
 
                     showError(message) {

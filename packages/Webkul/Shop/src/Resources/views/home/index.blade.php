@@ -22,7 +22,8 @@
 
 @push('scripts')
     <script>
-        localStorage.setItem('categories', JSON.stringify(@json($categories)));
+        // 将分类数据写入本地存储；当 $categories 未定义时使用空数组回退
+        localStorage.setItem('categories', JSON.stringify(@json($categories ?? [])));
     </script>
 @endpush
 

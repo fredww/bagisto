@@ -13,18 +13,21 @@
             </x-shop::form.control-group>
 
             <!-- Company Name -->
-            <x-shop::form.control-group>
-                <x-shop::form.control-group.label>
-                    @lang('shop::app.checkout.onepage.address.company-name')
-                </x-shop::form.control-group.label>
+            {{-- Chinese: 根据系统配置控制公司名称字段是否显示 --}}
+            @if (core()->getConfigData('sales.checkout.address.enable_company_name') === '1')
+                <x-shop::form.control-group>
+                    <x-shop::form.control-group.label>
+                        @lang('shop::app.checkout.onepage.address.company-name')
+                    </x-shop::form.control-group.label>
 
-                <x-shop::form.control-group.control
-                    type="text"
-                    ::name="controlName + '.company_name'"
-                    ::value="address.company_name"
-                    :placeholder="trans('shop::app.checkout.onepage.address.company-name')"
-                />
-            </x-shop::form.control-group>
+                    <x-shop::form.control-group.control
+                        type="text"
+                        ::name="controlName + '.company_name'"
+                        ::value="address.company_name"
+                        :placeholder="trans('shop::app.checkout.onepage.address.company-name')"
+                    />
+                </x-shop::form.control-group>
+            @endif
 
             {!! view_render_event('bagisto.shop.checkout.onepage.address.form.company_name.after') !!}
 
@@ -91,25 +94,28 @@
             {!! view_render_event('bagisto.shop.checkout.onepage.address.form.email.after') !!}
 
             <!-- Vat ID -->
-            <template v-if="controlName=='billing'">
-                <x-shop::form.control-group>
-                    <x-shop::form.control-group.label>
-                        @lang('shop::app.checkout.onepage.address.vat-id')
-                    </x-shop::form.control-group.label>
+            {{-- Chinese: 根据系统配置控制增值税号字段是否显示，仅限账单地址 --}}
+            @if (core()->getConfigData('sales.checkout.address.enable_vat_id') === '1')
+                <template v-if="controlName=='billing'">
+                    <x-shop::form.control-group>
+                        <x-shop::form.control-group.label>
+                            @lang('shop::app.checkout.onepage.address.vat-id')
+                        </x-shop::form.control-group.label>
 
-                    <x-shop::form.control-group.control
-                        type="text"
-                        ::name="controlName + '.vat_id'"
-                        ::value="address.vat_id"
-                        :label="trans('shop::app.checkout.onepage.address.vat-id')"
-                        :placeholder="trans('shop::app.checkout.onepage.address.vat-id')"
-                    />
+                        <x-shop::form.control-group.control
+                            type="text"
+                            ::name="controlName + '.vat_id'"
+                            ::value="address.vat_id"
+                            :label="trans('shop::app.checkout.onepage.address.vat-id')"
+                            :placeholder="trans('shop::app.checkout.onepage.address.vat-id')"
+                        />
 
-                    <x-shop::form.control-group.error ::name="controlName + '.vat_id'" />
-                </x-shop::form.control-group>
+                        <x-shop::form.control-group.error ::name="controlName + '.vat_id'" />
+                    </x-shop::form.control-group>
 
-                {!! view_render_event('bagisto.shop.checkout.onepage.address.form.vat_id.after') !!}
-            </template>
+                    {!! view_render_event('bagisto.shop.checkout.onepage.address.form.vat_id.after') !!}
+                </template>
+            @endif
 
             <!-- Street Address -->
             <x-shop::form.control-group>

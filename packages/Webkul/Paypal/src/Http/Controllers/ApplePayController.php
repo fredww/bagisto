@@ -103,7 +103,14 @@ class ApplePayController extends Controller
      * @param  Request  $request
      * @return \Illuminate\Http\JsonResponse
      */
-    public function capturePayment(Request $request)
+    /**
+     * 捕获Apple Pay支付订单
+     * Capture Apple Pay order.
+     *
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function captureOrder(Request $request)
     {
         try {
             $orderId = $request->input('order_id');

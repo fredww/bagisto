@@ -2755,6 +2755,24 @@ return [
             ],
         ],
     ], [
+        'key'    => 'sales.checkout.address',
+        'name'   => 'admin::app.configuration.index.sales.checkout.address.title',
+        'info'   => 'admin::app.configuration.index.sales.checkout.address.info',
+        'sort'   => 2,
+        'fields' => [
+            [
+                'name'    => 'enable_company_name',
+                'title'   => 'admin::app.configuration.index.sales.checkout.address.enable-company-name',
+                'type'    => 'boolean',
+                'default' => 0,
+            ], [
+                'name'    => 'enable_vat_id',
+                'title'   => 'admin::app.configuration.index.sales.checkout.address.enable-vat-id',
+                'type'    => 'boolean',
+                'default' => 0,
+            ],
+        ],
+    ], [
         'key'    => 'sales.checkout.my_cart',
         'name'   => 'admin::app.configuration.index.sales.checkout.my-cart.title',
         'info'   => 'admin::app.configuration.index.sales.checkout.my-cart.info',
