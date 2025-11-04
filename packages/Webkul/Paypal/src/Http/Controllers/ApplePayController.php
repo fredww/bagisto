@@ -3,6 +3,7 @@
 namespace Webkul\Paypal\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Paypal\Payment\ApplePay;
 use Webkul\Sales\Repositories\InvoiceRepository;
@@ -25,6 +26,57 @@ class ApplePayController extends Controller
         protected OrderRepository $orderRepository,
         protected InvoiceRepository $invoiceRepository
     ) {}
+
+    /**
+     * Get cart data for Apple Pay.
+     *
+     * @param  Request  $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function getCartData(Request $request)
+    {
+        try {
+            $cart = Cart::getCart();
+
+            if (! $cart) {
+                return response()->json([
+                    'success' => false,
+                    'message' => trans('shop::app.checkout.cart.index.cart-empty'),
+                ], 400);
+            }
+
+            $currencyCode = core()->getCurrentCurrencyCode();
+
+            return response()->json([
+                'success' => true,
+                'currency' => $currencyCode,
+                'amount' => $cart->grand_total,
+                'sub_total' => $cart->sub_total,
+                'tax_total' => $cart->tax_total,
+                'shipping_amount' => $cart->shipping_amount,
+                'discount_amount' => $cart->discount_amount,
+                'items' => $cart->items->map(function ($item) use ($currencyCode) {
+                    return [
+                        'name' => $item->name,
+                        'sku' => $item->sku,
+                        'quantity' => $item->quantity,
+                        'price' => number_format($item->price, 2, '.', ''),
+                    ];
+                }),
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Apple Pay getCartData failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => trans('paypal::app.errors.something-went-wrong'),
+            ], 500);
+        }
+    }
 
     /**
      * 创建Apple Pay订单
@@ -88,10 +140,14 @@ class ApplePayController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Apple Pay order creation failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => trans('paypal::app.errors.something-went-wrong'),
-                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -144,10 +200,15 @@ class ApplePayController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Apple Pay order capture failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'order_id' => $request->input('order_id')
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => trans('paypal::app.errors.something-went-wrong'),
-                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -171,10 +232,15 @@ class ApplePayController extends Controller
             ]);
 
         } catch (\Exception $e) {
+            Log::error('Apple Pay availability check failed', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'available' => false,
-                'message' => $e->getMessage(),
+                'message' => trans('paypal::app.errors.something-went-wrong'),
             ]);
         }
     }
@@ -221,15 +287,8 @@ class ApplePayController extends Controller
                     'shipping' => $this->buildShippingInfo($cart),
                 ],
             ],
-            'payment_source' => [
-                'applepay' => [
-                    'attributes' => [
-                        'customer' => [
-                            'id' => auth()->guard('customer')->id(),
-                        ],
-                    ],
-                ],
-            ],
+            // Note: payment_source is NOT included here when using PayPal JavaScript SDK
+            // PayPal SDK automatically handles payment_source when user approves Apple Pay payment
         ];
     }
 

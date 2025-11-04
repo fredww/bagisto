@@ -1,27 +1,24 @@
-{{-- Apple Pay 支付按钮组件 --}}
+{{-- Apple Pay Payment Button Component --}}
 <div id="apple-pay-container" class="apple-pay-container" style="display: none;">
     <div id="apple-pay-button" class="apple-pay-button"></div>
     <div id="apple-pay-error" class="apple-pay-error" style="display: none;"></div>
 </div>
 
 <script>
-    // Apple Pay 支付处理类
+    // Apple Pay Handler Class - Uses PayPal JavaScript SDK correctly
     class ApplePayHandler {
         constructor() {
             this.clientId = '{{ core()->getConfigData("sales.payment_methods.paypal_apple_pay.client_id") }}';
-            this.merchantId = '{{ core()->getConfigData("sales.payment_methods.paypal_apple_pay.merchant_id") }}';
-            this.environment = '{{ core()->getConfigData("sales.payment_methods.paypal_apple_pay.sandbox") ? "sandbox" : "production" }}';
             this.currency = '{{ core()->getCurrentCurrencyCode() }}';
-            this.countryCode = '{{ core()->getConfigData("sales.shipping.origin.country") }}';
             this.isEnabled = {{ core()->getConfigData('sales.payment_methods.paypal_apple_pay.active') ? 'true' : 'false' }};
             
-            this.paypalScript = null;
-            this.applePayComponent = null;
+            this.paypalButtons = null;
+            this.isInitialized = false;
             
             this.init();
         }
 
-        // 初始化Apple Pay
+        // Initialize Apple Pay
         async init() {
             if (!this.isEnabled) {
                 console.log('Apple Pay is disabled');
@@ -37,7 +34,7 @@
             }
         }
 
-        // 加载PayPal SDK
+        // Load PayPal SDK with correct parameters
         loadPayPalSDK() {
             return new Promise((resolve, reject) => {
                 if (window.paypal) {
@@ -46,174 +43,173 @@
                 }
 
                 const script = document.createElement('script');
-                script.src = `https://www.paypal.com/sdk/js?client-id=${this.clientId}&components=applepay&currency=${this.currency}&merchant-id=${this.merchantId}`;
+                // Use enable-funding=applepay (not components=applepay)
+                // Remove merchant-id parameter - not needed for PayPal's Apple Pay integration
+                script.src = `https://www.paypal.com/sdk/js?client-id=${this.clientId}&enable-funding=applepay&currency=${this.currency}`;
+                script.setAttribute('data-partner-attribution-id', 'Bagisto_ApplePay');
                 script.onload = resolve;
-                script.onerror = reject;
+                script.onerror = () => reject(new Error('Failed to load PayPal SDK'));
                 document.head.appendChild(script);
             });
         }
 
-        // 设置Apple Pay
+        // Setup Apple Pay using PayPal Buttons API (correct approach)
         async setupApplePay() {
-            if (!window.paypal || !window.paypal.Applepay) {
-                throw new Error('PayPal Apple Pay SDK not loaded');
+            if (!window.paypal || !window.paypal.Buttons) {
+                throw new Error('PayPal SDK not loaded correctly');
             }
 
-            // 检查Apple Pay可用性
-            const isApplePayAvailable = await window.paypal.Applepay().config({
-                countryCode: this.countryCode,
-            });
-
-            if (!isApplePayAvailable) {
-                throw new Error('Apple Pay not available');
-            }
-
-            // 创建Apple Pay组件
-            this.applePayComponent = window.paypal.Applepay({
+            // Use PayPal Buttons API with APPLEPAY funding source
+            this.paypalButtons = window.paypal.Buttons({
+                fundingSource: window.paypal.FUNDING.APPLEPAY,
+                
                 style: {
-                    type: 'buy',
+                    layout: 'vertical',
+                    shape: 'rect',
                     color: 'black',
-                    locale: 'en',
-                    height: 44
+                    label: 'pay',
+                    height: 45
+                },
+
+                createOrder: (data, actions) => {
+                    return this.createPayPalOrder();
+                },
+
+                onApprove: (data, actions) => {
+                    return this.onApprove(data);
+                },
+
+                onCancel: (data) => {
+                    this.onCancel(data);
+                },
+
+                onError: (error) => {
+                    this.onError(error);
                 }
             });
 
-            // 检查是否符合条件
-            if (this.applePayComponent.isEligible()) {
-                this.renderApplePayButton();
-                this.showContainer();
+            // Check if Apple Pay button is eligible and render
+            if (this.paypalButtons.isEligible && this.paypalButtons.isEligible()) {
+                this.paypalButtons.render('#apple-pay-button')
+                    .then(() => {
+                        console.log('Apple Pay button rendered successfully');
+                        this.showContainer();
+                        this.isInitialized = true;
+                    })
+                    .catch(error => {
+                        console.error('Failed to render Apple Pay button:', error);
+                        this.showError('{{ trans("paypal::app.errors.apple-pay-not-available") }}');
+                    });
             } else {
-                throw new Error('Apple Pay not eligible');
+                console.log('Apple Pay button is not eligible on this device/browser');
+                // Don't show error, just don't show the button
+                // Apple Pay is only available on supported devices/browsers
             }
         }
 
-        // 渲染Apple Pay按钮
-        renderApplePayButton() {
-            const buttonContainer = document.getElementById('apple-pay-button');
-            if (!buttonContainer) return;
-
-            this.applePayComponent.render('#apple-pay-button').then(() => {
-                console.log('Apple Pay button rendered successfully');
-                
-                // 绑定点击事件
-                this.applePayComponent.onClick(() => {
-                    this.handleApplePayClick();
-                });
-            }).catch(error => {
-                console.error('Failed to render Apple Pay button:', error);
-                this.showError('{{ trans("paypal::app.errors.apple-pay-not-available") }}');
-            });
-        }
-
-        // 处理Apple Pay点击事件
-        async handleApplePayClick() {
+        // Create PayPal order
+        async createPayPalOrder() {
             try {
                 this.showProcessing();
                 
-                // 获取购物车数据
-                const cartData = await this.getCartData();
-                
-                // 创建PayPal订单
-                const orderData = await this.createPayPalOrder(cartData);
-                
-                // 启动Apple Pay流程
-                await this.applePayComponent.confirmOrder({
-                    orderId: orderData.order_id,
-                    onApprove: (data) => this.onApprove(data),
-                    onCancel: (data) => this.onCancel(data),
-                    onError: (error) => this.onError(error)
+                const response = await fetch('{{ route("paypal.apple_pay.create_order") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'same-origin'
                 });
+
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || 'Failed to create PayPal order');
+                }
+
+                const result = await response.json();
+                
+                if (!result.success || !result.order_id) {
+                    throw new Error(result.message || 'Invalid order response');
+                }
+
+                return result.order_id;
                 
             } catch (error) {
-                console.error('Apple Pay payment failed:', error);
-                this.showError('{{ trans("paypal::app.errors.something-went-wrong") }}');
+                console.error('Apple Pay order creation failed:', error);
+                this.showError(error.message || '{{ trans("paypal::app.errors.something-went-wrong") }}');
                 this.hideProcessing();
+                throw error;
             }
         }
 
-        // 获取购物车数据
-        async getCartData() {
-            const response = await fetch('{{ route("paypal.apple_pay.cart") }}', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to get cart data');
-            }
-
-            return await response.json();
-        }
-
-        // 创建PayPal订单
-        async createPayPalOrder(cartData) {
-            const response = await fetch('{{ route("paypal.apple_pay.create_order") }}', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                },
-                body: JSON.stringify(cartData)
-            });
-
-            if (!response.ok) {
-                throw new Error('Failed to create PayPal order');
-            }
-
-            return await response.json();
-        }
-
-        // 支付批准回调
+        // Payment approval callback
         async onApprove(data) {
             try {
-                // 捕获支付
+                this.showProcessing();
+                
                 const response = await fetch('{{ route("paypal.apple_pay.capture_order") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'X-Requested-With': 'XMLHttpRequest'
                     },
+                    credentials: 'same-origin',
                     body: JSON.stringify({
                         order_id: data.orderID
                     })
                 });
 
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    throw new Error(errorData.message || 'Failed to capture payment');
+                }
+
                 const result = await response.json();
 
                 if (result.success) {
                     this.showSuccess('{{ trans("paypal::app.messages.payment-successful") }}');
-                    // 重定向到成功页面
+                    
+                    // Redirect to success page
                     if (result.redirect_url) {
                         window.location.href = result.redirect_url;
+                    } else {
+                        // Fallback redirect
+                        setTimeout(() => {
+                            window.location.href = '{{ route("shop.checkout.onepage.success") }}';
+                        }, 1000);
                     }
                 } else {
                     throw new Error(result.message || 'Payment capture failed');
                 }
+                
             } catch (error) {
                 console.error('Payment capture failed:', error);
-                this.showError('{{ trans("paypal::app.errors.capture-failed") }}');
-            } finally {
+                this.showError(error.message || '{{ trans("paypal::app.errors.capture-failed") }}');
                 this.hideProcessing();
+                
+                // Redirect to cart on critical error
+                setTimeout(() => {
+                    window.location.href = '{{ route("shop.checkout.cart.index") }}';
+                }, 2000);
             }
         }
 
-        // 支付取消回调
+        // Payment cancellation callback
         onCancel(data) {
-            console.log('Apple Pay cancelled:', data);
+            console.log('Apple Pay payment was cancelled by user');
             this.hideProcessing();
         }
 
-        // 支付错误回调
+        // Payment error callback
         onError(error) {
             console.error('Apple Pay error:', error);
             this.showError('{{ trans("paypal::app.errors.something-went-wrong") }}');
             this.hideProcessing();
         }
 
-        // 显示容器
+        // Show container
         showContainer() {
             const container = document.getElementById('apple-pay-container');
             if (container) {
@@ -221,16 +217,21 @@
             }
         }
 
-        // 显示错误信息
+        // Show error message
         showError(message) {
             const errorDiv = document.getElementById('apple-pay-error');
             if (errorDiv) {
                 errorDiv.textContent = message;
                 errorDiv.style.display = 'block';
+                
+                // Auto-hide error after 5 seconds
+                setTimeout(() => {
+                    errorDiv.style.display = 'none';
+                }, 5000);
             }
         }
 
-        // 显示处理中状态
+        // Show processing state
         showProcessing() {
             const button = document.getElementById('apple-pay-button');
             if (button) {
@@ -239,7 +240,7 @@
             }
         }
 
-        // 隐藏处理中状态
+        // Hide processing state
         hideProcessing() {
             const button = document.getElementById('apple-pay-button');
             if (button) {
@@ -248,19 +249,26 @@
             }
         }
 
-        // 显示成功信息
+        // Show success message
         showSuccess(message) {
-            // 可以显示成功提示或直接重定向
             console.log('Payment successful:', message);
+            // Success is handled via redirect in onApprove
         }
     }
 
-    // 页面加载完成后初始化Apple Pay
-    document.addEventListener('DOMContentLoaded', function() {
+    // Initialize Apple Pay when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof window.applePayHandler === 'undefined') {
+                window.applePayHandler = new ApplePayHandler();
+            }
+        });
+    } else {
+        // DOM already loaded
         if (typeof window.applePayHandler === 'undefined') {
             window.applePayHandler = new ApplePayHandler();
         }
-    });
+    }
 </script>
 
 <style>
@@ -274,7 +282,7 @@
 
 .apple-pay-button {
     width: 100%;
-    min-height: 44px;
+    min-height: 45px;
     border-radius: 6px;
 }
 
@@ -286,12 +294,17 @@
     background-color: #ffebee;
     border: 1px solid #ffcdd2;
     border-radius: 4px;
+    word-wrap: break-word;
 }
 
 @media (max-width: 768px) {
     .apple-pay-container {
         margin: 10px 0;
         padding: 8px;
+    }
+    
+    .apple-pay-button {
+        min-height: 40px;
     }
 }
 </style>

@@ -108,17 +108,11 @@ class ApplePay extends Paypal
         $request->headers['PayPal-Partner-Attribution-Id'] = $this->paypalPartnerAttributionId;
         $request->prefer('return=representation');
         
-        // 为Apple Pay添加特定的配置
-        // Add Apple Pay specific configuration
-        if (isset($body['payment_source'])) {
-            $body['payment_source']['applepay'] = [
-                'attributes' => [
-                    'customer' => [
-                        'id' => $this->getCustomerId(),
-                    ]
-                ]
-            ];
-        }
+        // Remove payment_source if present - PayPal JavaScript SDK handles this automatically
+        // When using PayPal's JavaScript SDK with Apple Pay, payment_source should NOT be
+        // included in the initial order creation. PayPal SDK handles payment source selection
+        // when the user approves the payment.
+        unset($body['payment_source']);
         
         $request->body = $body;
 
