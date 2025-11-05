@@ -209,14 +209,16 @@
                 @endif
 
                 <!-- Reviews Tab -->
-                <x-shop::tabs.item
-                    id="review-tab"
-                    class="container mt-[60px] !p-0"
-                    :title="trans('shop::app.products.view.review')"
-                    :is-selected="false"
-                >
-                    @include('shop::products.view.reviews')
-                </x-shop::tabs.item>
+                @if (core()->getConfigData('catalog.products.review.enabled', true))
+                    <x-shop::tabs.item
+                        id="review-tab"
+                        class="container mt-[60px] !p-0"
+                        :title="trans('shop::app.products.view.review')"
+                        :is-selected="false"
+                    >
+                        @include('shop::products.view.reviews')
+                    </x-shop::tabs.item>
+                @endif
             </x-shop::tabs>
         </div>
     </div>
@@ -345,23 +347,25 @@
         @endif
 
         <!-- Reviews Accordion -->
-        <x-shop::accordion
-            class="max-md:border-none"
-            :is-active="false"
-        >
-            <x-slot:header
-                class="bg-gray-100 max-md:!py-3 max-sm:!py-2"
-                id="review-accordian-button"
+        @if (core()->getConfigData('catalog.products.review.enabled', true))
+            <x-shop::accordion
+                class="max-md:border-none"
+                :is-active="false"
             >
-                <p class="text-base font-medium">
-                    @lang('shop::app.products.view.review')
-                </p>
-            </x-slot>
+                <x-slot:header
+                    class="bg-gray-100 max-md:!py-3 max-sm:!py-2"
+                    id="review-accordian-button"
+                >
+                    <p class="text-base font-medium">
+                        @lang('shop::app.products.view.review')
+                    </p>
+                </x-slot>
 
-            <x-slot:content>
-                @include('shop::products.view.reviews')
-            </x-slot>
-        </x-shop::accordion>
+                <x-slot:content>
+                    @include('shop::products.view.reviews')
+                </x-slot>
+            </x-shop::accordion>
+        @endif
     </div>
 
     <v-product-associations />
@@ -435,7 +439,7 @@
                                 <!-- Rating -->
                                 {!! view_render_event('bagisto.shop.products.rating.before', ['product' => $product]) !!}
 
-                                @if ($totalRatings = $reviewHelper->getTotalFeedback($product))
+                                @if (core()->getConfigData('catalog.products.review.enabled', true) && ($totalRatings = $reviewHelper->getTotalFeedback($product)))
                                     <!-- Scroll To Reviews Section and Activate Reviews Tab -->
                                     <div
                                         class="mt-1 w-max cursor-pointer max-sm:mt-1.5"

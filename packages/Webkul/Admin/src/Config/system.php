@@ -1069,6 +1069,11 @@ return [
         'sort'   => 8,
         'fields' => [
             [
+                'name'    => 'enabled',
+                'title'   => 'admin::app.configuration.index.catalog.products.review.enable-review',
+                'type'    => 'boolean',
+                'default' => true,
+            ], [
                 'name'  => 'guest_review',
                 'title' => 'admin::app.configuration.index.catalog.products.review.allow-guest-review',
                 'type'  => 'boolean',

@@ -43,22 +43,24 @@
                 <!-- Product Ratings -->
                 {!! view_render_event('bagisto.shop.components.products.card.average_ratings.before') !!}
 
-                @if (core()->getConfigData('catalog.products.review.summary') == 'star_counts')
-                    <x-shop::products.ratings
-                        class="absolute bottom-1.5 items-center !border-white bg-white/80 !px-2 !py-1 text-xs max-sm:!px-1.5 max-sm:!py-0.5 ltr:left-1.5 rtl:right-1.5"
-                        ::average="product.ratings.average"
-                        ::total="product.ratings.total"
-                        ::rating="false"
-                        v-if="product.ratings.total"
-                    />
-                @else
-                    <x-shop::products.ratings
-                        class="absolute bottom-1.5 items-center !border-white bg-white/80 !px-2 !py-1 text-xs max-sm:!px-1.5 max-sm:!py-0.5 ltr:left-1.5 rtl:right-1.5"
-                        ::average="product.ratings.average"
-                        ::total="product.reviews.total"
-                        ::rating="false"
-                        v-if="product.reviews.total"
-                    />
+                @if (core()->getConfigData('catalog.products.review.enabled', true))
+                    @if (core()->getConfigData('catalog.products.review.summary') == 'star_counts')
+                        <x-shop::products.ratings
+                            class="absolute bottom-1.5 items-center !border-white bg-white/80 !px-2 !py-1 text-xs max-sm:!px-1.5 max-sm:!py-0.5 ltr:left-1.5 rtl:right-1.5"
+                            ::average="product.ratings.average"
+                            ::total="product.ratings.total"
+                            ::rating="false"
+                            v-if="product.ratings.total"
+                        />
+                    @else
+                        <x-shop::products.ratings
+                            class="absolute bottom-1.5 items-center !border-white bg-white/80 !px-2 !py-1 text-xs max-sm:!px-1.5 max-sm:!py-0.5 ltr:left-1.5 rtl:right-1.5"
+                            ::average="product.ratings.average"
+                            ::total="product.reviews.total"
+                            ::rating="false"
+                            v-if="product.reviews.total"
+                        />
+                    @endif
                 @endif
 
                 {!! view_render_event('bagisto.shop.components.products.card.average_ratings.after') !!}
@@ -294,29 +296,31 @@
 
                 {!! view_render_event('bagisto.shop.components.products.card.average_ratings.before') !!}
 
-                <p class="text-sm text-zinc-500">
-                    <template  v-if="! product.ratings.total">
-                        <p class="text-sm text-zinc-500">
-                            @lang('shop::app.components.products.card.review-description')
-                        </p>
-                    </template>
+                @if (core()->getConfigData('catalog.products.review.enabled', true))
+                    <p class="text-sm text-zinc-500">
+                        <template  v-if="! product.ratings.total">
+                            <p class="text-sm text-zinc-500">
+                                @lang('shop::app.components.products.card.review-description')
+                            </p>
+                        </template>
 
-                    <template v-else>
-                        @if (core()->getConfigData('catalog.products.review.summary') == 'star_counts')
-                            <x-shop::products.ratings
-                                ::average="product.ratings.average"
-                                ::total="product.ratings.total"
-                                ::rating="false"
-                            />
-                        @else
-                            <x-shop::products.ratings
-                                ::average="product.ratings.average"
-                                ::total="product.reviews.total"
-                                ::rating="false"
-                            />
-                        @endif
-                    </template>
-                </p>
+                        <template v-else>
+                            @if (core()->getConfigData('catalog.products.review.summary') == 'star_counts')
+                                <x-shop::products.ratings
+                                    ::average="product.ratings.average"
+                                    ::total="product.ratings.total"
+                                    ::rating="false"
+                                />
+                            @else
+                                <x-shop::products.ratings
+                                    ::average="product.ratings.average"
+                                    ::total="product.reviews.total"
+                                    ::rating="false"
+                                />
+                            @endif
+                        </template>
+                    </p>
+                @endif
 
                 {!! view_render_event('bagisto.shop.components.products.card.average_ratings.after') !!}
 

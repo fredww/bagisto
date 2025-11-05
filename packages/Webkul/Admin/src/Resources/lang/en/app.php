@@ -4064,6 +4064,7 @@ return [
                         'censoring-reviewer-name' => 'Censoring Reviewer Name',
                         'display-review-count'    => 'Display the review count for ratings.',
                         'display-star-count'      => 'Display the star count in ratings.',
+                        'enable-review'           => 'Enable Review',
                         'summary'                 => 'Summary',
                         'title'                   => 'Review',
                         'title-info'              => 'Evaluation or assessment of something, often involving opinions and feedback.',
