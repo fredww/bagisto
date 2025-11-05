@@ -55,6 +55,11 @@
 
     {!! view_render_event('bagisto.shop.products.view.before', ['product' => $product]) !!}
 
+    @php
+        // Store product description once to avoid duplicate rendering
+        $productDescription = $product->description;
+    @endphp
+
     <!-- Breadcrumbs -->
     @if ((core()->getConfigData('general.general.breadcrumbs.shop')))
         <div class="flex justify-center px-7 max-lg:hidden">
@@ -86,42 +91,10 @@
                     :title="trans('shop::app.products.view.description')"
                     :is-selected="true"
                 >
-                    <div class="container mt-[60px] max-1180:px-5">
-
-                        @php
-                            // 功能：在描述区域展示运输时间预估与免运费门槛
-                            // Purpose: Show estimated delivery date range and free shipping threshold
-
-                            // Compute date range using Carbon
-                            $startDate = \Carbon\Carbon::now()->addDays(7);
-                            $endDate = \Carbon\Carbon::now()->addDays(15);
-
-                            // Format like "Nov 10" - concise, English month short name
-                            $startFormatted = $startDate->format('M j');
-                            $endFormatted = $endDate->format('M j');
-
-                            // Free shipping threshold amount
-                            $freeShippingThreshold = 59.99;
-                        @endphp
-
-                        <div class="mt-6 grid gap-3 text-black">
-                            <div class="flex items-center gap-2 text-base">
-                                <span class="icon-truck text-xl"></span>
-                                <span>
-                                    Estimated Delivery: {{ $startFormatted }} - {{ $endFormatted }}
-                                </span>
-                            </div>
-
-                            <div class="flex items-center gap-2 text-base">
-                                <span class="icon-box-fill text-xl"></span>
-                                <span>
-                                    Free Shipping & Returns: On all orders over ${{ number_format($freeShippingThreshold, 2) }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <p class="text-lg text-zinc-500 max-1180:text-sm" style="margin-top:20px">
-                            {!! $product->description !!}
+                    <!-- Desktop Description - Using optimized variable -->
+                    <div class="container mt-[60px] max-1180:px-5 product-description-wrapper">
+                        <p class="text-lg text-zinc-500 max-1180:text-sm">
+                            {!! $productDescription !!}
                         </p>
                     </div>
                 </x-shop::tabs.item>
@@ -248,9 +221,9 @@
         </div>
     </div>
 
-    <!-- Information Section -->
+    <!-- Information Section for Mobile -->
     <div class="container mt-6 grid gap-3 !p-0 max-1180:px-5 1180:hidden pdp-information">
-        <!-- Description Accordion -->
+        <!-- Description Accordion - Using shared description -->
         <x-shop::accordion
             class="max-md:border-none"
             :is-active="true"
@@ -262,40 +235,9 @@
             </x-slot>
 
             <x-slot:content class="max-sm:px-0">
-                <div class="mb-5 text-lg text-zinc-500 max-1180:text-sm max-md:mb-1 max-md:px-4">
-                    {!! $product->description !!}
-                </div>
-
-                @php
-                    // 功能：在移动端描述折叠面板展示运输时间预估与免运费门槛
-                    // Purpose: Show estimated delivery date range and free shipping threshold on mobile
-
-                    // Compute date range using Carbon
-                    $mStartDate = \Carbon\Carbon::now()->addDays(7);
-                    $mEndDate = \Carbon\Carbon::now()->addDays(15);
-
-                    // Format like "Nov 10"
-                    $mStartFormatted = $mStartDate->format('M j');
-                    $mEndFormatted = $mEndDate->format('M j');
-
-                    // Free shipping threshold amount
-                    $mFreeShippingThreshold = 59.99;
-                @endphp
-
-                <div class="mb-5 grid gap-3 max-md:mb-1 max-md:px-4 text-black">
-                    <div class="flex items-center gap-2 text-base">
-                        <span class="icon-truck text-xl"></span>
-                        <span>
-                            Estimated Delivery: {{ $mStartFormatted }} - {{ $mEndFormatted }}
-                        </span>
-                    </div>
-
-                    <div class="flex items-center gap-2 text-base">
-                        <span class="icon-box-fill text-xl"></span>
-                        <span>
-                            Free Shipping & Returns: On all orders over ${{ number_format($mFreeShippingThreshold, 2) }}
-                        </span>
-                    </div>
+                <!-- Mobile Description - Single render optimized -->
+                <div class="mb-5 text-lg text-zinc-500 max-1180:text-sm max-md:mb-1 max-md:px-4 product-description-wrapper">
+                    {!! $productDescription !!}
                 </div>
             </x-slot>
         </x-shop::accordion>
@@ -425,6 +367,16 @@
     <v-product-associations />
 
     {!! view_render_event('bagisto.shop.products.view.after', ['product' => $product]) !!}
+
+    @push('styles')
+        <style>
+            /* Fix for li p alignment - make p tags inline within list items */
+            .product-description-wrapper li p {
+                display: inline;
+                margin: 0;
+            }
+        </style>
+    @endpush
 
     @pushOnce('scripts')
         <script
@@ -580,6 +532,41 @@
 
                                         {!! view_render_event('bagisto.shop.products.view.add_to_cart.after', ['product' => $product]) !!}
                                     @endif
+                                </div>
+
+                                <!-- Shipping Info and Description -->
+                                <div class="mt-8 max-w-[470px] max-sm:mt-4 product-description-wrapper">
+                                    @php
+                                        // 功能：在描述区域展示运输时间预估与免运费门槛
+                                        // Purpose: Show estimated delivery date range and free shipping threshold
+
+                                        // Compute date range using Carbon
+                                        $startDate = \Carbon\Carbon::now()->addDays(7);
+                                        $endDate = \Carbon\Carbon::now()->addDays(15);
+
+                                        // Format like "Nov 10" - concise, English month short name
+                                        $startFormatted = $startDate->format('M j');
+                                        $endFormatted = $endDate->format('M j');
+
+                                        // Free shipping threshold amount
+                                        $freeShippingThreshold = 59.99;
+                                    @endphp
+
+                                    <div class="grid gap-3 text-black">
+                                        <div class="flex items-center gap-2 text-base">
+                                            <span class="icon-truck text-xl"></span>
+                                            <span>
+                                                Estimated Delivery: {{ $startFormatted }} - {{ $endFormatted }}
+                                            </span>
+                                        </div>
+
+                                        <div class="flex items-center gap-2 text-base">
+                                            <span class="icon-box-fill text-xl"></span>
+                                            <span>
+                                                Free Shipping & Returns: On all orders over ${{ number_format($freeShippingThreshold, 2) }}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Buy Now Button -->

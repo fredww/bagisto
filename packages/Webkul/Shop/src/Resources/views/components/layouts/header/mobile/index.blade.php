@@ -11,7 +11,7 @@
 <div class="flex flex-wrap gap-4 px-4 pb-4 pt-6 shadow-sm lg:hidden">
     <div class="flex w-full items-center justify-between">
         <!-- Left Navigation -->
-        <div class="flex items-center gap-x-1.5">
+        <div class="flex items-center gap-x-1.5 min-w-0 overflow-hidden">
             {!! view_render_event('bagisto.shop.components.layouts.header.mobile.drawer.before') !!}
 
             <!-- Drawer -->
@@ -23,7 +23,7 @@
 
             <a
                 href="{{ route('shop.home.index') }}"
-                class="max-h-[30px]"
+                class="max-h-[30px] max-w-[131px] flex-shrink-0"
                 aria-label="@lang('shop::app.components.layouts.header.mobile.bagisto')"
             >
                 <img
@@ -31,6 +31,7 @@
                     alt="{{ config('app.name') }}"
                     width="131"
                     height="29"
+                    class="h-auto max-h-[30px] w-auto max-w-full"
                 >
             </a>
 
@@ -245,12 +246,13 @@
 
             <x-slot:header>
                 <div class="flex items-center justify-between">
-                    <a href="{{ route('shop.home.index') }}">
+                    <a href="{{ route('shop.home.index') }}" class="max-w-[131px] flex-shrink-0">
                         <img
                             src="{{ core()->getCurrentChannel()->logo_url ?? bagisto_asset('images/logo.svg') }}"
                             alt="{{ config('app.name') }}"
                             width="131"
                             height="29"
+                            class="h-auto max-h-[30px] w-auto max-w-full"
                         >
                     </a>
                 </div>

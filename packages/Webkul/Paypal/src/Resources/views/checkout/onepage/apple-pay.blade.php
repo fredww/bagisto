@@ -90,9 +90,9 @@
                 <!-- Apple Pay Button Container -->
                 <div class="apple-pay-button-container"></div>
 
-                <!-- Fallback Place Order Button when Apple Pay unavailable -->
-                <div v-if="showFallback" class="mt-3">
-                    {{-- Chinese: 当设备/浏览器不支持Apple Pay时显示回退下单按钮 --}}
+                <!-- Fallback Place Order Button when Apple Pay unavailable or as alternative option -->
+                {{-- Chinese: 当设备/浏览器不支持Apple Pay时显示回退下单按钮，或者作为替代选项始终显示 --}}
+                <div v-if="showFallback || showAlternativeButton" class="mt-3">
                     <button
                         type="button"
                         class="primary-button w-max rounded-2xl bg-navyBlue px-11 py-3 max-md:mb-4 max-md:w-full max-md:max-w-full max-md:rounded-lg max-sm:py-1.5"
@@ -113,8 +113,10 @@
                     return {
                         isProcessing: false,
                         authorizationFailed: false,
-                        // Chinese: 控制是否显示回退的下单按钮
+                        // Chinese: 控制是否显示回退的下单按钮（当Apple Pay不可用时）
                         showFallback: false,
+                        // Chinese: 控制是否显示替代的下单按钮（当Apple Pay按钮成功渲染后显示）
+                        showAlternativeButton: false,
                     };
                 },
 
@@ -258,6 +260,8 @@
                             applePayButton.render('.apple-pay-button-container')
                                 .then(() => {
                                     console.log('Apple Pay button rendered successfully');
+                                    // Chinese: Apple Pay按钮成功渲染后，显示备用下单按钮
+                                    this.showAlternativeButton = true;
                                 })
                                 .catch(error => {
                                     console.error('Failed to render Apple Pay button:', error);

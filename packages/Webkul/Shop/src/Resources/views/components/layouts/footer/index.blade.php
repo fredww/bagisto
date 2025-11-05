@@ -78,18 +78,11 @@
         </div>
 
         <!-- For Mobile view -->
-        <x-shop::accordion
-            :is-active="false"
-            class="hidden !w-full rounded-xl !border-2 !border-[#e9decc] max-1060:block max-sm:rounded-lg"
-        >
-            <x-slot:header class="rounded-t-lg bg-[#F1EADF] font-medium max-md:p-2.5 max-sm:px-3 max-sm:py-2 max-sm:text-sm">
-                @lang('shop::app.components.layouts.footer.footer-content')
-            </x-slot>
-
-            <x-slot:content class="flex justify-between !bg-transparent !p-4">
+        <div class="hidden max-1060:block">
+            <div class="flex justify-between gap-6 max-md:gap-4">
                 @if ($customization?->options)
                     @foreach ($customization->options as $columnKey => $footerLinkSection)
-                        <div class="grid gap-3">
+                        <div class="grid gap-3 flex-1">
                             <!-- 移动端分组标题 -->
                             @php
                                 $columnTitles = [
@@ -125,8 +118,8 @@
                         </div>
                     @endforeach
                 @endif
-            </x-slot>
-        </x-shop::accordion>
+            </div>
+        </div>
 
         {!! view_render_event('bagisto.shop.layout.footer.newsletter_subscription.before') !!}
 
