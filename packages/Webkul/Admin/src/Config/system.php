@@ -2818,5 +2818,95 @@ return [
                 'validation' => 'max:200',
             ],
         ],
+    ], [
+        // 支付方式：添加 FortunePay 到「配置 → 销售 → 支付方式」
+        'key'    => 'sales.payment_methods.fortune_pay',
+        'name'   => 'FortunePay',
+        'info'   => 'Configure FortunePay payment gateway',
+        'sort'   => 99,
+        'fields' => [
+            [
+                'name'    => 'active',
+                'title'   => 'admin::app.configuration.index.sales.payment-methods.active',
+                'type'    => 'boolean',
+                'default' => 0,
+            ], [
+                'name'          => 'title',
+                'title'         => 'admin::app.configuration.index.sales.payment-methods.title',
+                'type'          => 'text',
+                'depends'       => 'active:1',
+                'validation'    => 'required_if:active,1',
+                'channel_based' => true,
+                'locale_based'  => true,
+                'default'       => 'FortunePay',
+            ], [
+                'name'          => 'merchant_id',
+                'title'         => 'Merchant ID',
+                'type'          => 'text',
+                'depends'       => 'active:1',
+                'validation'    => 'required_if:active,1',
+                'channel_based' => true,
+            ], [
+                'name'          => 'user_key',
+                'title'         => '商户密钥',
+                'type'          => 'text',
+                'depends'       => 'active:1',
+                'validation'    => 'required_if:active,1',
+                'channel_based' => true,
+            ], [
+                'name'          => 'username',
+                'title'         => 'Username',
+                'type'          => 'text',
+                'depends'       => 'active:1',
+                'channel_based' => true,
+            ], [
+                'name'          => 'bn',
+                'title'         => 'BN',
+                'type'          => 'text',
+                'channel_based' => true,
+            ], [
+                'name'          => 'base_url',
+                'title'         => 'Base URL',
+                'type'          => 'text',
+                'channel_based' => true,
+                'default'       => env('FORTUNE_BASE_URL', 'https://api.fortunepay.example'),
+            ], [
+                'name'          => 'method',
+                'title'         => 'Payment Method',
+                'type'          => 'select',
+                'depends'       => 'active:1',
+                'channel_based' => true,
+                'default'       => 'web',
+                'options'       => [
+                    [ 'title' => 'Redirect Pay', 'value' => 'redirect_pay' ],
+                    [ 'title' => 'Iframe', 'value' => 'iframe' ],
+                ],
+            ], [
+                'name'    => 'notify_url',
+                'title'   => 'Notify URL',
+                'type'    => 'text',
+                'depends' => 'active:1',
+            ], [
+                'name'    => 'success_uri',
+                'title'   => 'Success URI',
+                'type'    => 'text',
+                'depends' => 'active:1',
+            ], [
+                'name'    => 'return_uri',
+                'title'   => 'Return URI',
+                'type'    => 'text',
+                'depends' => 'active:1',
+            ], [
+                'name'    => 'channel_redirect',
+                'title'   => 'Channel Redirect',
+                'type'    => 'boolean',
+                'default' => 0,
+            ], [
+                'name'    => 'use_iframe',
+                'title'   => 'Use Iframe',
+                'type'    => 'boolean',
+                'default' => 0,
+            ],
+        ],
     ],
 ];
