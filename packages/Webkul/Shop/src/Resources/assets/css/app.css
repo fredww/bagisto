@@ -543,3 +543,68 @@ img.lazy {
 .static-container p{
     margin: 10pt auto;
 }
+
+/* Product title single line with ellipsis - PC and Mobile */
+/* Target product titles in product cards - Grid and List modes */
+/* Grid Card Mode - Product titles */
+.v-product-card p.text-base.font-medium,
+.v-product-card p.text-base.font-medium.max-md\:mb-1\.5,
+.v-product-card p.text-base.font-medium.max-md\:mb-1\.5.max-md\:max-w-full,
+.v-product-card p.break-all.text-base.font-medium {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    max-width: 100% !important;
+    display: block !important;
+    word-break: normal !important;
+}
+
+/* List Card Mode - Product titles */
+.v-product-card p.text-base:not(.flex):not(.text-lg):not([class*="price"]) {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    max-width: 100% !important;
+    display: block !important;
+    word-break: normal !important;
+}
+
+/* Product information section - ensure titles are single line */
+.group p.text-base:first-of-type:not(.flex):not(.text-lg),
+div[class*="content-start gap"] > p.text-base:not(.flex):not(.text-lg),
+div[class*="Product Information Section"] p.text-base:not(.flex):not(.text-lg) {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    max-width: 100% !important;
+    display: block !important;
+    word-break: normal !important;
+}
+
+/* Mobile responsive - ensure single line on mobile devices */
+@media (max-width: 768px) {
+    .v-product-card p.text-base.font-medium,
+    .v-product-card p.text-base:not(.flex):not(.text-lg),
+    .v-product-card p.break-all.text-base.font-medium.max-md\:mb-1\.5 {
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        max-width: 100% !important;
+        display: block !important;
+        word-break: normal !important;
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 525px) {
+    .v-product-card p.text-base.font-medium,
+    .v-product-card p.text-base:not(.flex):not(.text-lg),
+    .v-product-card p.break-all.text-base.font-medium.max-sm\:text-sm {
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        max-width: 100% !important;
+        display: block !important;
+        word-break: normal !important;
+    }
+}
