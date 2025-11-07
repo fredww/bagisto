@@ -36,7 +36,7 @@
                     <template v-if="products.length > 3">
                         <span
                             v-if="products.length > 4 || (products.length > 3 && isScreenMax2xl)"
-                            class="icon-arrow-left-stylish rtl:icon-arrow-right-stylish inline-block cursor-pointer text-2xl max-lg:hidden"
+                            class="icon-arrow-left-stylish rtl:icon-arrow-right-stylish inline-block cursor-pointer text-2xl max-lg:hidden 1180:hidden"
                             role="button"
                             aria-label="@lang('shop::app.components.products.carousel.previous')"
                             tabindex="0"
@@ -46,7 +46,7 @@
 
                         <span
                             v-if="products.length > 4 || (products.length > 3 && isScreenMax2xl)"
-                            class="icon-arrow-right-stylish rtl:icon-arrow-left-stylish inline-block cursor-pointer text-2xl max-lg:hidden"
+                            class="icon-arrow-right-stylish rtl:icon-arrow-left-stylish inline-block cursor-pointer text-2xl max-lg:hidden 1180:hidden"
                             role="button"
                             aria-label="@lang('shop::app.components.products.carousel.next')"
                             tabindex="0"
@@ -59,7 +59,7 @@
 
             <div
                 ref="swiperContainer"
-                class="flex gap-8 pb-2.5 [&>*]:flex-[0] mt-10 overflow-auto scroll-smooth scrollbar-hide max-md:grid max-md:grid-cols-2 max-md:gap-x-4 max-md:gap-y-5 max-md:overflow-visible max-md:pb-0 max-md:whitespace-normal max-md:mt-5 max-md:justify-items-center max-sm:gap-x-4 max-sm:gap-y-5"
+                class="mt-10 flex gap-8 pb-2.5 overflow-auto scroll-smooth scrollbar-hide [&>*]:flex-shrink-0 1180:grid 1180:grid-cols-4 1180:gap-8 1180:overflow-visible 1180:pb-0 max-md:grid max-md:grid-cols-2 max-md:gap-x-4 max-md:gap-y-5 max-md:overflow-visible max-md:pb-0 max-md:whitespace-normal max-md:mt-5 max-md:justify-items-center max-sm:gap-x-4 max-sm:gap-y-5"
             >
                 <x-shop::products.card
                     ::mode="'grid'"

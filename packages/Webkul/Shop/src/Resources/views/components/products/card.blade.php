@@ -11,10 +11,10 @@
     >
         <!-- Grid Card -->
         <div
-            class="1180:transtion-all group w-full rounded-md 1180:relative 1180:grid 1180:content-start 1180:overflow-hidden 1180:duration-300 1180:hover:shadow-[0_5px_10px_rgba(0,0,0,0.1)] max-md:w-full max-md:overflow-visible max-md:min-w-0"
+            class="1180:transition-all group w-full rounded-md 1180:relative 1180:grid 1180:content-start 1180:overflow-hidden 1180:duration-300 1180:hover:shadow-[0_5px_10px_rgba(0,0,0,0.1)] max-md:w-full max-md:overflow-visible max-md:min-w-0"
             v-if="mode != 'list'"
         >
-            <div class="relative max-h-[300px] max-w-[291px] overflow-hidden max-md:max-h-60 max-md:max-w-full max-md:rounded-lg max-md:w-full max-md:overflow-visible max-md:min-w-0 max-sm:max-h-[200px] max-sm:max-w-full max-sm:w-full max-sm:min-w-0">
+            <div class="relative max-h-[300px] overflow-hidden max-md:max-h-60 max-md:max-w-full max-md:rounded-lg max-md:w-full max-md:overflow-visible max-md:min-w-0 max-sm:max-h-[200px] max-sm:max-w-full max-sm:w-full max-sm:min-w-0">
                 {!! view_render_event('bagisto.shop.components.products.card.image.before') !!}
 
                 <!-- Product Image -->
@@ -43,24 +43,22 @@
                 <!-- Product Ratings -->
                 {!! view_render_event('bagisto.shop.components.products.card.average_ratings.before') !!}
 
-                @if (core()->getConfigData('catalog.products.review.enabled', true))
-                    @if (core()->getConfigData('catalog.products.review.summary') == 'star_counts')
-                        <x-shop::products.ratings
-                            class="absolute bottom-1.5 items-center !border-white bg-white/80 !px-2 !py-1 text-xs max-sm:!px-1.5 max-sm:!py-0.5 ltr:left-1.5 rtl:right-1.5"
-                            ::average="product.ratings.average"
-                            ::total="product.ratings.total"
-                            ::rating="false"
-                            v-if="product.ratings.total"
-                        />
-                    @else
-                        <x-shop::products.ratings
-                            class="absolute bottom-1.5 items-center !border-white bg-white/80 !px-2 !py-1 text-xs max-sm:!px-1.5 max-sm:!py-0.5 ltr:left-1.5 rtl:right-1.5"
-                            ::average="product.ratings.average"
-                            ::total="product.reviews.total"
-                            ::rating="false"
-                            v-if="product.reviews.total"
-                        />
-                    @endif
+                @if (core()->getConfigData('catalog.products.review.summary') == 'star_counts')
+                    <x-shop::products.ratings
+                        class="absolute bottom-1.5 items-center !border-white bg-white/80 !px-2 !py-1 text-xs max-sm:!px-1.5 max-sm:!py-0.5 ltr:left-1.5 rtl:right-1.5"
+                        ::average="product.ratings.average"
+                        ::total="product.ratings.total"
+                        ::rating="false"
+                        v-if="product.ratings.total"
+                    />
+                @else
+                    <x-shop::products.ratings
+                        class="absolute bottom-1.5 items-center !border-white bg-white/80 !px-2 !py-1 text-xs max-sm:!px-1.5 max-sm:!py-0.5 ltr:left-1.5 rtl:right-1.5"
+                        ::average="product.ratings.average"
+                        ::total="product.reviews.total"
+                        ::rating="false"
+                        v-if="product.reviews.total"
+                    />
                 @endif
 
                 {!! view_render_event('bagisto.shop.components.products.card.average_ratings.after') !!}
@@ -120,7 +118,7 @@
             </div>
 
             <!-- Product Information Section -->
-            <div class="-mt-9 grid max-w-[291px] translate-y-9 content-start gap-2.5 bg-white p-2.5 transition-transform duration-300 ease-out group-hover:-translate-y-0 group-hover:rounded-t-lg max-md:relative max-md:mt-0 max-md:translate-y-0 max-md:gap-0 max-md:px-0 max-md:py-1.5 max-md:max-w-full max-md:w-full max-md:min-w-0 max-sm:min-w-0 max-sm:max-w-full max-sm:w-full">
+            <div class="1180:-mt-9 1180:grid 1180:translate-y-9 content-start gap-2.5 bg-white p-2.5 1180:transition-transform 1180:duration-300 1180:ease-out group-hover:1180:-translate-y-0 group-hover:1180:rounded-t-lg max-md:relative max-md:mt-0 max-md:translate-y-0 max-md:gap-0 max-md:px-0 max-md:py-1.5 max-md:max-w-full max-md:w-full max-md:min-w-0 max-sm:min-w-0 max-sm:max-w-full max-sm:w-full">
 
                 {!! view_render_event('bagisto.shop.components.products.card.name.before') !!}
 
@@ -296,31 +294,29 @@
 
                 {!! view_render_event('bagisto.shop.components.products.card.average_ratings.before') !!}
 
-                @if (core()->getConfigData('catalog.products.review.enabled', true))
-                    <p class="text-sm text-zinc-500">
-                        <template  v-if="! product.ratings.total">
-                            <p class="text-sm text-zinc-500">
-                                @lang('shop::app.components.products.card.review-description')
-                            </p>
-                        </template>
+                <p class="text-sm text-zinc-500">
+                    <template  v-if="! product.ratings.total">
+                        <p class="text-sm text-zinc-500">
+                            @lang('shop::app.components.products.card.review-description')
+                        </p>
+                    </template>
 
-                        <template v-else>
-                            @if (core()->getConfigData('catalog.products.review.summary') == 'star_counts')
-                                <x-shop::products.ratings
-                                    ::average="product.ratings.average"
-                                    ::total="product.ratings.total"
-                                    ::rating="false"
-                                />
-                            @else
-                                <x-shop::products.ratings
-                                    ::average="product.ratings.average"
-                                    ::total="product.reviews.total"
-                                    ::rating="false"
-                                />
-                            @endif
-                        </template>
-                    </p>
-                @endif
+                    <template v-else>
+                        @if (core()->getConfigData('catalog.products.review.summary') == 'star_counts')
+                            <x-shop::products.ratings
+                                ::average="product.ratings.average"
+                                ::total="product.ratings.total"
+                                ::rating="false"
+                            />
+                        @else
+                            <x-shop::products.ratings
+                                ::average="product.ratings.average"
+                                ::total="product.reviews.total"
+                                ::rating="false"
+                            />
+                        @endif
+                    </template>
+                </p>
 
                 {!! view_render_event('bagisto.shop.components.products.card.average_ratings.after') !!}
 
