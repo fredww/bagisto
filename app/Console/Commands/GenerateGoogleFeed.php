@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Webkul\Product\Repositories\ProductFlatRepository;
 use Webkul\Core\Repositories\ChannelRepository;
 use Webkul\Product\ProductImage;
+use Webkul\Attribute\Repositories\AttributeOptionRepository;
 
 /**
  * php artisan google:generate-feed --channel=default --locale=en --output=feeds.xml --base-url=https://kiaoa.com
@@ -37,6 +38,7 @@ class GenerateGoogleFeed extends Command
     protected $productFlatRepository;
     protected $channelRepository;
     protected $productImage;
+    protected $attributeOptionRepository;
 
     /**
      * Create a new command instance.
@@ -46,13 +48,15 @@ class GenerateGoogleFeed extends Command
     public function __construct(
         ProductFlatRepository $productFlatRepository,
         ChannelRepository $channelRepository,
-        ProductImage $productImage
+        ProductImage $productImage,
+        AttributeOptionRepository $attributeOptionRepository
     ) {
         parent::__construct();
         
         $this->productFlatRepository = $productFlatRepository;
         $this->channelRepository = $channelRepository;
         $this->productImage = $productImage;
+        $this->attributeOptionRepository = $attributeOptionRepository;
     }
 
     /**
@@ -399,12 +403,25 @@ class GenerateGoogleFeed extends Command
         $this->addChild($xml, $item, 'title', $this->cleanText($title));
 
         // Description
-        $description = $variant->description ?? $parent->description ?? $parent->short_description ?? '';
-        if ($description) {
-            $this->addChild($xml, $item, 'description', $this->cleanText($description));
-        } else {
-            $this->addChild($xml, $item, 'description', $this->cleanText($title));
+        // 优先使用变体的描述，如果为空或看起来不像有效描述，则使用父产品的描述
+        $description = $variant->description ?? '';
+        
+        // 如果变体描述看起来像是自动生成的标识符（包含 "variant-" 或类似格式），则忽略它
+        if ($description && (preg_match('/variant-\d+-\d+-\d+/', $description) || preg_match('/^\d+-variant-/', $description))) {
+            $description = '';
         }
+        
+        // 如果变体描述为空或无效，使用父产品的描述
+        if (empty($description) || strlen(trim($description)) < 10) {
+            $description = $parent->description ?? $parent->short_description ?? '';
+        }
+        
+        // 如果仍然为空，使用标题作为描述
+        if (empty($description)) {
+            $description = $title;
+        }
+        
+        $this->addChild($xml, $item, 'description', $this->cleanText($description));
 
         // Link (使用父产品的URL)
         if ($parent->url_key) {
@@ -644,10 +661,42 @@ class GenerateGoogleFeed extends Command
                 ->whereHas('attribute', function($query) use ($attributeCode) {
                     $query->where('code', $attributeCode);
                 })
+                ->with('attribute')
                 ->first();
             
-            if ($attributeValue) {
-                return $attributeValue->text_value ?? $attributeValue->boolean_value ?? $attributeValue->integer_value ?? $attributeValue->float_value ?? null;
+            if ($attributeValue && $attributeValue->attribute) {
+                $attribute = $attributeValue->attribute;
+                $value = null;
+                
+                // 根据属性类型获取值
+                if ($attribute->type === 'select') {
+                    // 对于 select 类型，integer_value 存储的是 option ID，需要获取 option 的 label
+                    $optionId = $attributeValue->integer_value;
+                    if ($optionId) {
+                        $option = $this->attributeOptionRepository->find($optionId);
+                        if ($option) {
+                            $value = $option->label ?? $option->admin_name ?? null;
+                        }
+                    }
+                } elseif ($attribute->type === 'multiselect' || $attribute->type === 'checkbox') {
+                    // 对于 multiselect 和 checkbox，text_value 存储的是逗号分隔的 option IDs
+                    $optionIds = $attributeValue->text_value;
+                    if ($optionIds) {
+                        $labels = [];
+                        $options = $this->attributeOptionRepository->findWhereIn('id', explode(',', $optionIds));
+                        foreach ($options as $option) {
+                            if ($label = $option->label ?? $option->admin_name) {
+                                $labels[] = $label;
+                            }
+                        }
+                        $value = implode(', ', $labels);
+                    }
+                } else {
+                    // 其他类型直接获取值
+                    $value = $attributeValue->text_value ?? $attributeValue->boolean_value ?? $attributeValue->integer_value ?? $attributeValue->float_value ?? null;
+                }
+                
+                return $value;
             }
         } catch (\Exception $e) {
             // 忽略错误
