@@ -284,6 +284,10 @@
 
                         this.childAttributes.unshift(attribute);
                     }
+
+                    this.$nextTick(() => {
+                        this.initializeSelectionFromQuery();
+                    });
                 },
 
                 methods: {
@@ -443,6 +447,57 @@
                         }
 
                         this.$emitter.emit('configurable-variant-update-images-event', galleryImages);
+                    },
+
+                    initializeSelectionFromQuery() {
+                        const searchParams = new URLSearchParams(window.location.search);
+
+                        if (! searchParams.toString()) {
+                            return;
+                        }
+
+                        this.childAttributes.forEach((attribute, attributeIndex) => {
+                            const rawValue = searchParams.get(attribute.code);
+
+                            if (! rawValue) {
+                                return;
+                            }
+
+                            if (
+                                attributeIndex
+                                && ! this.childAttributes
+                                    .slice(0, attributeIndex)
+                                    .every(previousAttribute => previousAttribute.selectedValue)
+                            ) {
+                                return;
+                            }
+
+                            if (! attribute.options.length) {
+                                this.fillAttributeOptions(attribute);
+                            }
+
+                            const normalizedValue = rawValue.toString().toLowerCase();
+
+                            const matchedOption = attribute.options.find((option) => {
+                                if (! option.id) {
+                                    return false;
+                                }
+
+                                if (option.id == rawValue) {
+                                    return true;
+                                }
+
+                                if (! option.label) {
+                                    return false;
+                                }
+
+                                return option.label.toString().toLowerCase() === normalizedValue;
+                            });
+
+                            if (matchedOption) {
+                                this.configure(attribute, matchedOption.id);
+                            }
+                        });
                     },
                 }
             });

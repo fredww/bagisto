@@ -340,6 +340,10 @@ class GenerateGoogleFeed extends Command
             }
         }
 
+        if ($product->type === 'configurable') {
+            $this->addChild($xml, $item, 'g:item_group_id', $productFlat->sku);
+        }
+
         // 处理变体产品（configurable products）
         if ($product->type === 'configurable' && $product->variants && $product->variants->count() > 0) {
             $variants = $product->variants;
@@ -370,6 +374,60 @@ class GenerateGoogleFeed extends Command
         }
 
         return $item;
+    }
+
+    /**
+     * 获取变体 URL 所需的查询参数
+     *
+     * @param \Webkul\Product\Models\Product $variantProduct
+     * @param \Webkul\Product\Models\Product|null $parentProduct
+     * @return array
+     */
+    protected function getVariantQueryParameters($variantProduct, $parentProduct = null)
+    {
+        $params = [];
+
+        if (! $variantProduct) {
+            return $params;
+        }
+
+        if (! $parentProduct) {
+            $parentProduct = $variantProduct->parent;
+        }
+
+        if (! $parentProduct) {
+            return $params;
+        }
+
+        if (! $parentProduct->relationLoaded('super_attributes')) {
+            $parentProduct->load('super_attributes');
+        }
+
+        $superAttributes = $parentProduct->super_attributes ?? collect();
+
+        foreach ($superAttributes as $attribute) {
+            $code = $attribute->code;
+
+            if (! $code) {
+                continue;
+            }
+
+            $optionValue = $variantProduct->{$code} ?? null;
+
+            if ($optionValue === null || $optionValue === '') {
+                continue;
+            }
+
+            if (is_bool($optionValue)) {
+                continue;
+            }
+
+            if (is_scalar($optionValue)) {
+                $params[$code] = (string) $optionValue;
+            }
+        }
+
+        return $params;
     }
 
     /**
@@ -426,6 +484,13 @@ class GenerateGoogleFeed extends Command
         // Link (使用父产品的URL)
         if ($parent->url_key) {
             $productUrl = rtrim($baseUrl, '/') . '/' . $parent->url_key;
+
+            $queryParams = $this->getVariantQueryParameters($product, $parent->product ?: $product->parent);
+
+            if (! empty($queryParams)) {
+                $productUrl .= (str_contains($productUrl, '?') ? '&' : '?') . http_build_query($queryParams);
+            }
+
             $this->addChild($xml, $item, 'link', $productUrl);
         } else {
             return null;
