@@ -10,7 +10,7 @@ use Webkul\Core\Repositories\ChannelRepository;
 use Webkul\Product\ProductImage;
 
 /**
- * php artisan google:generate-feed --channel=default --locale=en --output=google-feed.xml --base-url=https://kiaoa.com
+ * php artisan google:generate-feed --channel=default --locale=en --output=feeds.xml --base-url=https://kiaoa.com
  * 生成 Google Merchant Center Feed 的命令
  * Command to generate Google Merchant Center Feed
  */
@@ -582,6 +582,8 @@ class GenerateGoogleFeed extends Command
      */
     protected function getAvailability($product)
     {
+        return 'in stock';
+        
         $typeInstance = $product->getTypeInstance();
         
         if ($typeInstance->isSaleable()) {
