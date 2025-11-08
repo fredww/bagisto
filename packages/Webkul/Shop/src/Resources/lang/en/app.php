@@ -811,6 +811,8 @@ return [
             'review'                 => 'Reviews',
             'tax-inclusive'          => 'Inclusive of all taxes',
             'up-sell-title'          => 'We found other products you might like!',
+            'product-shipping-policy'=> 'Shipping',
+            'product-return-policy'  => 'Return',
         ],
 
         'type' => [

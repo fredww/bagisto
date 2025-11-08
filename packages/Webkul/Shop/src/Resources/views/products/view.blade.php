@@ -132,7 +132,7 @@
                     <x-shop::tabs.item
                         id="shipping-policy-tab"
                         class="container mt-[60px] !p-0"
-                        :title="trans('shop::app.products.view.shipping-policy')"
+                        :title="trans('shop::app.products.view.product-shipping-policy')"
                         :is-selected="false"
                     >
                         <div class="container mt-[60px] max-1180:px-5">
@@ -148,7 +148,7 @@
                     <x-shop::tabs.item
                         id="return-terms-tab"
                         class="container mt-[60px] !p-0"
-                        :title="trans('shop::app.products.view.return-terms')"
+                        :title="trans('shop::app.products.view.product-return-policy')"
                         :is-selected="false"
                     >
                         <div class="container mt-[60px] max-1180:px-5">
