@@ -318,7 +318,7 @@ class GenerateGoogleFeed extends Command
 
         // Additional Images
         // 确保使用 Product 对象而不是 ProductFlat
-        if ($product && $product->relationLoaded('images')) {
+        if (1==2 && $product && $product->relationLoaded('images')) {
             try {
                 $galleryImages = $this->productImage->getGalleryImages($product);
                 if (is_array($galleryImages) && count($galleryImages) > 1) {
