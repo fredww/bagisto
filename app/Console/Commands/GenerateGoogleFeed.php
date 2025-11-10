@@ -246,6 +246,7 @@ class GenerateGoogleFeed extends Command
                 if (!filter_var($imageUrl, FILTER_VALIDATE_URL)) {
                     $imageUrl = rtrim($baseUrl, '/') . '/' . ltrim($imageUrl, '/');
                 }
+                $imageUrl = $this->staticMediaUrl($imageUrl);
                 $this->addChild($xml, $item, 'g:image_link', $imageUrl);
             }
         } catch (\Exception $e) {
