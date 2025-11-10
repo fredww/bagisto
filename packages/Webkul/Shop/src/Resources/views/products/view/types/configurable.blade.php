@@ -102,7 +102,7 @@
                         </div>
 
                         <!-- Regular Swatch Options -->
-                        <div class="flex items-center gap-3" v-else>
+                        <div class="flex flex-wrap items-center gap-3" v-else>
                             <template v-for="(option, index) in attribute.options">
                                 <template v-if="option.id">
                                     <!-- Color Swatch Options -->

@@ -59,18 +59,18 @@
 
     <!-- Product Base Image and Video with Shimmer-->
     <div
-        class="max-h-[610px] max-w-[560px]"
+        class="max-h-[610px] max-w-[560px] w-full"
         v-show="isMediaLoading"
     >
-        <div class="shimmer min-h-[607px] min-w-[560px] rounded-xl bg-zinc-200"></div>
+        <div class="shimmer min-h-[607px] w-full max-w-[560px] rounded-xl bg-zinc-200"></div>
     </div>
 
     <div
-        class="max-h-[610px] max-w-[560px]"
+        class="max-h-[610px] max-w-[560px] w-full"
         v-show="! isMediaLoading"
     >
         <img
-            class="min-w-[450px] cursor-pointer rounded-xl"
+            class="w-full max-w-[560px] h-auto object-contain cursor-pointer rounded-xl"
             :src="baseFile.path"
             v-if="baseFile.type == 'image'"
             alt="{{ $product->name }}"
@@ -83,13 +83,13 @@
         />
 
         <div
-            class="min-w-[450px] cursor-pointer rounded-xl"
+            class="w-full max-w-[560px] cursor-pointer rounded-xl"
             tabindex="0"
             v-if="baseFile.type == 'video'"
         >
             <video
                 controls
-                width="475"
+                class="w-full h-auto"
                 alt="{{ $product->name }}"
                 @click="isImageZooming = !isImageZooming"
                 @loadeddata="onMediaLoad()"
