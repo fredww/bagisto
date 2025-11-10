@@ -318,7 +318,7 @@ class GenerateGoogleFeed extends Command
 
         // Additional Images
         // 确保使用 Product 对象而不是 ProductFlat
-        if (1==2 && $product && $product->relationLoaded('images')) {
+        if ($product && $product->relationLoaded('images')) {
             try {
                 $galleryImages = $this->productImage->getGalleryImages($product);
                 if (is_array($galleryImages) && count($galleryImages) > 1) {
@@ -328,6 +328,7 @@ class GenerateGoogleFeed extends Command
                             if (!filter_var($imageUrl, FILTER_VALIDATE_URL)) {
                                 $imageUrl = rtrim($baseUrl, '/') . '/' . ltrim($imageUrl, '/');
                             }
+                            $imageUrl = $this->staticMediaUrl($imageUrl);
                             $this->addChild($xml, $item, 'g:additional_image_link', $imageUrl);
                         }
                     }
@@ -505,6 +506,7 @@ class GenerateGoogleFeed extends Command
                 if (!filter_var($imageUrl, FILTER_VALIDATE_URL)) {
                     $imageUrl = rtrim($baseUrl, '/') . '/' . ltrim($imageUrl, '/');
                 }
+                $imageUrl = $this->staticMediaUrl($imageUrl);
                 $this->addChild($xml, $item, 'g:image_link', $imageUrl);
             } else {
                 // 如果没有变体图片，使用父产品图片
@@ -515,6 +517,7 @@ class GenerateGoogleFeed extends Command
                         if (!filter_var($imageUrl, FILTER_VALIDATE_URL)) {
                             $imageUrl = rtrim($baseUrl, '/') . '/' . ltrim($imageUrl, '/');
                         }
+                        $imageUrl = $this->staticMediaUrl($imageUrl);
                         $this->addChild($xml, $item, 'g:image_link', $imageUrl);
                     }
                 }
@@ -885,6 +888,13 @@ class GenerateGoogleFeed extends Command
         ];
         
         return $mapping[strtolower($attributeCode)] ?? null;
+    }
+
+    protected function staticMediaUrl($url){
+        if(stripos($url,'cache/large') !== false){
+            $url = str_replace('cache/large','storage',$url);
+        }
+        return $url;
     }
 }
 
