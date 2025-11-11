@@ -127,6 +127,14 @@ return [
             'path' => storage_path('logs/laravel.log'),
         ],
 
+        // FortunePay dedicated log channel
+        'fortune' => [
+            'driver'               => 'single',
+            'path'                 => storage_path('logs/fortune.log'),
+            'level'                => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];

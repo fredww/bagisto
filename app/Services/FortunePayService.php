@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\FortunePayment;
-use App\Models\FortuneSetting;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -12,25 +11,43 @@ use Illuminate\Support\Str;
 class FortunePayService
 {
     /**
-     * 获取当前有效配置（优先数据库，其次env/config）
-     * Purpose: Fetch active FortunePay configuration from DB or fallback to config/env
+     * 统一配置读取（仅 Bagisto 管理后台）
+     * Purpose: Read FortunePay config exclusively from admin settings (CoreConfig)
      */
     public function getConfig(): array
     {
-        $setting = FortuneSetting::query()->latest('id')->first();
+        // Read all fields from Bagisto admin panel: sales.payment_methods.fortune_pay.*
+        $baseUrl       = (string) (core()->getConfigData('sales.payment_methods.fortune_pay.base_url') ?? '');
+        $userKey       = (string) (core()->getConfigData('sales.payment_methods.fortune_pay.user_key') ?? '');
+        $username      = (string) (core()->getConfigData('sales.payment_methods.fortune_pay.username') ?? '');
+        $bn            = (string) (core()->getConfigData('sales.payment_methods.fortune_pay.bn') ?? '');
+        $paymentMethod = (string) (core()->getConfigData('sales.payment_methods.fortune_pay.payment_method') ?? '');
+        $notifyUrl     = (string) (core()->getConfigData('sales.payment_methods.fortune_pay.notify_url') ?? '');
+        $successUri    = (string) (core()->getConfigData('sales.payment_methods.fortune_pay.success_uri') ?? '');
+        $returnUri     = (string) (core()->getConfigData('sales.payment_methods.fortune_pay.return_uri') ?? '');
+        $uiMethod      = (string) (core()->getConfigData('sales.payment_methods.fortune_pay.method') ?? ''); // 'redirect_pay' | 'iframe'
+        $debugLog      = (bool)  (core()->getConfigData('sales.payment_methods.fortune_pay.debug_log') ?? false);
+
+        // UI flags derived strictly from admin value
+        $channelRedirect = $uiMethod === 'redirect_pay';
+        $channelIframe   = $uiMethod === 'iframe';
+
+        // Optional: map merchant_id for compatibility naming (merchant_no)
+        $merchantId = (string) (core()->getConfigData('sales.payment_methods.fortune_pay.merchant_id') ?? '');
 
         return [
-            'base_url' => $setting->base_url ?: (string) config('fortune.base_url'),
-            'merchant_no' => $setting->merchant_no ?: (string) config('fortune.merchant_no'),
-            'user_key' => $setting->getUserKey(),
-            'username' => $setting->username ?: (string) config('fortune.username'),
-            'bn' => $setting->bn ?: (string) config('fortune.bn'),
-            'payment_method' => $setting->payment_method ?: (string) config('fortune.payment_method'),
-            'notify_url' => $setting->notify_url ?: (string) config('fortune.notify_url'),
-            'success_uri' => $setting->success_uri ?: (string) config('fortune.success_uri'),
-            'return_uri' => $setting->return_uri ?: (string) config('fortune.return_uri'),
-            'channel_redirect' => (bool) ($setting->channel_redirect ?? config('fortune.channel_redirect')),
-            'channel_iframe' => (bool) ($setting->channel_iframe ?? config('fortune.channel_iframe')),
+            'base_url'        => $baseUrl,
+            'merchant_no'     => $merchantId,
+            'user_key'        => $userKey,
+            'username'        => $username,
+            'bn'              => $bn,
+            'payment_method'  => $paymentMethod,
+            'notify_url'      => $notifyUrl,
+            'success_uri'     => $successUri,
+            'return_uri'      => $returnUri,
+            'channel_redirect'=> $channelRedirect,
+            'channel_iframe'  => $channelIframe,
+            'debug_log'       => $debugLog,
         ];
     }
 
@@ -141,8 +158,19 @@ class FortunePayService
             'payment_method' => (string) $payload['payment_method'],
         ]);
 
+        // Build endpoint URL outside try to allow logging before request
+        $url = rtrim($config['base_url'], '/') . '/pay/create_payment';
+
+        // Debug: log outgoing payload when enabled
+        if (!empty($config['debug_log'])) {
+            // Internal logic: keep concise and avoid sensitive keys if any
+            Log::channel('fortune')->info('FortunePay debug: create_payment outgoing payload', [
+                'url'     => $url,
+                'payload' => $payload,
+            ]);
+        }
+
         try {
-            $url = rtrim($config['base_url'], '/') . '/pay/create_payment';
             $resp = Http::timeout(10)->retry(3, 500)->asJson()->post($url, $payload);
 
             if (!$resp->ok()) {
@@ -159,6 +187,14 @@ class FortunePayService
             }
 
             $json = $resp->json();
+
+            // Debug: log gateway response JSON
+            if (!empty($config['debug_log'])) {
+                Log::channel('fortune')->info('FortunePay debug: create_payment response', [
+                    'status' => $resp->status(),
+                    'json'   => $json,
+                ]);
+            }
             $result = Arr::get($json, 'result', []);
 
             $payment->update([
@@ -181,7 +217,15 @@ class FortunePayService
                 'msg' => Arr::get($json, 'msg'),
             ];
         } catch (\Throwable $e) {
-            Log::error('FortunePay create_payment exception', ['e' => $e->getMessage()]);
+            Log::channel('fortune')->error('FortunePay create_payment exception', ['e' => $e->getMessage()]);
+
+            // Debug: include stack trace when enabled
+            if (!empty($config['debug_log'])) {
+                Log::channel('fortune')->error('FortunePay debug: create_payment exception trace', [
+                    'message' => $e->getMessage(),
+                    'trace'   => $e->getTraceAsString(),
+                ]);
+            }
             $payment->update(['status' => 'pending']);
             return [
                 'code' => 500,

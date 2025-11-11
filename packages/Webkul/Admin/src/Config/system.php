@@ -2865,6 +2865,12 @@ return [
                 'type'          => 'text',
                 'channel_based' => true,
             ], [
+                'name'          => 'payment_method',
+                'title'         => 'Gateway Payment Method',
+                'type'          => 'text',
+                'depends'       => 'active:1',
+                'channel_based' => true,
+            ], [
                 'name'          => 'base_url',
                 'title'         => 'Base URL',
                 'type'          => 'text',
@@ -2872,7 +2878,7 @@ return [
                 'default'       => env('FORTUNE_BASE_URL', 'https://api.fortunepay.example'),
             ], [
                 'name'          => 'method',
-                'title'         => 'Payment Method',
+                'title'         => 'Checkout UI Mode',
                 'type'          => 'select',
                 'depends'       => 'active:1',
                 'channel_based' => true,
@@ -2904,6 +2910,11 @@ return [
             ], [
                 'name'    => 'use_iframe',
                 'title'   => 'Use Iframe',
+                'type'    => 'boolean',
+                'default' => 0,
+            ], [
+                'name'    => 'debug_log',
+                'title'   => 'Debug Log',
                 'type'    => 'boolean',
                 'default' => 0,
             ],

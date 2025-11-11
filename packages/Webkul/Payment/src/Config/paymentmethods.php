@@ -18,4 +18,14 @@ return [
         'active'      => true,
         'sort'        => 2,
     ],
+
+    // FortunePay payment method registration
+    'fortune_pay' => [
+        'code'        => 'fortune_pay',
+        'title'       => 'FortunePay',
+        'description' => 'FortunePay Gateway',
+        'class'       => 'App\\Payment\\FortunePay',
+        'active'      => true,
+        'sort'        => 50,
+    ],
 ];

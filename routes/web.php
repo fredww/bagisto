@@ -15,6 +15,10 @@ Route::prefix('fortune')->group(function () {
     Route::get('/return', [\App\Http\Controllers\FortunePayController::class, 'return'])
         ->name('fortune.return');
 
+    // 重定向到网关
+    Route::get('/redirect', [\App\Http\Controllers\FortunePayController::class, 'redirect'])
+        ->name('fortune.redirect');
+
     // 查询
     Route::get('/query', [\App\Http\Controllers\FortunePayController::class, 'query'])
         ->name('fortune.query');
