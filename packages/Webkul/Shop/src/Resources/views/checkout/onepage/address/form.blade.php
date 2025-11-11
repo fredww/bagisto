@@ -332,7 +332,9 @@
 
             data() {
                 return {
-                    selectedCountry: this.address.country,
+                    // 中文：初始化选中国家；如果没有地址值，则使用配置中的默认国家
+                    // English: Initialize selected country; fallback to configured default when address is empty
+                    selectedCountry: this.address.country || "{{ config('app.default_country') }}",
 
                     countries: [],
 
@@ -353,6 +355,8 @@
             },
 
             methods: {
+                // 中文：获取国家列表，用于国家下拉选择框
+                // English: Fetch the list of countries for the country select dropdown
                 getCountries() {
                     this.$axios.get("{{ route('shop.api.core.countries') }}")
                         .then(response => {
@@ -361,6 +365,8 @@
                         .catch(() => {});
                 },
 
+                // 中文：获取所有州/省数据，根据选中国家过滤显示
+                // English: Fetch all states/provinces; filtered by the selected country in UI
                 getStates() {
                     this.$axios.get("{{ route('shop.api.core.states') }}")
                         .then(response => {

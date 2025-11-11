@@ -121,7 +121,9 @@ return [
     | (use capital letters!)
     */
 
-    'default_country' => null,
+    // 中文：默认国家代码，用于结账页等表单的初始值
+    // English: Default country code used as initial value for forms like checkout
+    'default_country' => env('APP_DEFAULT_COUNTRY', 'US'),
 
     /*
     |--------------------------------------------------------------------------
