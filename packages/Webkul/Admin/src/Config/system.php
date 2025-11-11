@@ -1839,6 +1839,15 @@ return [
                 'type'          => 'boolean',
                 'channel_based' => true,
                 'locale_based'  => false,
+            ], [
+                'name'          => 'minimum_amount',
+                'title'         => 'Free Shipping Minimum Amount',
+                'info'          => 'Set order amount threshold to enable Free Shipping',
+                'type'          => 'text',
+                'depends'       => 'active:1',
+                'validation'    => 'required_if:active,1|decimal|min:0',
+                'channel_based' => true,
+                'locale_based'  => false,
             ],
         ],
     ], [

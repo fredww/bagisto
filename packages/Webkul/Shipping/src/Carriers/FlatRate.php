@@ -22,6 +22,29 @@ class FlatRate extends AbstractShipping
     protected $method = 'flatrate_flatrate';
 
     /**
+     * 中文：判断固定运费是否可用（当免运费达标时隐藏）
+     * English: Determine availability of Flat Rate; hide when Free Shipping qualifies.
+     */
+    public function isAvailable(): bool
+    {
+        // Respect own active setting first.
+        if (! parent::isAvailable()) {
+            return false;
+        }
+
+        // If Free Shipping threshold is set and reached, hide Flat Rate.
+        $minimumAmount = (float) core()->getConfigData('sales.carriers.free.minimum_amount');
+        if ($minimumAmount > 0) {
+            $cart = Cart::getCart();
+            if ($cart && ($cart->base_grand_total ?? 0) >= $minimumAmount) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
      * Calculate rate for flatrate.
      *
      * @return \Webkul\Checkout\Models\CartShippingRate|false
