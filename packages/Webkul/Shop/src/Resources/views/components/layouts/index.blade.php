@@ -90,6 +90,9 @@
             </script>
         @endif
 
+        {{-- Inject Google Ads & GA4 tracking scripts (auto-loaded from admin config) --}}
+        @include('shop::components.tracking.google')
+
         {!! view_render_event('bagisto.shop.layout.head.after') !!}
 
     </head>

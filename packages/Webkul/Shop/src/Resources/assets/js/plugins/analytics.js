@@ -1,0 +1,125 @@
+/**
+ * 插件目的：统一管理 Google Ads 与 GA4 的事件上报
+ * Purpose: Manage Google Ads and GA4 event reporting in a unified way
+ */
+export default {
+    /**
+     * 插件安装入口：挂载 GA 集成对象，并提供常用方法
+     * Install entry: mount GA integration object and provide common methods
+     */
+    install(app) {
+        const config = window.__GA_CONFIG__ || {
+            ga4Enabled: false,
+            measurementId: '',
+            adsEnabled: false,
+            adsConversionId: '',
+            adsPurchaseLabel: '',
+            debug: false,
+            currency: 'USD'
+        };
+
+        // Chinese comment: 暴露全局对象，方便在 Blade 或组件中直接调用
+        // Expose global object for direct usage in blades or components
+        window.GAIntegration = {
+            /**
+             * 方法：输出调试日志
+             * Function: Output debug logs
+             */
+            debugLog(...args) {
+                if (config.debug) console.log('[GA]', ...args);
+            },
+
+            /**
+             * 方法：获取 Google Ads `send_to` 字段值
+             * Function: Compute Google Ads `send_to` parameter
+             */
+            getAdsSendTo() {
+                // internal: build send_to string for Ads conversion
+                if (!config.adsEnabled || !config.adsConversionId || !config.adsPurchaseLabel) return null;
+                return `${config.adsConversionId}/${config.adsPurchaseLabel}`;
+            },
+
+            /**
+             * 方法：追踪 GA4 add_to_cart 事件
+             * Function: Track GA4 add_to_cart event
+             */
+            trackAddToCart(payload = {}) {
+                try {
+                    const item = payload.item || {};
+                    const currency = payload.currency || config.currency || 'USD';
+                    const value = Number(payload.value ?? item.total ?? item.price ?? 0);
+
+                    // internal: items array follows GA4 spec
+                    const items = payload.items ?? [{
+                        item_id: payload.sku || payload.id || item.sku || item.id || item.product_id || item.id,
+                        item_name: payload.name || item.name || '',
+                        quantity: Number(payload.quantity ?? item.quantity ?? 1),
+                        price: Number(item.price ?? value)
+                    }];
+
+                    window.GAIntegration.debugLog('add_to_cart', { currency, value, items });
+                    window.gtag && gtag('event', 'add_to_cart', { currency, value, items });
+                } catch (e) {
+                    window.GAIntegration.debugLog('add_to_cart error', e);
+                }
+            },
+
+            /**
+             * 方法：追踪 GA4 purchase 事件
+             * Function: Track GA4 purchase event
+             */
+            trackPurchase(payload = {}) {
+                try {
+                    const currency = payload.currency || config.currency || 'USD';
+                    const value = Number(payload.value ?? 0);
+                    const items = payload.items || [];
+                    const transaction_id = payload.transactionId || payload.orderId || undefined;
+
+                    window.GAIntegration.debugLog('purchase', { currency, value, items, transaction_id });
+                    window.gtag && gtag('event', 'purchase', { currency, value, items, transaction_id });
+                } catch (e) {
+                    window.GAIntegration.debugLog('purchase error', e);
+                }
+            },
+
+            /**
+             * 方法：追踪 Google Ads 的购买转化事件
+             * Function: Track Google Ads purchase conversion event
+             */
+            trackAdsPurchase(payload = {}) {
+                try {
+                    const sendTo = window.GAIntegration.getAdsSendTo();
+                    if (!sendTo) return;
+
+                    const currency = payload.currency || config.currency || 'USD';
+                    const value = Number(payload.value ?? 0);
+
+                    window.GAIntegration.debugLog('ads conversion', { send_to: sendTo, value, currency });
+                    window.gtag && gtag('event', 'conversion', { send_to: sendTo, value, currency });
+                } catch (e) {
+                    window.GAIntegration.debugLog('ads conversion error', e);
+                }
+            },
+
+            /**
+             * 方法：追踪自定义事件
+             * Function: Track a custom event
+             */
+            trackCustomEvent(name, params = {}) {
+                try {
+                    window.GAIntegration.debugLog('custom_event', name, params);
+                    window.gtag && gtag('event', name, params);
+                } catch (e) {
+                    window.GAIntegration.debugLog('custom_event error', e);
+                }
+            },
+        };
+
+        // Optional: listen to global events (e.g., mini cart update) – debug only
+        if (app.config.globalProperties.$emitter) {
+            app.config.globalProperties.$emitter.on('update-mini-cart', (cart) => {
+                window.GAIntegration.debugLog('emitter:update-mini-cart', cart);
+            });
+        }
+    },
+};

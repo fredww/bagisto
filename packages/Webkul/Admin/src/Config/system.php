@@ -307,6 +307,53 @@ return [
             ],
         ],
     ], [
+        'key'    => 'general.content.analytics',
+        'name'   => 'Google Analytics & Ads',
+        'info'   => 'Configure Google Analytics 4 and Google Ads tracking',
+        'sort'   => 3,
+        'fields' => [
+            [
+                'name'    => 'ga4_enabled',
+                'title'   => 'Enable GA4',
+                'type'    => 'boolean',
+                'default' => false,
+            ], [
+                'name'       => 'ga4_measurement_id',
+                'title'      => 'GA4 Measurement ID',
+                'type'       => 'text',
+                'depends'    => 'ga4_enabled:true',
+                'validation' => 'required_if:ga4_enabled,1|regex:/^G-[A-Za-z0-9\-]{6,}$/',
+            ], [
+                'name'       => 'ga4_api_secret',
+                'title'      => 'GA4 API Secret (optional)',
+                'type'       => 'text',
+                'depends'    => 'ga4_enabled:true',
+                'validation' => 'nullable|max:100',
+            ], [
+                'name'    => 'ads_enabled',
+                'title'   => 'Enable Google Ads',
+                'type'    => 'boolean',
+                'default' => false,
+            ], [
+                'name'       => 'ads_conversion_id',
+                'title'      => 'Google Ads Conversion ID',
+                'type'       => 'text',
+                'depends'    => 'ads_enabled:true',
+                'validation' => 'required_if:ads_enabled,1|regex:/^AW-[A-Za-z0-9\-]{6,}$/',
+            ], [
+                'name'       => 'ads_purchase_label',
+                'title'      => 'Google Ads Purchase Label',
+                'type'       => 'text',
+                'depends'    => 'ads_enabled:true',
+                'validation' => 'required_if:ads_enabled,1|regex:/^[A-Za-z0-9_\-]{3,}$/',
+            ], [
+                'name'    => 'debug',
+                'title'   => 'Debug Mode',
+                'type'    => 'boolean',
+                'default' => false,
+            ],
+        ],
+    ], [
         'key'  => 'general.design',
         'name' => 'admin::app.configuration.index.general.design.title',
         'info' => 'admin::app.configuration.index.general.design.info',
@@ -1875,7 +1922,7 @@ return [
                 'title'         => 'admin::app.configuration.index.sales.shipping-methods.flat-rate-shipping.rate',
                 'type'          => 'text',
                 'depends'       => 'active:1',
-                'validation'    => 'required_if:active,1|numeric',
+                'validation'    => 'required_if:active,1|decimal|min:0',
                 'channel_based' => true,
                 'locale_based'  => false,
             ], [

@@ -57,4 +57,72 @@
 			{{ view_render_event('bagisto.shop.checkout.success.continue-shopping.after', ['order' => $order]) }}
 		</div>
 	</div>
+
+    <!-- Inject GA4 and Google Ads purchase conversion events -->
+    <script>
+        (function () {
+            try {
+                // internal: build payloads from server-side order data
+                var orderId  = "{{ addslashes($order->increment_id) }}";
+                var currency = "{{ $order->order_currency_code ?? (core()->getCurrentCurrency()?->code ?? 'USD') }}";
+                var value    = Number("{{ $order->grand_total ?? 0 }}");
+
+                @php
+                    $gaItems = [];
+                    foreach ($order->items as $itm) {
+                        $gaItems[] = [
+                            'sku'   => $itm->sku ?? $itm->product_id ?? null,
+                            'name'  => $itm->name ?? '',
+                            'qty'   => $itm->qty_ordered ?? $itm->quantity ?? 1,
+                            'price' => (float) ($itm->price ?? ($itm->total ?? 0)),
+                            'total' => (float) ($itm->total ?? 0),
+                        ];
+                    }
+                @endphp
+
+                var itemsRaw = @json($gaItems);
+                var items = itemsRaw.map(function (i) {
+                    return {
+                        item_id: i.sku || undefined,
+                        item_name: i.name || '',
+                        quantity: Number(i.qty || 1),
+                        price: Number((i.price ?? i.total) || 0),
+                    };
+                });
+
+                // GA4 purchase event
+                if (window.GAIntegration && typeof window.GAIntegration.trackPurchase === 'function') {
+                    window.GAIntegration.trackPurchase({
+                        currency: currency,
+                        value: value,
+                        items: items,
+                        transactionId: orderId,
+                    });
+                } else {
+                    // Fallback: call gtag directly if plugin is unavailable
+                    if (window.gtag) {
+                        gtag('event', 'purchase', {
+                            currency: currency,
+                            value: value,
+                            items: items,
+                            transaction_id: orderId,
+                        });
+                    }
+                }
+
+                // Google Ads conversion
+                if (window.GAIntegration && typeof window.GAIntegration.trackAdsPurchase === 'function') {
+                    window.GAIntegration.trackAdsPurchase({ currency: currency, value: value });
+                }
+
+                if (window.GAIntegration && window.GAIntegration.debugLog) {
+                    window.GAIntegration.debugLog('success.purchase emitted', { orderId, currency, value, items });
+                }
+            } catch (e) {
+                if (window.GAIntegration && window.GAIntegration.debugLog) {
+                    window.GAIntegration.debugLog('success.purchase hook error', e);
+                }
+            }
+        })();
+    </script>
 </x-shop::layouts>

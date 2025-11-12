@@ -57,6 +57,7 @@ import Emitter from "./plugins/emitter";
 import Shop from "./plugins/shop";
 import VeeValidate from "./plugins/vee-validate";
 import Flatpickr from "./plugins/flatpickr";
+import Analytics from "./plugins/analytics";
 
 [
     Axios,
@@ -64,6 +65,7 @@ import Flatpickr from "./plugins/flatpickr";
     Shop,
     VeeValidate,
     Flatpickr,
+    Analytics,
 ].forEach((plugin) => app.use(plugin));
 
 /**

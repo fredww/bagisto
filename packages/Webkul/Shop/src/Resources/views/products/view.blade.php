@@ -663,6 +663,25 @@
 
                                     this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
 
+                                    // Inject GA4 add_to_cart event (based on current product and returned cart item)
+                                    try {
+                                        const cart = response?.data?.data || {};
+                                        const lastItem = (cart.items || []).slice(-1)[0];
+
+                                        const qty = Number((new FormData(this.$refs.formData)).get('quantity') || 1);
+
+                                        window.GAIntegration && window.GAIntegration.trackAddToCart({
+                                            id: {{ $product->id }},
+                                            sku: '{{ addslashes($product->sku) }}',
+                                            name: '{{ addslashes($product->name) }}',
+                                            quantity: qty,
+                                            value: Number(lastItem?.total ?? lastItem?.price ?? 0),
+                                            item: lastItem,
+                                        });
+                                    } catch (e) {
+                                        window.GAIntegration && window.GAIntegration.debugLog('view.add_to_cart hook error', e);
+                                    }
+
                                     if (response.data.redirect) {
                                         window.location.href= response.data.redirect;
                                     }

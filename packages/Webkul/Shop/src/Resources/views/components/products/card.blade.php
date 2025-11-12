@@ -439,6 +439,23 @@
                                 this.$emitter.emit('update-mini-cart', response.data.data );
 
                                 this.$emitter.emit('add-flash', { type: 'success', message: response.data.message });
+
+                                // Inject GA4 add_to_cart event (based on card product and returned cart item)
+                                try {
+                                    const cart = response?.data?.data || {};
+                                    const lastItem = (cart.items || []).slice(-1)[0];
+
+                                    window.GAIntegration && window.GAIntegration.trackAddToCart({
+                                        id: this.product?.id,
+                                        sku: this.product?.sku,
+                                        name: this.product?.name,
+                                        quantity: 1,
+                                        value: Number(lastItem?.total ?? lastItem?.price ?? this.product?.price ?? 0),
+                                        item: lastItem,
+                                    });
+                                } catch (e) {
+                                    window.GAIntegration && window.GAIntegration.debugLog('card.add_to_cart hook error', e);
+                                }
                             } else {
                                 this.$emitter.emit('add-flash', { type: 'warning', message: response.data.data.message });
                             }
