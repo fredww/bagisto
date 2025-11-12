@@ -1,0 +1,21 @@
+{
+    "name": "webkul/ai-review",
+    "description": "AI Review module for Bagisto",
+    "type": "library",
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "Webkul\\AiReview\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Webkul\\AiReview\\Providers\\AiReviewServiceProvider"
+            ]
+        }
+    },
+    "require": {
+        "php": ">=8.1"
+    }
+}

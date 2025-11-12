@@ -322,14 +322,13 @@ return [
                 'title'      => 'GA4 Measurement ID',
                 'type'       => 'text',
                 'depends'    => 'ga4_enabled:true',
-                // Chinese: 移除 GA4 ID 的正则校验，避免格式误报；仅保留显示
-                // English: Remove GA4 ID regex validation to avoid false format errors; display only
+                'validation' => 'max:100',
             ], [
                 'name'       => 'ga4_api_secret',
                 'title'      => 'GA4 API Secret (optional)',
                 'type'       => 'text',
                 'depends'    => 'ga4_enabled:true',
-                'validation' => 'nullable|max:100',
+                'validation' => 'max:100',
             ], [
                 'name'    => 'ads_enabled',
                 'title'   => 'Enable Google Ads',
@@ -340,36 +339,31 @@ return [
                 'title'      => 'Google Ads Conversion ID',
                 'type'       => 'text',
                 'depends'    => 'ads_enabled:true',
-                // Chinese: 去除 Ads 转化 ID 的格式校验，兼容多种 ID 表现
-                // English: Drop Ads Conversion ID regex validation to handle various ID formats
+                'validation' => 'max:100',
             ], [
                 'name'       => 'ads_purchase_label',
                 'title'      => 'Google Ads Purchase Label',
                 'type'       => 'text',
                 'depends'    => 'ads_enabled:true',
-                // Chinese: 购买转化标签；不做正则限制，避免误报
-                // English: Purchase conversion label; no regex to avoid false errors
+                'validation' => 'max:100',
             ], [
                 'name'       => 'ads_add_to_cart_label',
                 'title'      => 'Google Ads Add To Cart Label',
                 'type'       => 'text',
                 'depends'    => 'ads_enabled:true',
-                // Chinese: 加入购物车转化标签；不做正则限制
-                // English: Add To Cart conversion label; no regex validation
+                'validation' => 'max:100',
             ], [
                 'name'       => 'ads_begin_checkout_label',
                 'title'      => 'Google Ads Begin Checkout Label',
                 'type'       => 'text',
                 'depends'    => 'ads_enabled:true',
-                // Chinese: 开始结账转化标签；不做正则限制
-                // English: Begin Checkout conversion label; no regex validation
+                'validation' => 'max:100',
             ], [
                 'name'       => 'ads_page_view_label',
                 'title'      => 'Google Ads Page View Label',
                 'type'       => 'text',
                 'depends'    => 'ads_enabled:true',
-                // Chinese: 页面浏览转化标签；不做正则限制
-                // English: Page View conversion label; no regex validation
+                'validation' => 'max:100',
             ], [
                 'name'    => 'debug',
                 'title'   => 'Debug Mode',
