@@ -14,6 +14,9 @@ export default {
             adsEnabled: false,
             adsConversionId: '',
             adsPurchaseLabel: '',
+            adsAddToCartLabel: '',
+            adsBeginCheckoutLabel: '',
+            adsPageViewLabel: '',
             debug: false,
             currency: 'USD'
         };
@@ -33,10 +36,21 @@ export default {
              * 方法：获取 Google Ads `send_to` 字段值
              * Function: Compute Google Ads `send_to` parameter
              */
-            getAdsSendTo() {
-                // internal: build send_to string for Ads conversion
-                if (!config.adsEnabled || !config.adsConversionId || !config.adsPurchaseLabel) return null;
-                return `${config.adsConversionId}/${config.adsPurchaseLabel}`;
+            /**
+             * 方法：获取指定标签键的 Google Ads `send_to` 值
+             * Chinese: 根据标签键（如 adsPurchaseLabel）拼接 send_to
+             * English: Build Ads `send_to` using a specific label key
+             */
+            getAdsSendTo(labelKey = 'adsPurchaseLabel') {
+                try {
+                    if (!config.adsEnabled || !config.adsConversionId) return null;
+                    const label = config[labelKey];
+                    if (!label) return null;
+                    return `${config.adsConversionId}/${label}`;
+                } catch (e) {
+                    window.GAIntegration.debugLog('getAdsSendTo error', e);
+                    return null;
+                }
             },
 
             /**
@@ -65,6 +79,26 @@ export default {
             },
 
             /**
+             * 方法：追踪 Google Ads 的加入购物车转化事件
+             * Chinese: 触发 Ads add_to_cart 转化（使用 adsAddToCartLabel）
+             * English: Fire Ads add_to_cart conversion (uses adsAddToCartLabel)
+             */
+            trackAdsAddToCart(payload = {}) {
+                try {
+                    const sendTo = window.GAIntegration.getAdsSendTo('adsAddToCartLabel');
+                    if (!sendTo) return;
+
+                    const currency = payload.currency || config.currency || 'USD';
+                    const value = Number(payload.value ?? 1);
+
+                    window.GAIntegration.debugLog('ads add_to_cart', { send_to: sendTo, value, currency });
+                    window.gtag && gtag('event', 'conversion', { send_to: sendTo, value, currency });
+                } catch (e) {
+                    window.GAIntegration.debugLog('ads add_to_cart error', e);
+                }
+            },
+
+            /**
              * 方法：追踪 GA4 purchase 事件
              * Function: Track GA4 purchase event
              */
@@ -88,7 +122,7 @@ export default {
              */
             trackAdsPurchase(payload = {}) {
                 try {
-                    const sendTo = window.GAIntegration.getAdsSendTo();
+                    const sendTo = window.GAIntegration.getAdsSendTo('adsPurchaseLabel');
                     if (!sendTo) return;
 
                     const currency = payload.currency || config.currency || 'USD';
@@ -98,6 +132,46 @@ export default {
                     window.gtag && gtag('event', 'conversion', { send_to: sendTo, value, currency });
                 } catch (e) {
                     window.GAIntegration.debugLog('ads conversion error', e);
+                }
+            },
+
+            /**
+             * 方法：追踪 Google Ads 的 Begin Checkout 转化事件
+             * Chinese: 触发 Ads begin_checkout 转化（使用 adsBeginCheckoutLabel）
+             * English: Fire Ads begin_checkout conversion (uses adsBeginCheckoutLabel)
+             */
+            trackAdsBeginCheckout(payload = {}) {
+                try {
+                    const sendTo = window.GAIntegration.getAdsSendTo('adsBeginCheckoutLabel');
+                    if (!sendTo) return;
+
+                    const currency = payload.currency || config.currency || 'USD';
+                    const value = Number(payload.value ?? 1);
+
+                    window.GAIntegration.debugLog('ads begin_checkout', { send_to: sendTo, value, currency });
+                    window.gtag && gtag('event', 'conversion', { send_to: sendTo, value, currency });
+                } catch (e) {
+                    window.GAIntegration.debugLog('ads begin_checkout error', e);
+                }
+            },
+
+            /**
+             * 方法：追踪 Google Ads 的 Page View 转化事件
+             * Chinese: 触发 Ads page_view 转化（使用 adsPageViewLabel）
+             * English: Fire Ads page_view conversion (uses adsPageViewLabel)
+             */
+            trackAdsPageView(payload = {}) {
+                try {
+                    const sendTo = window.GAIntegration.getAdsSendTo('adsPageViewLabel');
+                    if (!sendTo) return;
+
+                    const currency = payload.currency || config.currency || 'USD';
+                    const value = Number(payload.value ?? 1);
+
+                    window.GAIntegration.debugLog('ads page_view', { send_to: sendTo, value, currency });
+                    window.gtag && gtag('event', 'conversion', { send_to: sendTo, value, currency });
+                } catch (e) {
+                    window.GAIntegration.debugLog('ads page_view error', e);
                 }
             },
 
@@ -120,6 +194,14 @@ export default {
             app.config.globalProperties.$emitter.on('update-mini-cart', (cart) => {
                 window.GAIntegration.debugLog('emitter:update-mini-cart', cart);
             });
+        }
+
+        // Chinese: 如果配置了 Page View 标签，则在页面加载后自动触发一次
+        // English: Auto-fire Ads page_view once per page load if label configured
+        try {
+            window.GAIntegration.trackAdsPageView();
+        } catch (e) {
+            window.GAIntegration.debugLog('auto page_view error', e);
         }
     },
 };

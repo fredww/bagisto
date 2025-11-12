@@ -168,6 +168,10 @@
                         paymentMethods: null,
 
                         canPlaceOrder: false,
+
+                        // Chinese: 标记是否已触发 begin_checkout（避免重复触发）
+                        // English: Flag to ensure begin_checkout fires only once
+                        hasFiredBeginCheckout: false,
                     }
                 },
 
@@ -176,12 +180,26 @@
                 },
 
                 methods: {
+                    // Chinese: 拉取购物车数据；首次成功后触发 Ads begin_checkout 事件
+                    // English: Fetch cart; on first success fire Ads begin_checkout conversion
                     getCart() {
                         this.$axios.get("{{ route('shop.checkout.onepage.summary') }}")
                             .then(response => {
                                 this.cart = response.data.data;
 
                                 this.scrollToCurrentStep();
+
+                                try {
+                                    if (!this.hasFiredBeginCheckout && window.GAIntegration) {
+                                        const currency = this.cart?.cart_currency_code || undefined;
+                                        const value = Number(this.cart?.grand_total ?? this.cart?.base_grand_total ?? 1);
+
+                                        window.GAIntegration.trackAdsBeginCheckout({ currency, value });
+                                        this.hasFiredBeginCheckout = true;
+                                    }
+                                } catch (e) {
+                                    window.GAIntegration && window.GAIntegration.debugLog && window.GAIntegration.debugLog('begin_checkout trigger error', e);
+                                }
                             })
                             .catch(error => {});
                     },

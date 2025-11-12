@@ -7,6 +7,9 @@
     $adsEnabled       = (bool) core()->getConfigData('general.content.analytics.ads_enabled');
     $adsConversionId  = (string) core()->getConfigData('general.content.analytics.ads_conversion_id');
     $adsPurchaseLabel = (string) core()->getConfigData('general.content.analytics.ads_purchase_label');
+    $adsAddToCartLabel = (string) core()->getConfigData('general.content.analytics.ads_add_to_cart_label');
+    $adsBeginCheckoutLabel = (string) core()->getConfigData('general.content.analytics.ads_begin_checkout_label');
+    $adsPageViewLabel = (string) core()->getConfigData('general.content.analytics.ads_page_view_label');
     $debugMode        = (bool) core()->getConfigData('general.content.analytics.debug');
     $currency         = core()->getCurrentCurrency()?->code ?? 'USD';
     $scriptId         = $ga4Enabled && $measurementId ? $measurementId : ($adsEnabled && $adsConversionId ? $adsConversionId : null);
@@ -37,6 +40,9 @@
             adsEnabled: {{ $adsEnabled ? 'true' : 'false' }},
             adsConversionId: '{{ $adsConversionId }}',
             adsPurchaseLabel: '{{ $adsPurchaseLabel }}',
+            adsAddToCartLabel: '{{ $adsAddToCartLabel }}',
+            adsBeginCheckoutLabel: '{{ $adsBeginCheckoutLabel }}',
+            adsPageViewLabel: '{{ $adsPageViewLabel }}',
             debug: {{ $debugMode ? 'true' : 'false' }},
             currency: '{{ $currency }}'
         };

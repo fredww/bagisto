@@ -453,6 +453,12 @@
                                         value: Number(lastItem?.total ?? lastItem?.price ?? this.product?.price ?? 0),
                                         item: lastItem,
                                     });
+                                    // Chinese: 触发 Google Ads 加入购物车转化事件（如果配置了标签）
+                                    // English: Fire Google Ads add_to_cart conversion when label is configured
+                                    window.GAIntegration && window.GAIntegration.trackAdsAddToCart({
+                                        currency: window.__GA_CONFIG__?.currency,
+                                        value: Number(lastItem?.total ?? 1)
+                                    });
                                 } catch (e) {
                                     window.GAIntegration && window.GAIntegration.debugLog('card.add_to_cart hook error', e);
                                 }
