@@ -1,5 +1,5 @@
 <?php
-
+//php artisan sitemap:generate --output=public/sitemap.xml
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;

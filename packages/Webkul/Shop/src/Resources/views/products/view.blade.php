@@ -534,6 +534,26 @@
                                     @endif
                                 </div>
 
+                                <!-- Buy Now Button -->
+                                @if (core()->getConfigData('sales.checkout.shopping_cart.cart_page'))
+                                    {!! view_render_event('bagisto.shop.products.view.buy_now.before', ['product' => $product]) !!}
+
+                                    @if (core()->getConfigData('catalog.products.storefront.buy_now_button_display'))
+                                        <x-shop::button
+                                            type="submit"
+                                            class="primary-button mt-5 w-full max-w-[470px] max-md:py-3 max-sm:mt-3 max-sm:rounded-lg max-sm:py-1.5"
+                                            button-type="primary-button"
+                                            :title="trans('shop::app.products.view.buy-now')"
+                                            :disabled="! $product->isSaleable(1)"
+                                            ::loading="isStoring.buyNow"
+                                            @click="is_buy_now=1;"
+                                            ::disabled="isStoring.buyNow"
+                                        />
+                                    @endif
+
+                                    {!! view_render_event('bagisto.shop.products.view.buy_now.after', ['product' => $product]) !!}
+                                @endif
+
                                 <!-- Shipping Info and Description -->
                                 <div class="mt-8 max-w-[470px] max-sm:mt-4 product-description-wrapper">
                                     @php
@@ -568,26 +588,6 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- Buy Now Button -->
-                                @if (core()->getConfigData('sales.checkout.shopping_cart.cart_page'))
-                                    {!! view_render_event('bagisto.shop.products.view.buy_now.before', ['product' => $product]) !!}
-
-                                    @if (core()->getConfigData('catalog.products.storefront.buy_now_button_display'))
-                                        <x-shop::button
-                                            type="submit"
-                                            class="primary-button mt-5 w-full max-w-[470px] max-md:py-3 max-sm:mt-3 max-sm:rounded-lg max-sm:py-1.5"
-                                            button-type="primary-button"
-                                            :title="trans('shop::app.products.view.buy-now')"
-                                            :disabled="! $product->isSaleable(1)"
-                                            ::loading="isStoring.buyNow"
-                                            @click="is_buy_now=1;"
-                                            ::disabled="isStoring.buyNow"
-                                        />
-                                    @endif
-
-                                    {!! view_render_event('bagisto.shop.products.view.buy_now.after', ['product' => $product]) !!}
-                                @endif
 
                                 {!! view_render_event('bagisto.shop.products.view.additional_actions.before', ['product' => $product]) !!}
 
