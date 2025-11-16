@@ -162,15 +162,12 @@ class ImportShopifyProducts extends Command
 
                 $data = $response->json();
 
-                // $data = file_get_contents('/Users/niaoqing/Sites/pt/bagisto/public_html/shopify_products.json');
-                // $data = json_decode($data, true);
-
                 // 保存采集到的JSON：格式为 "collection名称_page.json"，保存到 storage/app/shopify/
                 try {
                     $collectionSlug = Str::slug($collection, '_');
                     $fileName = $collectionSlug . '_' . $page . '.json';
                     Storage::disk('local')->put('shopify/' . $fileName, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
-                    $this->info("已保存采集数据: storage/app/shopify/{$fileName}");
+                    $this->info('已保存采集数据: ' . storage_path('app/shopify/' . $fileName));
                 } catch (\Throwable $e) {
                     $this->warn('保存采集数据失败: ' . $e->getMessage());
                 }
