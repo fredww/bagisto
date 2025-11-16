@@ -12,6 +12,8 @@ use Webkul\Attribute\Repositories\AttributeOptionRepository;
 
 /**
  * sudo -u www php artisan google:generate-feed --channel=default --locale=en --output=public/feeds.xml --base-url=https://kiaoa.com
+ * sudo -u www php artisan google:generate-feed --channel=default --locale=en --output=public/zyn.xml --base-url=https://kiaoa.com --category=34
+ * sudo -u www php artisan google:generate-feed --channel=default --locale=en --output=public/feeds.xml --base-url=https://kiaoa.com --exclude-category=34
  * 生成 Google Merchant Center Feed 的命令
  * Command to generate Google Merchant Center Feed
  */
@@ -27,6 +29,7 @@ class GenerateGoogleFeed extends Command
                             {--locale=en : Locale code (default: en)}
                             {--output=public/google-feed.xml : Output file path}
                             {--category= : Category ID(s), comma-separated}
+                            {--exclude-category= : Exclude Category ID(s), comma-separated}
                             {--base-url= : Base URL for product links (default: from config)}';
 
     /**
@@ -73,6 +76,7 @@ class GenerateGoogleFeed extends Command
         $path = $this->resolveOutputPath($outputOption);
         $baseUrl = $this->option('base-url') ?? config('app.url');
         $categoryOption = $this->option('category');
+        $excludeCategoryOption = $this->option('exclude-category');
 
         $this->info("开始生成 Google Feed...");
         $this->info("Channel: {$channelCode}");
@@ -110,6 +114,20 @@ class GenerateGoogleFeed extends Command
                     $query = $query->whereHas('product', function ($q) use ($categoryIds) {
                         $q->whereHas('categories', function ($sub) use ($categoryIds) {
                             $sub->whereIn('categories.id', $categoryIds);
+                        });
+                    });
+                }
+            }
+
+            if (! empty($excludeCategoryOption)) {
+                $excludeCategoryIds = array_values(array_filter(array_map('intval', explode(',', $excludeCategoryOption))));
+
+                if (! empty($excludeCategoryIds)) {
+                    $this->info('Exclude Category IDs: ' . implode(',', $excludeCategoryIds));
+
+                    $query = $query->whereDoesntHave('product', function ($q) use ($excludeCategoryIds) {
+                        $q->whereHas('categories', function ($sub) use ($excludeCategoryIds) {
+                            $sub->whereIn('categories.id', $excludeCategoryIds);
                         });
                     });
                 }
