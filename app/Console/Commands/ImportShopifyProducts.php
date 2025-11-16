@@ -27,7 +27,7 @@ class ImportShopifyProducts extends Command
      * # 导入单个产品
      * php artisan shopify:import-products https://7pp15d-mn.myshopify.com --collection=spinning-reel --limit=1
      * # 批量导入
-     * php artisan shopify:import-products https://7pp15d-mn.myshopify.com --collection=spinning-reel --limit=50
+     * php artisan shopify:import-products https://ghacnj.com --collection=zyn --limit=50
      * @var string
     */
     protected $signature = 'shopify:import-products 
@@ -164,6 +164,16 @@ class ImportShopifyProducts extends Command
 
                 // $data = file_get_contents('/Users/niaoqing/Sites/pt/bagisto/public_html/shopify_products.json');
                 // $data = json_decode($data, true);
+
+                // 保存采集到的JSON：格式为 "collection名称_page.json"，保存到 storage/app/shopify/
+                try {
+                    $collectionSlug = Str::slug($collection, '_');
+                    $fileName = $collectionSlug . '_' . $page . '.json';
+                    Storage::disk('local')->put('shopify/' . $fileName, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+                    $this->info("已保存采集数据: storage/app/shopify/{$fileName}");
+                } catch (\Throwable $e) {
+                    $this->warn('保存采集数据失败: ' . $e->getMessage());
+                }
                 
                 if (empty($data['products'])) {
                     $this->info("集合 {$collection} 没有更多产品");
@@ -1196,7 +1206,13 @@ class ImportShopifyProducts extends Command
         if (!empty($shopifyProduct['variants']) && is_array($shopifyProduct['variants'])) {
             foreach ($shopifyProduct['variants'] as $variant) {
                 if (isset($variant['price']) && is_numeric($variant['price'])) {
-                    $variantPrice = (float) $variant['price'];
+
+                    if(isset($variant['title']) && $variant['title'] == '1 Pack'){
+                        $variantPrice = 7.99;
+                    }else{
+                        $variantPrice = (float) $variant['price'];
+                    }
+                    
                     if ($variantPrice > 0) {
                         $price = $variantPrice;
                         break; // 使用第一个有效价格
@@ -1421,6 +1437,27 @@ class ImportShopifyProducts extends Command
         if ($attribute) {
             $this->info("属性已存在: {$optionName} (code: {$attributeCode})");
             $this->info("Attribute already exists: {$optionName} (code: {$attributeCode})");
+
+            try {
+                $group = $attributeFamily->attribute_groups()->orderBy('position')->first();
+
+                if ($group) {
+                    $exists = DB::table('attribute_group_mappings')
+                        ->join('attribute_groups', 'attribute_groups.id', '=', 'attribute_group_mappings.attribute_group_id')
+                        ->where('attribute_group_mappings.attribute_id', $attribute->id)
+                        ->where('attribute_groups.attribute_family_id', $attributeFamily->id)
+                        ->exists();
+
+                    if (! $exists) {
+                        $position = (int) DB::table('attribute_group_mappings')
+                            ->where('attribute_group_id', $group->id)
+                            ->max('position');
+
+                        $group->custom_attributes()->save($attribute, ['position' => $position + 1]);
+                    }
+                }
+            } catch (\Throwable $th) {}
+
             return $attribute;
         }
 
@@ -1450,6 +1487,18 @@ class ImportShopifyProducts extends Command
         $attribute = $this->attributeRepository->create($attributeData);
         
         $this->info("属性创建成功: {$optionName} (ID: {$attribute->id})");
+
+        try {
+            $group = $attributeFamily->attribute_groups()->orderBy('position')->first();
+
+            if ($group) {
+                $position = (int) DB::table('attribute_group_mappings')
+                    ->where('attribute_group_id', $group->id)
+                    ->max('position');
+
+                $group->custom_attributes()->save($attribute, ['position' => $position + 1]);
+            }
+        } catch (\Throwable $th) {}
 
         return $attribute;
     }
