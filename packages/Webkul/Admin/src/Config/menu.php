@@ -57,6 +57,12 @@ return [
         'route'      => 'admin.sales.bookings.index',
         'sort'       => 6,
         'icon'       => '',
+    ], [
+        'key'        => 'sales.fortune_payments',
+        'name'       => 'FortunePay Payments',
+        'route'      => 'admin.fortune.payments.index',
+        'sort'       => 7,
+        'icon'       => '',
     ],
 
     /**

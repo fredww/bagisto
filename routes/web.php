@@ -31,4 +31,7 @@ Route::prefix('admin/fortune-pay')->group(function () {
 
     Route::post('/config', [\App\Http\Controllers\Admin\FortunePayConfigController::class, 'update'])
         ->name('admin.fortune.config.update');
+
+    Route::get('/payments', [\App\Http\Controllers\Admin\FortunePayPaymentController::class, 'index'])
+        ->name('admin.fortune.payments.index');
 });

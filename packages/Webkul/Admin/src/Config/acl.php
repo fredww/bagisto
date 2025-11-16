@@ -105,6 +105,11 @@ return [
         'name'  => 'admin::app.acl.view',
         'route' => 'admin.sales.transactions.view',
         'sort'  => 1,
+    ], [
+        'key'   => 'sales.fortune_payments',
+        'name'  => 'FortunePay Payments',
+        'route' => 'admin.fortune.payments.index',
+        'sort'  => 6,
     ],
 
     /*
