@@ -27,7 +27,7 @@ class ImportShopifyProducts extends Command
      * # 导入单个产品
      * php artisan shopify:import-products https://7pp15d-mn.myshopify.com --collection=spinning-reel --limit=1
      * # 批量导入
-     * php artisan shopify:import-products https://ghacnj.com --collection=zyn --currency=USD --limit=50
+     * sudo -u www php artisan shopify:import-products https://ghacnj.com --collection=zyn --currency=USD --limit=50
      * @var string
     */
     protected $signature = 'shopify:import-products 
@@ -658,7 +658,9 @@ class ImportShopifyProducts extends Command
                     $variantPrice = $this->getProductPrice($shopifyVariant) ?: $this->getProductPrice(['variants' => [$shopifyVariant]]);
                     $variantWeight = $this->getProductWeight($shopifyVariant) ?: $this->getProductWeight(['variants' => [$shopifyVariant]]);
                     $variantQuantity = $this->getProductQuantity($shopifyVariant) ?: $this->getProductQuantity(['variants' => [$shopifyVariant]]);
-                    
+                    if($variantPrice  < 6){
+                        $variantPrice = 7.99;
+                    }
                     // 更新变体数据 - 确保正确关联父产品变体信息
                     // Update variant data - ensure correct association with parent variant info
                     $updateData = [
@@ -765,15 +767,19 @@ class ImportShopifyProducts extends Command
         
         if ($minVariantPrice !== null && $minVariantPrice >= 0) {
             try {
-                $this->productRepository->update([
-                    'price'  => $minVariantPrice,
-                    'channel'=> $channel->code,
-                    'locale' => 'en',
-                ], $configurableProduct->id);
+                $attributeValueRepository = app(\Webkul\Product\Repositories\ProductAttributeValueRepository::class);
+                $priceAttribute = $this->attributeRepository->findOneByField('code', 'price');
 
-                $reloaded = $this->productRepository->find($configurableProduct->id);
-                Event::dispatch('catalog.product.update.after', $reloaded);
-                $this->info("已更新可配置产品价格为最小变体价: {$minVariantPrice}");
+                if ($priceAttribute) {
+                    $attributeValueRepository->saveValues([
+                        'price'   => $minVariantPrice,
+                        'channel' => $channel->code,
+                    ], $configurableProduct, collect([$priceAttribute]));
+
+                    $reloaded = $this->productRepository->find($configurableProduct->id);
+                    Event::dispatch('catalog.product.update.after', $reloaded);
+                    $this->info("已更新可配置产品价格为最小变体价: {$minVariantPrice}");
+                }
             } catch (\Throwable $e) {
                 $this->warn("更新父产品价格失败: " . $e->getMessage());
             }
@@ -1258,10 +1264,9 @@ class ImportShopifyProducts extends Command
             foreach ($shopifyProduct['variants'] as $variant) {
                 if (isset($variant['price']) && is_numeric($variant['price'])) {
 
-                    if(isset($variant['title']) && $variant['title'] == '1 Pack'){
+                    $variantPrice = (float) $variant['price'];
+                    if($variantPrice < 6){
                         $variantPrice = 7.99;
-                    }else{
-                        $variantPrice = (float) $variant['price'];
                     }
                     
                     if ($variantPrice > 0) {
