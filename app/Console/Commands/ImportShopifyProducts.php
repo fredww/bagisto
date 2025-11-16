@@ -27,7 +27,7 @@ class ImportShopifyProducts extends Command
      * # 导入单个产品
      * php artisan shopify:import-products https://7pp15d-mn.myshopify.com --collection=spinning-reel --limit=1
      * # 批量导入
-     * php artisan shopify:import-products https://ghacnj.com --collection=zyn --limit=50
+     * php artisan shopify:import-products https://ghacnj.com --collection=zyn --currency=USD --limit=50
      * @var string
     */
     protected $signature = 'shopify:import-products 
@@ -555,6 +555,7 @@ class ImportShopifyProducts extends Command
         
         $updatedVariantsCount = 0;
         $failedVariantsCount = 0;
+        $minVariantPrice = null;
         
         // 为每个Shopify变体找到对应的Bagisto变体并更新
         // Find corresponding Bagisto variant for each Shopify variant and update
@@ -713,6 +714,14 @@ class ImportShopifyProducts extends Command
                         $this->info("  - Price: {$variantPrice}");
                         $this->info("  - Stock: {$variantQuantity}");
                         $this->info("  - Parent ID: {$configurableProduct->id}");
+
+                        if (is_numeric($variantPrice)) {
+                            if ($minVariantPrice === null) {
+                                $minVariantPrice = (float) $variantPrice;
+                            } else {
+                                $minVariantPrice = min($minVariantPrice, (float) $variantPrice);
+                            }
+                        }
                     } else {
                         $failedVariantsCount++;
                         $this->error("变体更新失败: {$variantName}");
@@ -754,6 +763,22 @@ class ImportShopifyProducts extends Command
         $this->info("  - Failed to update: {$failedVariantsCount}");
         $this->info("  - Total: " . count($shopifyVariants));
         
+        if ($minVariantPrice !== null && $minVariantPrice >= 0) {
+            try {
+                $this->productRepository->update([
+                    'price'  => $minVariantPrice,
+                    'channel'=> $channel->code,
+                    'locale' => 'en',
+                ], $configurableProduct->id);
+
+                $reloaded = $this->productRepository->find($configurableProduct->id);
+                Event::dispatch('catalog.product.update.after', $reloaded);
+                $this->info("已更新可配置产品价格为最小变体价: {$minVariantPrice}");
+            } catch (\Throwable $e) {
+                $this->warn("更新父产品价格失败: " . $e->getMessage());
+            }
+        }
+
         return $updatedVariantsCount > 0;
     }
 
