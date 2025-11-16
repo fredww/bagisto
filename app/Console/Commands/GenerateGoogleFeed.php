@@ -11,7 +11,7 @@ use Webkul\Product\ProductImage;
 use Webkul\Attribute\Repositories\AttributeOptionRepository;
 
 /**
- * sudo -u www php artisan google:generate-feed --channel=default --locale=en --output=feeds.xml --base-url=https://kiaoa.com
+ * sudo -u www php artisan google:generate-feed --channel=default --locale=en --output=public/feeds.xml --base-url=https://kiaoa.com
  * 生成 Google Merchant Center Feed 的命令
  * Command to generate Google Merchant Center Feed
  */
@@ -25,7 +25,8 @@ class GenerateGoogleFeed extends Command
     protected $signature = 'google:generate-feed 
                             {--channel= : Channel code (default: current channel)}
                             {--locale=en : Locale code (default: en)}
-                            {--output=storage/app/google-feed.xml : Output file path}
+                            {--output=public/google-feed.xml : Output file path}
+                            {--category= : Category ID(s), comma-separated}
                             {--base-url= : Base URL for product links (default: from config)}';
 
     /**
@@ -68,8 +69,10 @@ class GenerateGoogleFeed extends Command
     {
         $channelCode = $this->option('channel') ?? core()->getCurrentChannel()->code;
         $locale = $this->option('locale');
-        $outputPath = $this->option('output');
+        $outputOption = $this->option('output') ?? 'public/google-feed.xml';
+        $path = $this->resolveOutputPath($outputOption);
         $baseUrl = $this->option('base-url') ?? config('app.url');
+        $categoryOption = $this->option('category');
 
         $this->info("开始生成 Google Feed...");
         $this->info("Channel: {$channelCode}");
@@ -85,31 +88,53 @@ class GenerateGoogleFeed extends Command
                 return Command::FAILURE;
             }
 
-            // 获取所有启用的、可见的产品
-            $products = $this->productFlatRepository
+            // 获取所有启用的、可见的产品（可选按分类过滤）
+            $query = $this->productFlatRepository
                 ->where('channel', $channelCode)
                 ->where('locale', $locale)
                 ->where('status', 1)
                 ->where('visible_individually', 1)
-                ->whereNull('parent_id') // 只获取父产品，变体产品单独处理
+                ->whereNull('parent_id')
                 ->with([
                     'product' => function($query) {
                         $query->with(['variants', 'super_attributes', 'inventories', 'categories', 'images', 'parent.images']);
                     }
-                ])
-                ->get();
+                ]);
+
+            if (! empty($categoryOption)) {
+                $categoryIds = array_values(array_filter(array_map('intval', explode(',', $categoryOption))));
+
+                if (! empty($categoryIds)) {
+                    $this->info('Filter by Category IDs: ' . implode(',', $categoryIds));
+
+                    $query = $query->whereHas('product', function ($q) use ($categoryIds) {
+                        $q->whereHas('categories', function ($sub) use ($categoryIds) {
+                            $sub->whereIn('categories.id', $categoryIds);
+                        });
+                    });
+                }
+            }
+
+            $products = $query->get();
 
             $this->info("找到 " . $products->count() . " 个产品");
 
             // 生成 XML
             $xml = $this->generateXML($products, $baseUrl, $channelCode, $locale);
 
-            // 保存文件
-            Storage::put($outputPath, $xml);
-            
-            $fullPath = Storage::path($outputPath);
-            $this->info("Feed 文件已生成: {$fullPath}");
-            $this->info("文件大小: " . number_format(filesize($fullPath) / 1024, 2) . " KB");
+            // 保存文件至 public 或解析后的目标路径
+            $dir = dirname($path);
+            if (! is_dir($dir)) {
+                if (! mkdir($dir, 0755, true) && ! is_dir($dir)) {
+                    $this->error('Failed to create directory: ' . $dir);
+                    return Command::FAILURE;
+                }
+            }
+
+            file_put_contents($path, $xml);
+
+            $this->info("Feed 文件已生成: {$path}");
+            $this->info("文件大小: " . number_format(filesize($path) / 1024, 2) . " KB");
 
             return Command::SUCCESS;
         } catch (\Exception $e) {
@@ -117,6 +142,23 @@ class GenerateGoogleFeed extends Command
             $this->error($e->getTraceAsString());
             return Command::FAILURE;
         }
+    }
+
+    protected function resolveOutputPath(string $output): string
+    {
+        if (str_starts_with($output, 'public/')) {
+            return public_path(substr($output, 7));
+        }
+
+        if (str_starts_with($output, 'storage/')) {
+            return storage_path(substr($output, 8));
+        }
+
+        if ($output !== '' && $output[0] === DIRECTORY_SEPARATOR) {
+            return $output;
+        }
+
+        return base_path($output);
     }
 
     /**

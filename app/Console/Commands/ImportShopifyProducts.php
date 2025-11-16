@@ -27,7 +27,7 @@ class ImportShopifyProducts extends Command
      * # 导入单个产品
      * php artisan shopify:import-products https://7pp15d-mn.myshopify.com --collection=spinning-reel --limit=1
      * # 批量导入
-     * sudo -u www php artisan shopify:import-products https://ghacnj.com --collection=zyn --currency=USD --limit=50
+     * sudo -u www php artisan shopify:import-products https://ghacnj.com --collection=zyn --currency=USD
      * @var string
     */
     protected $signature = 'shopify:import-products 
