@@ -19,21 +19,23 @@ class FortunePayController extends Controller
      */
     public function redirect(Request $request, FortunePayService $service)
     {
-        $cart = Cart::getCart();
+        $orderId = session('order_id');
+        $orderRepo = app(OrderRepository::class);
+        $order = $orderId ? $orderRepo->find($orderId) : null;
 
-        if (! $cart) {
+        if (! $order) {
             return \redirect()->route('shop.checkout.cart.index');
         }
 
-        $billing = $cart->billing_address;
+        $billing = $order->billing_address;
 
         // Build payload from cart
         $items = [];
-        foreach ($cart->items as $item) {
+        foreach ($order->items as $item) {
             $items[] = [
                 'name'  => (string) $item->name,
                 'price' => number_format((float) $item->price, 2, '.', ''),
-                'qty'   => (int) $item->quantity,
+                'qty'   => (int) ($item->qty_ordered ?? 1),
                 'model' => (string) $item->sku,
                 // Optional fields from product
                 // 'link'  => '',
@@ -44,11 +46,13 @@ class FortunePayController extends Controller
 
         $address = trim((string) $billing->address ?? '');
 
+        $orderNo = (string) ($order->increment_id ?? $order->id);
+
         $data = [
-            'order_no'   => (string) $cart->id,
-            'invoice_id' => 'INV-' . $cart->id . '-' . time(),
-            'currency'   => (string) $cart->cart_currency_code,
-            'amount'     => number_format($cart->grand_total, 2, '.', ''),
+            'order_no'   => $orderNo,
+            'invoice_id' => 'INV-' . $orderNo . '-' . time(),
+            'currency'   => (string) $order->order_currency_code,
+            'amount'     => number_format((float) $order->grand_total, 2, '.', ''),
             'first_name' => (string) ($billing->first_name ?? ''),
             'last_name'  => (string) ($billing->last_name ?? ''),
             'email'      => (string) ($billing->email ?? ''),
@@ -58,10 +62,9 @@ class FortunePayController extends Controller
             'country'    => (string) ($billing->country ?? ''),
             'zip_code'   => (string) ($billing->postcode ?? ''),
             'zone'       => (string) ($billing->state ?? ''),
-            'subject'    => 'Order #' . $cart->id,
+            'subject'    => 'Order #' . $orderNo,
             'body'       => json_encode($items, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         ];
-
         $resp = $service->createPayment($data);
 
         $result = Arr::get($resp, 'result', []);
@@ -153,17 +156,8 @@ class FortunePayController extends Controller
             Log::warning('FortunePay return invalid signature', ['params' => $params]);
         }
 
-        // On success, create Bagisto order and redirect to success page
         if ($valid && $status === 'success') {
-            $cart = Cart::getCart();
-
-            if ($cart) {
-                $data = (new OrderResource($cart))->jsonSerialize();
-                $order = app(OrderRepository::class)->create($data);
-                Cart::deActivateCart();
-                session()->flash('order_id', $order->id);
-                return \redirect()->route('shop.checkout.onepage.success');
-            }
+            return \redirect()->route('shop.checkout.onepage.success');
         }
 
         $payment = FortunePayment::where('order_no', $orderNo)->where('invoice_id', $invoiceId)->latest('id')->first();
