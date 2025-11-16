@@ -11,7 +11,7 @@ use Webkul\Product\ProductImage;
 use Webkul\Attribute\Repositories\AttributeOptionRepository;
 
 /**
- * php artisan google:generate-feed --channel=default --locale=en --output=feeds.xml --base-url=https://kiaoa.com
+ * sudo -u www php artisan google:generate-feed --channel=default --locale=en --output=feeds.xml --base-url=https://kiaoa.com
  * 生成 Google Merchant Center Feed 的命令
  * Command to generate Google Merchant Center Feed
  */

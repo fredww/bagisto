@@ -51,7 +51,7 @@ class FortunePayController extends Controller
             'last_name'  => (string) ($billing->last_name ?? ''),
             'email'      => (string) ($billing->email ?? ''),
             'telephone'  => (string) ($billing->phone ?? ''),
-            'address'    => (string) (($billing->address1 ?? '') . ' ' . ($billing->address2 ?? '')),
+            'address'    => trim((string) (($billing->address1 ?? '') . ' ' . ($billing->address2 ?? ''))),
             'city'       => (string) ($billing->city ?? ''),
             'country'    => (string) ($billing->country ?? ''),
             'zip_code'   => (string) ($billing->postcode ?? ''),
