@@ -42,6 +42,8 @@ class FortunePayController extends Controller
             ];
         }
 
+        $address = trim((string) $billing->address ?? '');
+
         $data = [
             'order_no'   => (string) $cart->id,
             'invoice_id' => 'INV-' . $cart->id . '-' . time(),
@@ -51,8 +53,7 @@ class FortunePayController extends Controller
             'last_name'  => (string) ($billing->last_name ?? ''),
             'email'      => (string) ($billing->email ?? ''),
             'telephone'  => (string) ($billing->phone ?? ''),
-            'address'    => trim((string) (($billing->address1 ?? '') . ' ' . ($billing->address2 ?? ''))),
-            'streetAndNumber'    => trim((string) (($billing->address1 ?? '') . ' ' . ($billing->address2 ?? ''))),
+            'address'    => $address,
             'city'       => (string) ($billing->city ?? ''),
             'country'    => (string) ($billing->country ?? ''),
             'zip_code'   => (string) ($billing->postcode ?? ''),

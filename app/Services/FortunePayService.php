@@ -108,7 +108,6 @@ class FortunePayService
             'email' => (string) ($data['email'] ?? ''),
             'telephone' => (string) ($data['telephone'] ?? ''),
             'address' => trim((string) ($data['address'] ?? '')),
-            'streetAndNumber' => trim((string) ($data['address'] ?? '')),
             'city' => (string) ($data['city'] ?? ''),
             'country' => (string) ($data['country'] ?? ''),
             'zip_code' => (string) ($data['zip_code'] ?? ''),
