@@ -78,8 +78,8 @@
                 <!-- Product Carousel -->
                 <x-shop::products.carousel
                     :title="$data['title'] ?? ''"
-                    :src="route('shop.api.products.index', $data['filters'] ?? [])"
-                    :navigation-link="route('shop.search.index', $data['filters'] ?? [])"
+                    :src="route('shop.api.products.index', array_merge($data['filters'] ?? [], (($data['title'] ?? '') === 'All Products') ? ['exclude_name_contains' => 'zyn'] : []))"
+                    :navigation-link="route('shop.search.index', array_merge($data['filters'] ?? [], (($data['title'] ?? '') === 'All Products') ? ['exclude_name_contains' => 'zyn'] : []))"
                     aria-label="{{ trans('shop::app.home.index.product-carousel') }}"
                 />
 

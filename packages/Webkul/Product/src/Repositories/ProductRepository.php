@@ -404,6 +404,37 @@ class ProductRepository extends Repository
             }
 
             /**
+             * Exclude by name contains (custom filter).
+             */
+            if (! empty($params['exclude_name_contains'])) {
+                $nameAttribute = $this->attributeRepository->findOneByField('code', 'name');
+
+                if ($nameAttribute) {
+                    $alias = 'exclude_name_product_attribute_values';
+
+                    $qb->leftJoin('product_attribute_values as '.$alias, function ($join) use ($alias, $nameAttribute) {
+                        $join->on('products.id', '=', $alias.'.product_id')
+                            ->where($alias.'.attribute_id', $nameAttribute->id);
+
+                        if ($nameAttribute->value_per_channel) {
+                            if ($nameAttribute->value_per_locale) {
+                                $join->where($alias.'.channel', core()->getRequestedChannelCode())
+                                    ->where($alias.'.locale', core()->getRequestedLocaleCode());
+                            } else {
+                                $join->where($alias.'.channel', core()->getRequestedChannelCode());
+                            }
+                        } else {
+                            if ($nameAttribute->value_per_locale) {
+                                $join->where($alias.'.locale', core()->getRequestedLocaleCode());
+                            }
+                        }
+                    });
+
+                    $qb->where($alias.'.text_value', 'not like', '%'.urldecode($params['exclude_name_contains']).'%');
+                }
+            }
+
+            /**
              * Sort collection.
              */
             $sortOptions = $this->getSortOptions($params);

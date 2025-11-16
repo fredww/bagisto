@@ -122,14 +122,7 @@
                     this.$axios.get(this.src)
                         .then(response => {
                             this.isLoading = false;
-                            let items = response.data.data;
-
-                            if (this.title === 'All Products') {
-                                const re = /zyn/i;
-                                items = items.filter(p => !re.test(p.name));
-                            }
-
-                            this.products = items;
+                            this.products = response.data.data;
                         }).catch(error => {
                             console.log(error);
                         });

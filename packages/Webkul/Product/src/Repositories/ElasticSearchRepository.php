@@ -48,6 +48,19 @@ class ElasticSearchRepository
             $filters['filter'][]['term']['type'] = $params['type'];
         }
 
+        // Add exclusion by name (custom filter) via must_not
+        if (! empty($params['exclude_name_contains'])) {
+            $term = trim($params['exclude_name_contains']);
+            if ($term !== '') {
+                $filters['must_not'][] = [
+                    'query_string' => [
+                        'query'         => '*'.str_replace('"', '"', $term).'*',
+                        'default_field' => 'name',
+                    ],
+                ];
+            }
+        }
+
         $results = Elasticsearch::search([
             'index' => $params['index'] ?? $this->getIndexName(),
             'body'  => [
