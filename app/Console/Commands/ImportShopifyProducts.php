@@ -34,6 +34,7 @@ class ImportShopifyProducts extends Command
                             {shopify_url : The Shopify store URL (e.g., https://7pp15d-mn.myshopify.com/)}
                             {--collection=* : Specific collections to import (optional)}
                             {--limit=50 : Number of products to import per collection}
+                            {--currency= : Currency code to request (e.g., USD)}
                             {--dry-run : Run without actually importing}';
 
     /**
@@ -90,6 +91,7 @@ class ImportShopifyProducts extends Command
         $shopifyUrl = rtrim($this->argument('shopify_url'), '/');
         $collections = $this->option('collection');
         $limit = $this->option('limit');
+        $currency = $this->option('currency');
         $this->info("开始从 {$shopifyUrl} 导入产品...");
 
         try {
@@ -103,7 +105,7 @@ class ImportShopifyProducts extends Command
             $totalErrors = 0;
             foreach ($collections as $collection) {
                 $this->info("处理集合: {$collection}");
-                $result = $this->importCollectionProducts($shopifyUrl, $collection, $limit);
+                $result = $this->importCollectionProducts($shopifyUrl, $collection, $limit, $currency);
                 $totalImported += $result['imported'];
                 $totalErrors += $result['errors'];
             }
@@ -137,7 +139,7 @@ class ImportShopifyProducts extends Command
     /**
      * Import products from specified collection
      */
-    protected function importCollectionProducts($shopifyUrl, $collection, $limit)
+    protected function importCollectionProducts($shopifyUrl, $collection, $limit, $currency = null)
     {
         $imported = 0;
         $errors = 0;
@@ -145,12 +147,18 @@ class ImportShopifyProducts extends Command
 
         while ($imported < $limit) {
             $productsUrl = "{$shopifyUrl}/collections/{$collection}/products.json?limit=50&page={$page}";
+            if (!empty($currency)) {
+                $productsUrl .= "&currency=" . urlencode($currency);
+            }
+            $productsUrl .= "&_ts=" . time();
             $this->info("正在获取: {$productsUrl}");
             try {
                 $response = Http::timeout(60) // 增加超时时间到60秒
                     ->withHeaders([
                         'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
                         'Accept' => 'application/json, text/plain, */*',
+                        'Cache-Control' => 'no-cache',
+                        'Pragma' => 'no-cache',
                     ])
                     ->get($productsUrl);
                 $this->info("响应状态码: {$response->status()}");
@@ -168,6 +176,27 @@ class ImportShopifyProducts extends Command
                     $fileName = $collectionSlug . '_' . $page . '.json';
                     Storage::disk('local')->put('shopify/' . $fileName, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
                     $this->info('已保存采集数据: ' . storage_path('app/shopify/' . $fileName));
+
+                    // 保存响应头与请求信息
+                    $headersPayload = [
+                        'fetched_at' => date('c'),
+                        'request'    => [
+                            'url'     => $productsUrl,
+                            'headers' => [
+                                'User-Agent'    => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+                                'Accept'        => 'application/json, text/plain, */*',
+                                'Cache-Control' => 'no-cache',
+                                'Pragma'        => 'no-cache',
+                            ],
+                        ],
+                        'response'   => [
+                            'status'  => $response->status(),
+                            'headers' => $response->headers(),
+                        ],
+                    ];
+                    $headersFile = $collectionSlug . '_' . $page . '.headers.json';
+                    Storage::disk('local')->put('shopify/' . $headersFile, json_encode($headersPayload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+                    $this->info('已保存响应头: ' . storage_path('app/shopify/' . $headersFile));
                 } catch (\Throwable $e) {
                     $this->warn('保存采集数据失败: ' . $e->getMessage());
                 }
