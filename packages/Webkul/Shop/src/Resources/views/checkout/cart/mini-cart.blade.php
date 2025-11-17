@@ -59,7 +59,36 @@
                         </p>
                     </div>
 
-                    <p class="text-base max-md:text-zinc-500 max-sm:text-xs">
+                    <div v-if="cart" class="grid gap-3">
+                        <template v-if="isEligibleFree">
+                            <p class="text-base font-medium max-md:text-zinc-500 max-sm:text-xs">
+                                Congrats! You are eligible for FREE Shipping
+                            </p>
+
+                            <div class="relative mt-2 h-3 w-full rounded-full" style="background-color:#16a34a;">
+                                <div class="absolute inset-0 h-3 rounded-full" style="background-color:#16a34a;"></div>
+                                <span class="absolute right-0 z-10 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white" style="top:50%;transform:translateY(-50%);border:2px solid #16a34a;color:#16a34a;">
+                                    <span class="icon-star text-base"></span>
+                                </span>
+                            </div>
+                        </template>
+
+                        <template v-else>
+                            <p class="text-base max-md:text-zinc-500 max-sm:text-xs">
+                                Buy $@{{ formattedRemaining }} more to enjoy FREE Shipping
+                            </p>
+
+                            <div class="relative mt-2 h-3 w-full rounded-full bg-zinc-200">
+                                <div class="h-3 rounded-full" :style="{ width: progressPercent + '%', backgroundColor: '#f59e0b' }"></div>
+                                <span class="absolute z-10" :style="{ left: 'calc(' + progressPercent + '% - 12px)', top: '50%', transform: 'translateY(-50%)' }">
+                                    <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white" :style="{ border: '2px solid #f59e0b', color: '#f59e0b' }" >
+                                        <span class="icon-star text-base"></span>
+                                    </span>
+                                </span>
+                            </div>
+                        </template>
+                    </div>
+                    <p v-else class="text-base max-md:text-zinc-500 max-sm:text-xs">
                         {{ core()->getConfigData('sales.checkout.mini_cart.offer_info')}}
                     </p>
 
@@ -391,6 +420,8 @@
                         prices: "{{ core()->getConfigData('sales.taxes.shopping_cart.display_prices') }}",
                         subtotal: "{{ core()->getConfigData('sales.taxes.shopping_cart.display_subtotal') }}",
                     },
+
+                    freeShippingThreshold: parseFloat("{{ core()->getConfigData('sales.carriers.free.minimum_amount') }}") || 59.99,
                 }
             },
 
@@ -458,6 +489,36 @@
                             });
                         }
                     });
+                },
+            },
+
+            computed: {
+                subtotalForThreshold() {
+                    if (!this.cart) return 0;
+                    if (this.displayTax.subtotal == 'including_tax' || this.displayTax.subtotal == 'both') {
+                        return Number(this.cart?.sub_total_incl_tax || 0);
+                    }
+                    return Number(this.cart?.sub_total || 0);
+                },
+
+                remainingToFree() {
+                    const rem = (this.freeShippingThreshold || 0) - this.subtotalForThreshold;
+                    return rem > 0 ? rem : 0;
+                },
+
+                formattedRemaining() {
+                    return this.remainingToFree.toFixed(2);
+                },
+
+                progressPercent() {
+                    const threshold = this.freeShippingThreshold || 0;
+                    if (threshold <= 0) return 0;
+                    const pct = (this.subtotalForThreshold / threshold) * 100;
+                    return Math.max(0, Math.min(100, isFinite(pct) ? pct : 0));
+                },
+
+                isEligibleFree() {
+                    return this.subtotalForThreshold >= (this.freeShippingThreshold || 0);
                 },
             },
         });
