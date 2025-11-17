@@ -1,41 +1,35 @@
-<!-- 方法说明（中文）：支付返回页（非成功时展示信息） -->
-<!-- Purpose (English): Payment return page to show info when not successful -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Payment Result</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <style>
-        body { font-family: sans-serif; padding: 2rem; }
-        .ok { color: #2e7d32; }
-        .fail { color: #c62828; }
-        .btn { display: inline-block; padding: 0.6rem 1rem; background: #2d7dff; color: #fff; border-radius: 4px; text-decoration: none; }
-    </style>
-</head>
-<body>
-    <h3>Payment Return</h3>
-    @if($valid)
-        <p class="ok">Signature verified.</p>
-    @else
-        <p class="fail">Signature invalid.</p>
-    @endif
+<x-shop::layouts>
+    <x-slot:title>
+        Payment Result
+    </x-slot>
 
-    @if(!empty($failureCode))
-        <p class="fail">Failure Code: {{ $failureCode }}</p>
-        @if(!empty($failureMsg))
-            <p class="fail">Message: {{ $failureMsg }}</p>
-        @endif
-    @endif
+    <div class="container px-[60px] max-lg:px-8 max-md:px-4">
+        <div class="mx-auto mt-10 max-w-[720px] rounded-xl border border-zinc-200 bg-white p-8 shadow-sm max-md:mt-6 max-md:p-6">
+            <h1 class="text-2xl font-semibold text-gray-800">Payment Return</h1>
 
-    @if(!empty($payment))
-        <p>Invoice: {{ $payment->invoice_id }}</p>
-        <p>Order No: {{ $payment->order_no }}</p>
-        <p>Status: {{ $payment->status }}</p>
-    @endif
+            @if(!empty($failureCode))
+                <div class="mt-4 rounded-lg bg-red-50 p-4 text-red-700">
+                    <p class="font-medium">Failure Code: {{ $failureCode }}</p>
+                    @if(!empty($failureMsg))
+                        <p class="mt-1">Message: {{ $failureMsg }}</p>
+                    @endif
+                </div>
+            @endif
 
-    <p>
-        <a class="btn" href="{{ route('shop.checkout.cart.index') }}">Back to Cart</a>
-    </p>
-</body>
-</html>
+            @if(!empty($payment))
+                <div class="mt-6 grid gap-2 text-gray-700">
+                    <p><span class="font-medium">Invoice:</span> {{ $payment->invoice_id }}</p>
+                    <p><span class="font-medium">Order No:</span> {{ $payment->order_no }}</p>
+                    <p><span class="font-medium">Status:</span> {{ $payment->status }}</p>
+                </div>
+            @endif
+
+            <a
+                href="{{ route('shop.checkout.cart.index') }}"
+                class="primary-button mt-8 inline-block"
+            >
+                Back to Cart
+            </a>
+        </div>
+    </div>
+</x-shop::layouts>
