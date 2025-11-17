@@ -2,7 +2,7 @@
 use Illuminate\Support\Facades\Route;
 
 // Fortune Pay public endpoints
-Route::prefix('fortune')->group(function () {
+Route::prefix('fortune')->middleware(['shop'])->group(function () {
     // 下单
     Route::post('/create-payment', [\App\Http\Controllers\FortunePayController::class, 'createPayment'])
         ->name('fortune.create');

@@ -146,10 +146,16 @@ class FortunePayController extends Controller
         $invoiceId = (string) ($params['invoice_id'] ?? '');
         $status = $failureCode === 'success' ? 'success' : 'failed';
 
+        // 用户取消支付
+        $failure_msg = isset($params['failure_msg']) ? (string) $params['failure_msg'] : '';
+        if ($failure_msg === '用户取消') {
+            $failure_msg = 'canceled';
+        }
+
         if ($valid) {
             $service->updatePaymentStatus($orderNo, $invoiceId, $status, [
                 'failure_code' => $failureCode,
-                'failure_msg' => (string) ($params['failure_msg'] ?? ''),
+                'failure_msg' => $failure_msg,
                 'returned_at' => now(),
             ]);
         } else {
@@ -165,7 +171,7 @@ class FortunePayController extends Controller
         return \view('fortune.return', [
             'valid' => $valid,
             'failureCode' => $failureCode,
-            'failureMsg' => (string) ($params['failure_msg'] ?? ''),
+            'failureMsg' => $failure_msg,
             'payment' => $payment,
         ]);
     }
