@@ -15,6 +15,10 @@ Route::prefix('fortune')->middleware(['shop'])->group(function () {
     Route::get('/return', [\App\Http\Controllers\FortunePayController::class, 'return'])
         ->name('fortune.return');
 
+    // 成功回调
+    Route::get('/success', [\App\Http\Controllers\FortunePayController::class, 'success'])
+        ->name('fortune.success');
+
     // 重定向到网关
     Route::get('/redirect', [\App\Http\Controllers\FortunePayController::class, 'redirect'])
         ->name('fortune.redirect');

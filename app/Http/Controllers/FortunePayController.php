@@ -186,6 +186,53 @@ class FortunePayController extends Controller
     }
 
     /**
+     * 方法说明（中文）：支付成功回调（与 return 相同处理流程）
+     * Purpose (English): Handle success callback; same business logic as return
+     */
+    public function success(Request $request, FortunePayService $service)
+    {
+        $params = $request->all();
+        $config = $service->getConfig();
+        if (!empty($config['debug_log'])) {
+            Log::channel('fortune_return')->info('FortunePay success params', ['params' => $params]);
+        }
+        $valid = $service->verifyToken($params);
+
+        $failureCode = (string) ($params['failure_code'] ?? 'failed');
+        $orderNo = (string) ($params['order_no'] ?? '');
+        $invoiceId = (string) ($params['invoice_id'] ?? '');
+        $status = $failureCode === 'success' ? 'success' : 'failed';
+
+        $failure_msg = isset($params['failure_msg']) ? (string) $params['failure_msg'] : '';
+        if ($failure_msg === '用户取消') {
+            $failure_msg = 'canceled';
+        }
+
+        if ($valid) {
+            $service->updatePaymentStatus($orderNo, $invoiceId, $status, [
+                'failure_code' => $failureCode,
+                'failure_msg' => $failure_msg,
+                'returned_at' => now(),
+            ]);
+        } else {
+            Log::warning('FortunePay success invalid signature', ['params' => $params]);
+        }
+
+        if ($valid && $status === 'success') {
+            return \redirect()->route('shop.checkout.onepage.success');
+        }
+
+        $payment = FortunePayment::where('order_no', $orderNo)->where('invoice_id', $invoiceId)->latest('id')->first();
+
+        return \view('fortune.return', [
+            'valid' => $valid,
+            'failureCode' => $failureCode,
+            'failureMsg' => $failure_msg,
+            'payment' => $payment,
+        ]);
+    }
+
+    /**
      * 查询支付状态
      * Purpose: Query payment status locally by order_no or invoice_id
      */
