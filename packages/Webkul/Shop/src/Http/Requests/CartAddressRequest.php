@@ -51,6 +51,7 @@ class CartAddressRequest extends FormRequest
             "{$addressType}.last_name"    => ['required'],
             "{$addressType}.email"        => ['required'],
             "{$addressType}.address"      => ['required', 'array', 'min:1'],
+            "{$addressType}.address.*"    => [new \Webkul\Core\Rules\NoPoBox],
             "{$addressType}.city"         => ['required'],
             "{$addressType}.country"      => core()->isCountryRequired() ? ['required'] : ['nullable'],
             "{$addressType}.state"        => core()->isStateRequired() ? ['required'] : ['nullable'],

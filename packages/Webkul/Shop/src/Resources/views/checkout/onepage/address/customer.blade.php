@@ -515,10 +515,15 @@
                                 let errors = {};
 
                                 Object.keys(error.response.data.errors).forEach(key => {
-                                    errors[this.activeAddressForm + '.' + key] = error.response.data.errors[key];
+                                    const fixedKey = key.replace(/(\.address)\.(\d+)/, '$1.[$2]');
+                                    errors[this.activeAddressForm + '.' + fixedKey] = error.response.data.errors[key];
                                 });
 
                                 setErrors(errors);
+
+                                if (error.response.data.message) {
+                                    this.$emitter.emit('add-flash', { type: 'warning', message: error.response.data.message });
+                                }
                             }
 
                             return Promise.reject(error);
@@ -541,10 +546,15 @@
                                 let errors = {};
 
                                 Object.keys(error.response.data.errors).forEach(key => {
-                                    errors[this.activeAddressForm + '.' + key] = error.response.data.errors[key];
+                                    const fixedKey = key.replace(/(\.address)\.(\d+)/, '$1.[$2]');
+                                    errors[this.activeAddressForm + '.' + fixedKey] = error.response.data.errors[key];
                                 });
 
                                 setErrors(errors);
+
+                                if (error.response.data.message) {
+                                    this.$emitter.emit('add-flash', { type: 'warning', message: error.response.data.message });
+                                }
                             }
 
                             return Promise.reject(error);

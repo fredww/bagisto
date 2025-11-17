@@ -13,6 +13,7 @@ use Webkul\Sales\Transformers\OrderResource;
 
 class FortunePayController extends Controller
 {
+    
     /**
      * 方法说明（中文）：重定向到支付网关，先调用 create_payment 获取跳转 URL
      * Purpose (English): Redirect to the gateway by calling create_payment to get URL
@@ -111,6 +112,10 @@ class FortunePayController extends Controller
     public function notify(Request $request, FortunePayService $service)
     {
         $payload = $request->all();
+        $config = $service->getConfig();
+        if (!empty($config['debug_log'])) {
+            Log::channel('fortune_notify')->info('FortunePay notify payload', ['payload' => $payload]);
+        }
         $valid = $service->verifyToken($payload);
 
         if (!$valid) {
@@ -139,6 +144,10 @@ class FortunePayController extends Controller
     public function return(Request $request, FortunePayService $service)
     {
         $params = $request->all();
+        $config = $service->getConfig();
+        if (!empty($config['debug_log'])) {
+            Log::channel('fortune_return')->info('FortunePay return params', ['params' => $params]);
+        }
         $valid = $service->verifyToken($params);
 
         $failureCode = (string) ($params['failure_code'] ?? 'failed');

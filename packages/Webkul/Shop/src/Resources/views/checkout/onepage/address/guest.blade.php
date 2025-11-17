@@ -180,7 +180,19 @@
                             this.isStoring = false;
 
                             if (error.response.status == 422) {
-                                setErrors(error.response.data.errors);
+                                const rawErrors = error.response.data.errors || {};
+                                const normalized = {};
+
+                                Object.keys(rawErrors).forEach((key) => {
+                                    const fixedKey = key.replace(/(\.address)\.(\d+)/, '$1.[$2]');
+                                    normalized[fixedKey] = rawErrors[key];
+                                });
+
+                                setErrors(normalized);
+
+                                if (error.response.data.message) {
+                                    this.$emitter.emit('add-flash', { type: 'warning', message: error.response.data.message });
+                                }
                             }
                         });
                 },

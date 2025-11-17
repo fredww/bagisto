@@ -135,6 +135,22 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // FortunePay notify payloads
+        'fortune_notify' => [
+            'driver'               => 'single',
+            'path'                 => storage_path('logs/fortune_notify.log'),
+            'level'                => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
+        // FortunePay return params
+        'fortune_return' => [
+            'driver'               => 'single',
+            'path'                 => storage_path('logs/fortune_return.log'),
+            'level'                => env('LOG_LEVEL', 'debug'),
+            'replace_placeholders' => true,
+        ],
+
     ],
 
 ];

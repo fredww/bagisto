@@ -31,6 +31,7 @@ class AddressRequest extends FormRequest
             'first_name'   => ['required'],
             'last_name'    => ['required'],
             'address'      => ['required', 'array', 'min:1'],
+            'address.*'    => [new \Webkul\Core\Rules\NoPoBox],
             'country'      => core()->isCountryRequired() ? ['required'] : ['nullable'],
             'state'        => core()->isStateRequired() ? ['required'] : ['nullable'],
             'city'         => ['required', 'string'],
