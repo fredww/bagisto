@@ -73,25 +73,46 @@
                 {!! view_render_event('bagisto.shop.checkout.onepage.address.form.last_name.after') !!}
             </div>
 
-            <!-- Email -->
-            <x-shop::form.control-group>
-                <x-shop::form.control-group.label class="required !mt-0">
-                    @lang('shop::app.checkout.onepage.address.email')
-                </x-shop::form.control-group.label>
+            <!-- Email & Telephone in two columns -->
+            <div class="grid grid-cols-2 gap-x-5 max-md:grid-cols-1">
+                <x-shop::form.control-group>
+                    <x-shop::form.control-group.label class="required !mt-0">
+                        @lang('shop::app.checkout.onepage.address.email')
+                    </x-shop::form.control-group.label>
 
-                <x-shop::form.control-group.control
-                    type="email"
-                    ::name="controlName + '.email'"
-                    ::value="address.email"
-                    rules="required|email"
-                    :label="trans('shop::app.checkout.onepage.address.email')"
-                    placeholder="email@example.com"
-                />
+                    <x-shop::form.control-group.control
+                        type="email"
+                        ::name="controlName + '.email'"
+                        ::value="address.email"
+                        rules="required|email"
+                        :label="trans('shop::app.checkout.onepage.address.email')"
+                        placeholder="email@example.com"
+                    />
 
-                <x-shop::form.control-group.error ::name="controlName + '.email'" />
-            </x-shop::form.control-group>
+                    <x-shop::form.control-group.error ::name="controlName + '.email'" />
+                </x-shop::form.control-group>
 
-            {!! view_render_event('bagisto.shop.checkout.onepage.address.form.email.after') !!}
+                {!! view_render_event('bagisto.shop.checkout.onepage.address.form.email.after') !!}
+
+                <x-shop::form.control-group>
+                    <x-shop::form.control-group.label class="required !mt-0">
+                        @lang('shop::app.checkout.onepage.address.telephone')
+                    </x-shop::form.control-group.label>
+
+                    <x-shop::form.control-group.control
+                        type="text"
+                        ::name="controlName + '.phone'"
+                        ::value="address.phone"
+                        rules="required|phone"
+                        :label="trans('shop::app.checkout.onepage.address.telephone')"
+                        :placeholder="trans('shop::app.checkout.onepage.address.telephone')"
+                    />
+
+                    <x-shop::form.control-group.error ::name="controlName + '.phone'" />
+                </x-shop::form.control-group>
+
+                {!! view_render_event('bagisto.shop.checkout.onepage.address.form.phone.after') !!}
+            </div>
 
             <!-- Vat ID -->
             {{-- Chinese: 根据系统配置控制增值税号字段是否显示，仅限账单地址 --}}
@@ -279,25 +300,6 @@
                 {!! view_render_event('bagisto.shop.checkout.onepage.address.form.postcode.after') !!}
             </div>
 
-            <!-- Phone Number -->
-            <x-shop::form.control-group>
-                <x-shop::form.control-group.label class="required !mt-0">
-                    @lang('shop::app.checkout.onepage.address.telephone')
-                </x-shop::form.control-group.label>
-
-                <x-shop::form.control-group.control
-                    type="text"
-                    ::name="controlName + '.phone'"
-                    ::value="address.phone"
-                    rules="required|phone"
-                    :label="trans('shop::app.checkout.onepage.address.telephone')"
-                    :placeholder="trans('shop::app.checkout.onepage.address.telephone')"
-                />
-
-                <x-shop::form.control-group.error ::name="controlName + '.phone'" />
-            </x-shop::form.control-group>
-
-            {!! view_render_event('bagisto.shop.checkout.onepage.address.form.phone.after') !!}
         </div>
     </script>
 
