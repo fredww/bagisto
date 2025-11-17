@@ -350,10 +350,24 @@
                 },
             },
 
+            emits: ['required-complete'],
+
             mounted() {
                 this.getCountries();
 
                 this.getStates();
+
+                this.$nextTick(() => {
+                    this.initAutoProceed();
+                });
+            },
+
+            beforeUnmount() {
+                if (this.__requiredInputs && this.__onBlur) {
+                    this.__requiredInputs.forEach((el) => {
+                        el.removeEventListener('blur', this.__onBlur);
+                    });
+                }
             },
 
             methods: {
@@ -375,6 +389,37 @@
                             this.states = response.data.data;
                         })
                         .catch(() => {});
+                },
+
+                initAutoProceed() {
+                    const inputs = this.$el.querySelectorAll('[rules*="required"]');
+                    this.__requiredInputs = Array.from(inputs);
+                    this.__blurredNames = new Set();
+
+                    this.__onBlur = (e) => {
+                        const name = e.target.getAttribute('name') || e.target.id || '';
+                        if (name) {
+                            this.__blurredNames.add(name);
+                        }
+
+                        if (this.__requiredInputs.length && this.__blurredNames.size >= this.__requiredInputs.length) {
+                            const allFilled = this.__requiredInputs.every((el) => {
+                                if (el.type === 'checkbox' || el.type === 'radio') {
+                                    return !!el.checked;
+                                }
+                                const val = (el.value || '').toString().trim();
+                                return val.length > 0;
+                            });
+
+                            if (allFilled) {
+                                this.$emit('required-complete', this.controlName);
+                            }
+                        }
+                    };
+
+                    this.__requiredInputs.forEach((el) => {
+                        el.addEventListener('blur', this.__onBlur, { once: false });
+                    });
                 },
             }
         });

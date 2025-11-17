@@ -21,7 +21,7 @@
             v-slot="{ meta, errors, handleSubmit }"
             as="div"
         >
-            <form @submit="handleSubmit($event, addAddress)">
+            <form @submit="handleSubmit($event, addAddress)" ref="guestAddressForm">
                 <!-- Guest Billing Address -->
                 <div class="mb-4">
                     {!! view_render_event('bagisto.shop.checkout.onepage.address.guest.billing.before') !!}
@@ -37,6 +37,7 @@
                     <v-checkout-address-form
                         control-name="billing"
                         :address="cart.billing_address || undefined"
+                        v-on:required-complete="onRequiredComplete"
                     ></v-checkout-address-form>
 
                     <!-- Use for Shipping Checkbox -->
@@ -84,6 +85,7 @@
                         <v-checkout-address-form
                             control-name="shipping"
                             :address="cart.shipping_address || undefined"
+                            v-on:required-complete="onRequiredComplete"
                         ></v-checkout-address-form>
 
                         {!! view_render_event('bagisto.shop.checkout.onepage.address.guest.shipping.after') !!}
@@ -116,6 +118,11 @@
                     useBillingAddressForShipping: true,
 
                     isStoring: false,
+
+                    requiredFormsCompleted: {
+                        billing: false,
+                        shipping: false,
+                    },
                 }
             },
 
@@ -126,6 +133,28 @@
             },
 
             methods: {
+                onRequiredComplete(name) {
+                    if (name === 'billing') {
+                        this.requiredFormsCompleted.billing = true;
+                    } else if (name === 'shipping') {
+                        this.requiredFormsCompleted.shipping = true;
+                    }
+
+                    const needShipping = this.cart.have_stockable_items && !this.useBillingAddressForShipping;
+                    const ready = needShipping
+                        ? (this.requiredFormsCompleted.billing && this.requiredFormsCompleted.shipping)
+                        : this.requiredFormsCompleted.billing;
+
+                    if (ready && !this.isStoring) {
+                        const form = this.$refs.guestAddressForm;
+                        if (form && typeof form.requestSubmit === 'function') {
+                            form.requestSubmit();
+                        } else if (form) {
+                            const btn = form.querySelector('button[type="submit"], button');
+                            btn && btn.click();
+                        }
+                    }
+                },
                 addAddress(params, { setErrors }) {
                     this.isStoring = true;
 

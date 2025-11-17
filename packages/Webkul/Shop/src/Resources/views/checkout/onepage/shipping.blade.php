@@ -123,6 +123,22 @@
                         });
                 },
             },
+
+            watch: {
+                methods: {
+                    immediate: true,
+                    handler() {
+                        this.$nextTick(() => {
+                            const radios = this.$el.querySelectorAll('input[name="shipping_method"]');
+                            if (radios.length === 1) {
+                                const r = radios[0];
+                                r.checked = true;
+                                r.dispatchEvent(new Event('change', { bubbles: true }));
+                            }
+                        });
+                    }
+                }
+            }
         });
     </script>
 @endPushOnce
