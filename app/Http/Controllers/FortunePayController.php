@@ -172,6 +172,11 @@ class FortunePayController extends Controller
         }
 
         if ($valid && $status === 'success') {
+            $orderRepo = app(\Webkul\Sales\Repositories\OrderRepository::class);
+            $order = $orderRepo->findOneByField('increment_id', $orderNo);
+            if ($order) {
+                session(['order_id' => $order->id]);
+            }
             return \redirect()->route('shop.checkout.onepage.success');
         }
 
@@ -215,10 +220,17 @@ class FortunePayController extends Controller
                 'returned_at' => now(),
             ]);
         } else {
+            $params['token'] = $params['token'] ?? '';
+            $params['valid'] = $valid;
             Log::warning('FortunePay success invalid signature', ['params' => $params]);
         }
 
         if ($valid && $status === 'success') {
+            $orderRepo = app(\Webkul\Sales\Repositories\OrderRepository::class);
+            $order = $orderRepo->findOneByField('increment_id', $orderNo);
+            if ($order) {
+                session(['order_id' => $order->id]);
+            }
             return \redirect()->route('shop.checkout.onepage.success');
         }
 

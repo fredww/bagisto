@@ -268,6 +268,22 @@ class FortunePayService
 
         $update = array_merge(['status' => $status], $extra);
         $payment->update($update);
+
+        if ($status === 'success') {
+            try {
+                $orderRepo = app(\Webkul\Sales\Repositories\OrderRepository::class);
+                $order = $orderRepo->findOneByField('increment_id', $orderNo);
+                if ($order) {
+                    $orderRepo->updateOrderStatus($order, \Webkul\Sales\Models\Order::STATUS_PROCESSING);
+                }
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('FortunePay updateOrderStatus exception', [
+                    'order_no' => $orderNo,
+                    'invoice_id' => $invoiceId,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
     }
 
     /**
