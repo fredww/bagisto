@@ -96,6 +96,7 @@
                  */
                 registerEvents() {
                     this.$emitter.on('change-datagrid', this.updateProperties);
+                    this.$emitter.on('dxm-change-datagrid', this.updateProperties);
                 },
 
                 /**

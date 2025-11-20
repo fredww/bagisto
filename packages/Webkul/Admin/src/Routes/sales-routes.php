@@ -51,6 +51,12 @@ Route::prefix('sales')->group(function () {
         Route::get('search', 'search')->name('admin.sales.orders.search');
     });
 
+    Route::controller(\Webkul\Admin\Http\Controllers\Sales\DxmOrderExportController::class)->prefix('orders/dxm-export')->group(function () {
+        Route::post('start', 'start')->name('admin.sales.orders.dxm_export.start');
+        Route::get('status/{id}', 'status')->name('admin.sales.orders.dxm_export.status');
+        Route::get('download/{id}', 'download')->name('admin.sales.orders.dxm_export.download');
+    });
+
     /**
      * Refunds routes.
      */

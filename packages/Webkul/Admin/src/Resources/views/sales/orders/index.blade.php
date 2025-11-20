@@ -10,6 +10,12 @@
         </p>
 
         <div class="flex items-center gap-x-2.5">
+            <x-admin::datagrid.dxm-export 
+                start-url="{{ route('admin.sales.orders.dxm_export.start') }}" 
+                status-url-base="{{ route('admin.sales.orders.dxm_export.status', '') }}"
+                default-store-account="{{ core()->getConfigData('sales.order_settings.dxm_export.store_account_default') }}"
+            />
+
             <x-admin::datagrid.export src="{{ route('admin.sales.orders.index') }}" />
 
             {!! view_render_event('bagisto.admin.sales.orders.create.before') !!}

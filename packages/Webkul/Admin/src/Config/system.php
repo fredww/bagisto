@@ -2435,6 +2435,18 @@ return [
             ],
         ],
     ], [
+        'key'    => 'sales.order_settings.dxm_export',
+        'name'   => 'DXM 导出',
+        'info'   => '店小秘订单导出设置',
+        'sort'   => 3,
+        'fields' => [
+            [
+                'name'    => 'store_account_default',
+                'title'   => '店铺账号默认值',
+                'type'    => 'text',
+            ],
+        ],
+    ], [
         'key'  => 'sales.invoice_settings',
         'name' => 'admin::app.configuration.index.sales.invoice-settings.title',
         'info' => 'admin::app.configuration.index.sales.invoice-settings.info',

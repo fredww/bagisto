@@ -457,6 +457,11 @@
                         available: this.available,
                         applied: this.applied
                     });
+                    this.$emitter.emit('dxm-change-datagrid', {
+                        src: this.src,
+                        available: this.available,
+                        applied: this.applied
+                    });
                 },
 
                 //=======================================================================================
