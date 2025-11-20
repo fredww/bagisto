@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Barryvdh\Debugbar\Facades\Debugbar;
+use App\Console\Commands\ImportReviewsFromCsv;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\ParallelTesting;
 use Illuminate\Support\Facades\Request;
@@ -35,6 +36,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->commands([
+            ImportReviewsFromCsv::class,
+        ]);
         ParallelTesting::setUpTestDatabase(function (string $database, int $token) {
             Artisan::call('db:seed');
         });
