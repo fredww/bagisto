@@ -122,7 +122,7 @@ class DxmOrderExportJob implements ShouldQueue
                     '',
                     '',
                     '',
-                    '进口海关编码',//进口海关编码
+                    '',//进口海关编码
                     '',
                     '',
                 ];
