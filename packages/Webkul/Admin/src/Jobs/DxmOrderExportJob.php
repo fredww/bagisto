@@ -11,6 +11,8 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Storage;
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use Webkul\Sales\Models\Order;
 use Webkul\Sales\Models\OrderItem;
 
@@ -57,7 +59,8 @@ class DxmOrderExportJob implements ShouldQueue
             '订单号','店铺账号','sku','属性','数量','单价','总运费','币种','买家指定物流','发货仓库','买家姓名','地址1','地址2','区县','城市','省/州','国家二字码','邮编','电话','手机','E-mail','买家税号','门牌号','公司名','买家备注','图片网址','售出链接','中文报关名','英文报关名','申报金额（USD）','出口申报金额（USD）','出口企业名称','企业信用代码','申报重量（g）','材质','用途','海关编码','进口海关编码','报关属性','卖家税号（IOSS）','下单时间（北京时间）','客服备注','拣货备注'
         ];
         $sheet->fromArray($header, null, 'A1');
-        $rowIndex = 2;
+$rowIndex = 2;
+$sheet->getStyle('C:C')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_TEXT);
 
         $itemsQuery->orderBy('order_id')->chunk(500, function ($items) use ($sheet, &$rowIndex, $task) {
             foreach ($items as $item) {
@@ -121,13 +124,13 @@ class DxmOrderExportJob implements ShouldQueue
                     '',
                     '',
                     '',
-                    '',
                     '',//进口海关编码
                     '',
                     '',
                 ];
 
                 $sheet->fromArray($row, null, 'A'.$rowIndex);
+                $sheet->setCellValueExplicit('C'.$rowIndex, (string) $item->sku, DataType::TYPE_STRING);
                 $rowIndex++;
 
                 $task->processed_rows++;
