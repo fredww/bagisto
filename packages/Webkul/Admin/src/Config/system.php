@@ -188,6 +188,19 @@ return [
             ],
         ],
     ], [
+        'key'    => 'general.content.footer_company',
+        'name'   => 'admin::app.configuration.index.general.content.footer-company.title',
+        'info'   => 'admin::app.configuration.index.general.content.footer-company.info',
+        'sort'   => 2,
+        'fields' => [
+            [
+                'name'    => 'company_info',
+                'title'   => 'admin::app.configuration.index.general.content.footer-company.company-info',
+                'type'    => 'editor',
+                'default' => '<ul class="grid gap-3 text-sm"><li>Store Name:Kiaoa</li><li>Hours: Monday - Friday : 9am-5pm</li><li>Saturday - Sunday : Closed</li><li>Address:715 S Washington St</li><li>apt c2,Alexandria,VA,22314</li><li>Phoen:+1（703）356-7108</li><li>Email:help@kiaoa.com</li></ul>',
+            ],
+        ],
+    ], [
         'key'    => 'sales.payment_methods.paypal_apple_pay',
         'name'   => 'admin::app.configuration.index.sales.payment-methods.paypal-apple-pay',
         'info'   => 'admin::app.configuration.index.sales.payment-methods.paypal-apple-pay-info',

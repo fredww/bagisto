@@ -41,15 +41,13 @@
                 <path d="M5.5 7.5L10 12l4.5-4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
         </h3>
-            <ul id="footer-section-column_0" class="grid gap-3 text-sm" data-collapsible="mobile">
-                <li>Store Name:Kiaoa</li>
-                <li>Hours: Monday - Friday : 9am-5pm</li>
-                <li>Saturday - Sunday : Closed</li>
-                <li>Address:715 S Washington St</li>
-                <li>apt c2,Alexandria,VA,22314</li>
-                <li>Phoen:+1（703）356-7108</li>
-                <li>Email:help@kiaoa.com</li>
-            </ul>
+            @php
+                $companyInfoHtml = core()->getConfigData('general.content.footer_company.company_info') ?? '<ul class="grid gap-3 text-sm"><li>Store Name:Kiaoa</li><li>Hours: Monday - Friday : 9am-5pm</li><li>Saturday - Sunday : Closed</li><li>Address:715 S Washington St</li><li>apt c2,Alexandria,VA,22314</li><li>Phoen:+1（703）356-7108</li><li>Email:help@kiaoa.com</li></ul>';
+            @endphp
+
+            <div id="footer-section-column_0" class="grid gap-3 text-sm" data-collapsible="mobile">
+                {!! $companyInfoHtml !!}
+            </div>
         </div>
 
         <!-- 动态链接列（从主题定制取数据） -->
