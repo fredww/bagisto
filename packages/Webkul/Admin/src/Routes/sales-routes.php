@@ -38,6 +38,8 @@ Route::prefix('sales')->group(function () {
 
         Route::get('create/{cartId}', 'create')->name('admin.sales.orders.create');
 
+        Route::post('send-abandoned-reminder/{orderId}', 'sendAbandonedReminder')->name('admin.sales.orders.send_abandoned_reminder');
+
         Route::post('create/{cartId}', 'store')->name('admin.sales.orders.store');
 
         Route::get('view/{id}', 'view')->name('admin.sales.orders.view');

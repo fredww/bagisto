@@ -16,6 +16,8 @@ use Webkul\Customer\Repositories\CustomerGroupRepository;
 use Webkul\Sales\Repositories\OrderCommentRepository;
 use Webkul\Sales\Repositories\OrderRepository;
 use Webkul\Sales\Transformers\OrderResource;
+use Webkul\Marketing\Repositories\AbandonedOrderTemplateRepository;
+use Webkul\Core\Repositories\EmailLogRepository;
 
 class OrderController extends Controller
 {
@@ -258,5 +260,55 @@ class OrderController extends Controller
         if (! $cart->payment) {
             throw new \Exception(trans('admin::app.sales.orders.create.specify-payment-method'));
         }
+    }
+
+    public function sendAbandonedReminder(int $orderId)
+    {
+        $order = $this->orderRepository->findOrFail($orderId);
+
+        $subject = request()->input('subject');
+        $body    = request()->input('body');
+        $email   = request()->input('email') ?: $order->customer_email;
+
+        if (! $subject || ! $body) {
+            $template = app(AbandonedOrderTemplateRepository::class)->allActive()->first();
+            $subject ??= $template?->subject ?? 'Complete your order';
+            $body    ??= $template?->body ?? '';
+        }
+
+        $payload = [
+            'subject' => $subject,
+            'body'    => $body,
+        ];
+
+        try {
+            $mailable = new \Webkul\Shop\Mail\Order\AbandonedReminder($order, $payload);
+
+            $envelope = $mailable->envelope();
+
+            app(EmailLogRepository::class)->create([
+                'mailable_class'   => get_class($mailable),
+                'category'        => 'abandoned_order',
+                'recipient_email' => $email,
+                'recipient_name'  => $order->customer_full_name,
+                'subject'         => $envelope->subject,
+                'body'            => $payload['body'],
+                'status'          => 'queued',
+                'context_type'    => 'order',
+                'context_id'      => $order->id,
+                'order_id'        => $order->id,
+            ]);
+
+            \Mail::to($email)->queue($mailable);
+
+            $order->abandoned_email_sent_at = now();
+            $order->save();
+
+            session()->flash('success', 'Abandoned reminder sent');
+        } catch (\Exception $e) {
+            session()->flash('error', $e->getMessage());
+        }
+
+        return redirect()->back();
     }
 }

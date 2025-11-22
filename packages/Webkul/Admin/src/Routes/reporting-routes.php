@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use Webkul\Admin\Http\Controllers\Reporting\CustomerController;
 use Webkul\Admin\Http\Controllers\Reporting\ProductController;
 use Webkul\Admin\Http\Controllers\Reporting\SaleController;
+use Webkul\Admin\Http\Controllers\Reporting\AbandonedReminderReportController;
 
 /**
  * Reporting routes.
@@ -52,5 +53,9 @@ Route::prefix('reporting')->group(function () {
         Route::get('view', 'view')->name('admin.reporting.sales.view');
 
         Route::get('view/stats', 'viewStats')->name('admin.reporting.sales.view.stats');
+    });
+
+    Route::controller(AbandonedReminderReportController::class)->prefix('abandoned-reminders')->group(function () {
+        Route::get('', 'index')->name('admin.reporting.abandoned_reminders.index');
     });
 });

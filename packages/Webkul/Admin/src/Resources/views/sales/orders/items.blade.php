@@ -38,3 +38,54 @@
         </a>
     @endif
 </div>
+
+@php
+    $templateAb = app(\Webkul\Marketing\Repositories\AbandonedOrderTemplateRepository::class)->allActive()->first();
+    $defaultSubjectAb = $templateAb?->subject ?? 'Complete your order';
+    $defaultBodyAb = $templateAb?->body ?? '';
+    $eligible = in_array($order->status, [\Webkul\Sales\Models\Order::STATUS_PENDING, \Webkul\Sales\Models\Order::STATUS_PENDING_PAYMENT]) && ! $order->abandoned_email_sent_at;
+@endphp
+
+<div class="mt-1">
+    <x-admin::drawer>
+        <x-slot:toggle>
+            <button type="button" class="text-sm text-blue-600 transition-all hover:underline">发送弃单提醒</button>
+        </x-slot:toggle>
+
+        <x-slot:header>
+            <p class="text-xl font-medium dark:text-white">发送弃单提醒</p>
+        </x-slot:header>
+
+        <x-slot:content>
+            @if (! $eligible)
+                <div class="mb-2 text-sm text-gray-600">当前订单不满足发送条件（仅限待处理/待支付且未发送过）。</div>
+            @endif
+
+            <x-admin::form method="POST" :action="route('admin.sales.orders.send_abandoned_reminder', $order->id)">
+                <div class="grid gap-4">
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>邮箱</x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="email" name="email" :value="$order->customer_email" rules="required|email" />
+                        <x-admin::form.control-group.error control-name="email" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>标题</x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="text" name="subject" :value="$defaultSubjectAb" rules="required" />
+                        <x-admin::form.control-group.error control-name="subject" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>内容</x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="textarea" name="body">{!! $defaultBodyAb !!}</x-admin::form.control-group.control>
+                        <x-admin::form.control-group.error control-name="body" />
+                    </x-admin::form.control-group>
+
+                    <div class="flex justify-end gap-2">
+                        <button type="submit" class="primary-button" @if(! $eligible) disabled @endif>发送</button>
+                    </div>
+                </div>
+            </x-admin::form>
+        </x-slot:content>
+    </x-admin::drawer>
+</div>

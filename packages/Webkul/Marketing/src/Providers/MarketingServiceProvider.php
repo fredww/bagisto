@@ -5,6 +5,7 @@ namespace Webkul\Marketing\Providers;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\ServiceProvider;
 use Webkul\Marketing\Console\Commands\EmailsCommand;
+use Webkul\Marketing\Console\Commands\AbandonedOrderReminder;
 
 class MarketingServiceProvider extends ServiceProvider
 {
@@ -16,7 +17,7 @@ class MarketingServiceProvider extends ServiceProvider
     public function register()
     {
         if ($this->app->runningInConsole()) {
-            $this->commands([EmailsCommand::class]);
+            $this->commands([EmailsCommand::class, AbandonedOrderReminder::class]);
         }
     }
 
@@ -31,6 +32,7 @@ class MarketingServiceProvider extends ServiceProvider
 
         $this->callAfterResolving(Schedule::class, function (Schedule $schedule) {
             $schedule->command('campaign:process')->daily();
+            $schedule->command('abandoned:reminder')->hourly();
         });
 
         $this->app->register(EventServiceProvider::class);

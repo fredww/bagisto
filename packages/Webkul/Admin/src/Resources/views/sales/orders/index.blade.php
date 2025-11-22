@@ -1,4 +1,9 @@
 <x-admin::layouts>
+    @php
+        $template = app(\Webkul\Marketing\Repositories\AbandonedOrderTemplateRepository::class)->allActive()->first();
+        $defaultSubject = $template?->subject ?? 'Complete your order';
+        $defaultBody = $template?->body ?? '';
+    @endphp
     <!-- Page Title -->
     <x-slot:title>
         @lang('admin::app.sales.orders.index.title')
@@ -157,6 +162,53 @@
                         <a :href=`{{ route('admin.sales.orders.view', '') }}/${record.id}`>
                             <span class="icon-sort-right rtl:icon-sort-left cursor-pointer p-1.5 text-xl sm:text-2xl hover:rounded-md hover:bg-gray-200 dark:hover:bg-gray-800 ltr:ml-1 rtl:mr-1"></span>
                         </a>
+                    </div>
+
+                    <!-- Abandoned Reminder Action -->
+                    <div class="mt-2">
+                        <x-admin::drawer>
+                            <x-slot:toggle>
+                                <button
+                                    type="button"
+                                    class="primary-button"
+                                    :disabled="!(record.abandoned_eligible == '1')"
+                                    :class="(record.abandoned_eligible == '1') ? '' : 'opacity-50 cursor-not-allowed'"
+                                >
+                                    发送弃单提醒
+                                </button>
+                            </x-slot:toggle>
+
+                            <x-slot:header>
+                                <p class="text-xl font-medium dark:text-white">发送弃单提醒</p>
+                            </x-slot:header>
+
+                            <x-slot:content>
+                                <form method="POST" :action="'{{ route('admin.sales.orders.send_abandoned_reminder', ':id') }}'.replace(':id', record.id)">
+                                    @csrf
+
+                                    <div class="grid gap-4">
+                                        <div class="grid gap-1.5">
+                                            <label class="text-gray-600 dark:text-gray-300">邮箱</label>
+                                            <input type="email" name="email" :value="record.customer_email" class="block w-full rounded-lg border bg-white py-1.5 leading-6 text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 ltr:pl-3 rtl:pr-3" />
+                                        </div>
+
+                                        <div class="grid gap-1.5">
+                                            <label class="text-gray-600 dark:text-gray-300">标题</label>
+                                            <input type="text" name="subject" value="{{ $defaultSubject }}" class="block w-full rounded-lg border bg-white py-1.5 leading-6 text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 ltr:pl-3 rtl:pr-3" placeholder="不填则使用默认模板标题" />
+                                        </div>
+
+                                        <div class="grid gap-1.5">
+                                            <label class="text-gray-600 dark:text-gray-300">内容</label>
+                                            <textarea name="body" rows="6" class="block w-full rounded-lg border bg-white py-1.5 leading-6 text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 ltr:pl-3 rtl:pr-3" placeholder="不填则使用默认模板内容">{!! $defaultBody !!}</textarea>
+                                        </div>
+
+                                        <div class="flex justify-end gap-2">
+                                            <button type="submit" class="primary-button">发送</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </x-slot:content>
+                        </x-admin::drawer>
                     </div>
                 </div>
             </template>

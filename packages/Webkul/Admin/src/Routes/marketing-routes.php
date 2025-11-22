@@ -8,6 +8,7 @@ use Webkul\Admin\Http\Controllers\Marketing\Communications\TemplateController;
 use Webkul\Admin\Http\Controllers\Marketing\Promotions\CartRuleController;
 use Webkul\Admin\Http\Controllers\Marketing\Promotions\CartRuleCouponController;
 use Webkul\Admin\Http\Controllers\Marketing\Promotions\CatalogRuleController;
+use Webkul\Admin\Http\Controllers\Marketing\AbandonedOrderTemplateController;
 use Webkul\Admin\Http\Controllers\Marketing\SearchSEO\SearchSynonymController;
 use Webkul\Admin\Http\Controllers\Marketing\SearchSEO\SearchTermController;
 use Webkul\Admin\Http\Controllers\Marketing\SearchSEO\SitemapController;
@@ -136,6 +137,15 @@ Route::prefix('marketing')->group(function () {
 
             Route::delete('edit/{id}', 'destroy')->name('admin.marketing.communications.subscribers.delete');
         });
+    });
+
+    Route::controller(AbandonedOrderTemplateController::class)->prefix('abandoned-templates')->group(function () {
+        Route::get('', 'index')->name('admin.marketing.abandoned_templates.index');
+        Route::get('create', 'create')->name('admin.marketing.abandoned_templates.create');
+        Route::post('store', 'store')->name('admin.marketing.abandoned_templates.store');
+        Route::get('edit/{id}', 'edit')->name('admin.marketing.abandoned_templates.edit');
+        Route::post('update/{id}', 'update')->name('admin.marketing.abandoned_templates.update');
+        Route::post('mass-delete', 'massDelete')->name('admin.marketing.abandoned_templates.mass_delete');
     });
 
     /**

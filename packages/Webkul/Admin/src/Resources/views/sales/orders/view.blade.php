@@ -627,6 +627,7 @@
                     </x-slot>
                 </x-admin::accordion>
 
+
                 <!-- Order Information -->
                 <x-admin::accordion>
                     <x-slot:header>

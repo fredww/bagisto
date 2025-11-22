@@ -466,6 +466,26 @@ return [
         'route' => 'admin.marketing.communications.subscribers.delete',
         'sort'  => 2,
     ], [
+        'key'   => 'marketing.abandoned_templates',
+        'name'  => 'Abandoned Templates',
+        'route' => 'admin.marketing.abandoned_templates.index',
+        'sort'  => 4,
+    ], [
+        'key'   => 'marketing.abandoned_templates.create',
+        'name'  => 'admin::app.acl.create',
+        'route' => 'admin.marketing.abandoned_templates.create',
+        'sort'  => 1,
+    ], [
+        'key'   => 'marketing.abandoned_templates.edit',
+        'name'  => 'admin::app.acl.edit',
+        'route' => 'admin.marketing.abandoned_templates.edit',
+        'sort'  => 2,
+    ], [
+        'key'   => 'marketing.abandoned_templates.delete',
+        'name'  => 'admin::app.acl.delete',
+        'route' => 'admin.marketing.abandoned_templates.mass_delete',
+        'sort'  => 3,
+    ], [
         'key'   => 'marketing.search_seo',
         'name'  => 'admin::app.acl.search-seo',
         'route' => 'admin.marketing.search_seo.url_rewrites.index',

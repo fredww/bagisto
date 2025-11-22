@@ -205,6 +205,12 @@ return [
         'sort'       => 3,
         'icon'       => '',
     ], [
+        'key'        => 'marketing.communications.email_logs',
+        'name'       => 'Email Logs',
+        'route'      => 'admin.communication.email_logs.index',
+        'sort'       => 4,
+        'icon'       => '',
+    ], [
         'key'        => 'marketing.search_seo',
         'name'       => 'admin::app.components.layouts.sidebar.search-seo',
         'route'      => 'admin.marketing.search_seo.url_rewrites.index',
@@ -232,6 +238,12 @@ return [
         'key'        => 'marketing.search_seo.sitemaps',
         'name'       => 'admin::app.components.layouts.sidebar.sitemaps',
         'route'      => 'admin.marketing.search_seo.sitemaps.index',
+        'sort'       => 4,
+        'icon'       => '',
+    ], [
+        'key'        => 'marketing.abandoned_templates',
+        'name'       => 'Abandoned Templates',
+        'route'      => 'admin.marketing.abandoned_templates.index',
         'sort'       => 4,
         'icon'       => '',
     ],
@@ -263,6 +275,12 @@ return [
         'name'       => 'admin::app.components.layouts.sidebar.products',
         'route'      => 'admin.reporting.products.index',
         'sort'       => 3,
+        'icon'       => '',
+    ], [
+        'key'        => 'reporting.abandoned_reminders',
+        'name'       => 'Abandoned Reminders',
+        'route'      => 'admin.reporting.abandoned_reminders.index',
+        'sort'       => 4,
         'icon'       => '',
     ],
 

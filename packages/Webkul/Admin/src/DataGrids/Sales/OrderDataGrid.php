@@ -36,8 +36,10 @@ class OrderDataGrid extends DataGrid
                 'channel_name',
                 'channel_id',
                 'status',
+                DB::raw(DB::getTablePrefix().'orders.status as status_code'),
                 'customer_email',
                 'orders.cart_id as items',
+                'orders.abandoned_email_sent_at',
                 DB::raw('CONCAT('.DB::getTablePrefix().'orders.customer_first_name, " ", '.DB::getTablePrefix().'orders.customer_last_name) as full_name'),
                 DB::raw('CONCAT('.DB::getTablePrefix().'order_address_billing.city, ", ", '.DB::getTablePrefix().'order_address_billing.state,", ", '.DB::getTablePrefix().'order_address_billing.country) as location')
             )
@@ -208,6 +210,45 @@ class OrderDataGrid extends DataGrid
             'filterable'      => true,
             'filterable_type' => 'date_range',
             'sortable'        => true,
+        ]);
+
+        $this->addColumn([
+            'index'      => 'abandoned_eligible',
+            'label'      => 'Abandoned Eligible',
+            'type'       => 'string',
+            'exportable' => false,
+            'closure'    => function ($row) {
+                $eligibleStatuses = [Order::STATUS_PENDING, Order::STATUS_PENDING_PAYMENT];
+
+                return in_array($row->status_code, $eligibleStatuses) && ! $row->abandoned_email_sent_at ? '1' : '0';
+            },
+        ]);
+
+        $this->addColumn([
+            'index'      => 'abandoned_email_sent_at',
+            'label'      => '弃单提醒状态',
+            'type'       => 'string',
+            'exportable' => true,
+            'sortable'   => true,
+            'closure'    => function ($row) {
+                if ($row->abandoned_email_sent_at) {
+                    return '<p class="label-active">已发送</p>';
+                }
+
+                return '<p class="label-pending">未发送</p>';
+            },
+        ]);
+
+        $this->addColumn([
+            'index'      => 'abandoned_reminder',
+            'label'      => '发送弃单提醒',
+            'type'       => 'string',
+            'exportable' => false,
+            'closure'    => function ($row) {
+                $order = app(OrderRepository::class)->find($row->id);
+
+                return view('admin::sales.orders.abandoned-reminder-action', compact('order'))->render();
+            },
         ]);
     }
 
