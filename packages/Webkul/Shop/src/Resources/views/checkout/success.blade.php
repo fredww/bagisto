@@ -62,10 +62,23 @@
     <script>
         (function () {
             try {
-                // internal: build payloads from server-side order data
                 var orderId  = "{{ addslashes($order->increment_id) }}";
                 var currency = "{{ $order->order_currency_code ?? (core()->getCurrentCurrency()?->code ?? 'USD') }}";
                 var value    = Number("{{ $order->grand_total ?? 0 }}");
+                var isPaid   = {{ isset($isPaid) && $isPaid ? 'true' : 'false' }};
+                var isBot    = {{ isset($isBot) && $isBot ? 'true' : 'false' }};
+                var validStatus = {{ isset($validStatus) && $validStatus ? 'true' : 'false' }};
+
+                var key = 'ga_purchase_emitted_' + orderId;
+                var alreadyEmitted = false;
+                try { alreadyEmitted = !!localStorage.getItem(key); } catch (_) {}
+
+                if (!orderId || !isPaid || !validStatus || isBot || alreadyEmitted) {
+                    if (window.GAIntegration && window.GAIntegration.debugLog) {
+                        window.GAIntegration.debugLog('success.purchase skipped', { orderId, isPaid, validStatus, isBot, alreadyEmitted });
+                    }
+                    return;
+                }
 
                 @php
                     $gaItems = [];
@@ -90,7 +103,6 @@
                     };
                 });
 
-                // GA4 purchase event
                 if (window.GAIntegration && typeof window.GAIntegration.trackPurchase === 'function') {
                     window.GAIntegration.trackPurchase({
                         currency: currency,
@@ -98,22 +110,20 @@
                         items: items,
                         transactionId: orderId,
                     });
-                } else {
-                    // Fallback: call gtag directly if plugin is unavailable
-                    if (window.gtag) {
-                        gtag('event', 'purchase', {
-                            currency: currency,
-                            value: value,
-                            items: items,
-                            transaction_id: orderId,
-                        });
-                    }
+                } else if (window.gtag) {
+                    gtag('event', 'purchase', {
+                        currency: currency,
+                        value: value,
+                        items: items,
+                        transaction_id: orderId,
+                    });
                 }
 
-                // Google Ads conversion
                 if (window.GAIntegration && typeof window.GAIntegration.trackAdsPurchase === 'function') {
                     window.GAIntegration.trackAdsPurchase({ currency: currency, value: value });
                 }
+
+                try { localStorage.setItem(key, '1'); } catch (_) {}
 
                 if (window.GAIntegration && window.GAIntegration.debugLog) {
                     window.GAIntegration.debugLog('success.purchase emitted', { orderId, currency, value, items });

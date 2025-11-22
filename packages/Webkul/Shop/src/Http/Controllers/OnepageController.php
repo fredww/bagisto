@@ -74,9 +74,22 @@ class OnepageController extends Controller
      */
     public function success(OrderRepository $orderRepository)
     {
-        if (! $order = $orderRepository->find(session('order_id'))) {
+        $orderId = session()->pull('order_id');
+
+        if (! $orderId || ! $order = $orderRepository->find($orderId)) {
             return redirect()->route('shop.checkout.cart.index');
         }
+
+        $isPaid = $order->invoices()->where('state', 'paid')->exists()
+            || ($order->grand_total_invoiced >= $order->grand_total);
+
+        $validStatus = ! in_array($order->status, [
+            \Webkul\Sales\Models\Order::STATUS_CANCELED,
+            \Webkul\Sales\Models\Order::STATUS_FRAUD,
+        ]);
+
+        $ua = request()->userAgent();
+        $isBot = $ua ? (bool) preg_match('/bot|spider|crawl|slurp|bingpreview/i', $ua) : false;
 
         if (
             core()->getConfigData('general.magic_ai.settings.enabled')
@@ -97,7 +110,12 @@ class OnepageController extends Controller
             }
         }
 
-        return view('shop::checkout.success', compact('order'));
+        return view('shop::checkout.success', [
+            'order'       => $order,
+            'isPaid'      => $isPaid,
+            'validStatus' => $validStatus,
+            'isBot'       => $isBot,
+        ]);
     }
 
     /**

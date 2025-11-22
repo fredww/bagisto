@@ -34,6 +34,9 @@ class AiReviewServiceProvider extends ServiceProvider
         $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'ai_review');
         $this->loadTranslationsFrom(__DIR__ . '/../Resources/lang', 'ai_review');
 
+        // Load package migrations
+        $this->loadMigrationsFrom(__DIR__ . '/../Database/Migrations');
+
         // Register admin routes with proper middlewares and prefix
         Route::middleware(['web', PreventRequestsDuringMaintenance::class])
             ->group(function () {

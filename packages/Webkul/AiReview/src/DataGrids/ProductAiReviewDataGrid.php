@@ -26,12 +26,20 @@ class ProductAiReviewDataGrid extends DataGrid
 
         $queryBuilder = DB::table('product_flat')
             ->leftJoin('product_reviews', 'product_reviews.product_id', '=', 'product_flat.product_id')
+            ->leftJoin('product_images', 'product_flat.product_id', '=', 'product_images.product_id')
+            ->leftJoin('product_categories as pc', 'product_flat.product_id', '=', 'pc.product_id')
+            ->leftJoin('category_translations as ct', function ($leftJoin) {
+                $leftJoin->on('pc.category_id', '=', 'ct.category_id')
+                    ->where('ct.locale', app()->getLocale());
+            })
             ->select(
                 'product_flat.product_id',
                 'product_flat.sku',
                 'product_flat.name',
                 'product_flat.channel',
                 'product_flat.locale',
+                'product_images.path as base_image',
+                'ct.name as category_name',
                 DB::raw('COUNT('.$tablePrefix.'product_reviews.id) as review_count')
             )
             ->where('product_flat.channel', $channelCode)
@@ -41,7 +49,9 @@ class ProductAiReviewDataGrid extends DataGrid
                 'product_flat.sku',
                 'product_flat.name',
                 'product_flat.channel',
-                'product_flat.locale'
+                'product_flat.locale',
+                'product_images.path',
+                'ct.name'
             );
 
         $this->addFilter('product_id', 'product_flat.product_id');
@@ -68,21 +78,6 @@ class ProductAiReviewDataGrid extends DataGrid
             'sortable'   => true,
         ]);
 
-        $this->addColumn([
-            'index'      => 'sku',
-            'label'      => trans('admin::app.catalog.products.index.datagrid.sku'),
-            'type'       => 'string',
-            'searchable' => true,
-            'sortable'   => true,
-        ]);
-
-        $this->addColumn([
-            'index'      => 'product_id',
-            'label'      => trans('admin::app.catalog.products.index.datagrid.id'),
-            'type'       => 'integer',
-            'searchable' => false,
-            'sortable'   => true,
-        ]);
 
         $this->addColumn([
             'index'      => 'review_count',
@@ -91,6 +86,22 @@ class ProductAiReviewDataGrid extends DataGrid
             'searchable' => false,
             'sortable'   => true,
         ]);
+
+        $this->addColumn([
+            'index'      => 'base_image',
+            'label'      => trans('admin::app.catalog.products.index.datagrid.image'),
+            'type'       => 'string',
+            'exportable' => false,
+            'closure'    => function ($row) {
+                if (! $row->base_image) {
+                    return '';
+                }
+
+                return '<img class="h-10 w-10 rounded object-cover" src="'.\Illuminate\Support\Facades\Storage::url($row->base_image).'" />';
+            },
+        ]);
+
+        // intentionally omit SKU, ID, and Category columns to reduce horizontal scroll
     }
 
     /**
