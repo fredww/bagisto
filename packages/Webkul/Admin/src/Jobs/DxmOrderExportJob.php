@@ -15,6 +15,7 @@ use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
 use PhpOffice\PhpSpreadsheet\Cell\DataType;
 use Webkul\Sales\Models\Order;
 use Webkul\Sales\Models\OrderItem;
+use Webkul\Product\Repositories\ProductRepository;
 
 class DxmOrderExportJob implements ShouldQueue
 {
@@ -87,6 +88,30 @@ $sheet->getStyle('C:C')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_T
 
                 $storeAccount = $this->storeAccount ?? ((string) (core()->getConfigData('sales.order_settings.dxm_export.store_account_default') ?? '')) ?: null;
 
+                // 获取商品主图 URL
+                $imageUrl = '';
+                try {
+                    $productForImage = $item->product;
+                    $selectedId = null;
+                    if (is_array($item->additional)) {
+                        $selectedId = $item->additional['selected_configurable_option'] ?? null;
+                    }
+                    if ($selectedId) {
+                        $repo = app(ProductRepository::class);
+                        $selectedProduct = $repo->find($selectedId);
+                        if ($selectedProduct) {
+                            $productForImage = $selectedProduct;
+                        }
+                    }
+
+                    $baseImage = product_image()->getProductBaseImage($productForImage);
+                    if (is_array($baseImage)) {
+                        $imageUrl = (string) ($baseImage['original_image_url'] ?? ($baseImage['large_image_url'] ?? ''));
+                    }
+                } catch (\Throwable $e) {
+                    $imageUrl = '';
+                }
+
                 $row = [
                     $order->increment_id,
                     $storeAccount ?: $order->channel_name,
@@ -113,6 +138,8 @@ $sheet->getStyle('C:C')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_T
                     '',
                     $shipping?->company_name ?? '',
                     '',
+                    $imageUrl,
+                    '',
                     '',
                     '',
                     '',
@@ -131,6 +158,7 @@ $sheet->getStyle('C:C')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_T
 
                 $sheet->fromArray($row, null, 'A'.$rowIndex);
                 $sheet->setCellValueExplicit('C'.$rowIndex, (string) $item->sku, DataType::TYPE_STRING);
+                $sheet->setCellValue('Z'.$rowIndex, $imageUrl);
                 $rowIndex++;
 
                 $task->processed_rows++;
