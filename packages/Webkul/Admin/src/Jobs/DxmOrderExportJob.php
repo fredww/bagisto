@@ -69,20 +69,67 @@ $sheet->getStyle('C:C')->getNumberFormat()->setFormatCode(NumberFormat::FORMAT_T
                 $shipping = $order->shipping_address;
 
                 $attributes = '';
+                $attrLines = [];
+                $attrLines[] = trim((string) ($item->name ?? ($item->product->name ?? '')));
+
                 if (is_array($item->additional)) {
                     $options = $item->additional['attributes'] ?? $item->additional['options'] ?? [];
                     if (is_array($options)) {
-                        $parts = [];
                         foreach ($options as $opt) {
-                            if (is_array($opt)) {
-                                $label = $opt['label'] ?? '';
-                                $value = $opt['value'] ?? '';
-                                $parts[] = trim($label.($value ? ':' . $value : ''));
+                            if (! is_array($opt)) {
+                                continue;
+                            }
+
+                            if (isset($opt['attribute_name'], $opt['option_label'])) {
+                                $label = trim((string) $opt['attribute_name']);
+                                $value = trim((string) $opt['option_label']);
+                            } elseif (isset($opt['label'], $opt['value_label'])) {
+                                $label = trim((string) $opt['label']);
+                                $value = trim((string) $opt['value_label']);
+                            } else {
+                                $label = trim((string) ($opt['label'] ?? ''));
+                                $value = trim((string) ($opt['value'] ?? ''));
+                            }
+
+                            if ($label !== '' && $value !== '') {
+                                $attrLines[] = $label . ' : ' . $value;
                             }
                         }
-                        $attributes = implode('|', $parts);
                     }
                 }
+
+                if (count($attrLines) === 1) {
+                    try {
+                        $productForAttr = $item->product;
+                        $selectedId = is_array($item->additional) ? ($item->additional['selected_configurable_option'] ?? null) : null;
+                        if ($selectedId) {
+                            $repo = app(ProductRepository::class);
+                            $selectedProduct = $repo->find($selectedId);
+                            if ($selectedProduct) {
+                                $productForAttr = $selectedProduct;
+                            }
+                        }
+
+                        if ($productForAttr && $productForAttr->parent) {
+                            foreach ($productForAttr->parent->super_attributes as $attribute) {
+                                $label = trim((string) ($attribute->admin_name ?? ''));
+                                $valueId = $productForAttr->getCustomAttributeValue($attribute);
+                                $valueLabel = '';
+                                if (! is_null($valueId)) {
+                                    $option = $attribute->options()->where('id', $valueId)->first();
+                                    if ($option) {
+                                        $valueLabel = trim((string) ($option->label ?? $option->admin_name ?? ''));
+                                    }
+                                }
+                                if ($label !== '' && $valueLabel !== '') {
+                                    $attrLines[] = $label . ' : ' . $valueLabel;
+                                }
+                            }
+                        }
+                    } catch (\Throwable $e) {}
+                }
+
+                $attributes = implode("\n", array_filter($attrLines));
 
                 $currency = $order->order_currency_code ?: 'USD';
 
