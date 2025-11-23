@@ -3,6 +3,14 @@
     $template = app(\Webkul\Marketing\Repositories\AbandonedOrderTemplateRepository::class)->allActive()->first();
     $defaultSubject = $template?->subject ?? 'Complete your order';
     $defaultBody = $template?->body ?? '';
+
+    $renderer = app(\Webkul\Marketing\Services\AbandonedTemplateRenderer::class);
+    $rendered = $renderer->render($order, [
+        'subject' => $defaultSubject,
+        'body'    => $defaultBody,
+    ]);
+    $defaultSubject = $rendered['subject'] ?? $defaultSubject;
+    $defaultBody = $rendered['body'] ?? $defaultBody;
 @endphp
 
 <div class="flex items-center">
@@ -33,7 +41,7 @@
 
                         <x-admin::form.control-group>
                             <x-admin::form.control-group.label>内容</x-admin::form.control-group.label>
-                            <x-admin::form.control-group.control type="textarea" name="body">{!! $defaultBody !!}</x-admin::form.control-group.control>
+                            <x-admin::form.control-group.control type="textarea" name="body" :value="$defaultBody" />
                             <x-admin::form.control-group.error control-name="body" />
                         </x-admin::form.control-group>
 

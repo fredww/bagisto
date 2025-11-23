@@ -17,6 +17,7 @@ use Webkul\Sales\Repositories\OrderCommentRepository;
 use Webkul\Sales\Repositories\OrderRepository;
 use Webkul\Sales\Transformers\OrderResource;
 use Webkul\Marketing\Repositories\AbandonedOrderTemplateRepository;
+use Webkul\Marketing\Services\AbandonedTemplateRenderer;
 use Webkul\Core\Repositories\EmailLogRepository;
 
 class OrderController extends Controller
@@ -281,8 +282,10 @@ class OrderController extends Controller
             'body'    => $body,
         ];
 
+        $rendered = app(AbandonedTemplateRenderer::class)->render($order, $payload);
+
         try {
-            $mailable = new \Webkul\Shop\Mail\Order\AbandonedReminder($order, $payload);
+            $mailable = new \Webkul\Shop\Mail\Order\AbandonedReminder($order, $rendered);
 
             $envelope = $mailable->envelope();
 
@@ -291,8 +294,8 @@ class OrderController extends Controller
                 'category'        => 'abandoned_order',
                 'recipient_email' => $email,
                 'recipient_name'  => $order->customer_full_name,
-                'subject'         => $envelope->subject,
-                'body'            => $payload['body'],
+                'subject'         => $rendered['subject'],
+                'body'            => $rendered['body'],
                 'status'          => 'queued',
                 'context_type'    => 'order',
                 'context_id'      => $order->id,
@@ -310,5 +313,25 @@ class OrderController extends Controller
         }
 
         return redirect()->back();
+    }
+
+    public function abandonedPreview(int $orderId)
+    {
+        $order = $this->orderRepository->findOrFail($orderId);
+
+        $template = app(AbandonedOrderTemplateRepository::class)->allActive()->first();
+        $subject = $template?->subject ?? 'Complete your order';
+        $body    = $template?->body ?? '';
+
+        $rendered = app(AbandonedTemplateRenderer::class)->render($order, [
+            'subject' => $subject,
+            'body'    => $body,
+        ]);
+
+        return response()->json([
+            'subject' => $rendered['subject'],
+            'body'    => $rendered['body'],
+            'email'   => $order->customer_email,
+        ]);
     }
 }

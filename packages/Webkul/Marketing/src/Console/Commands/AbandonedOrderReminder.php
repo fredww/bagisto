@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use Webkul\Core\Repositories\EmailLogRepository;
 use Webkul\Marketing\Repositories\AbandonedOrderTemplateRepository;
+use Webkul\Marketing\Services\AbandonedTemplateRenderer;
 use Webkul\Sales\Models\Order;
 use Webkul\Sales\Repositories\OrderRepository;
 
@@ -45,6 +46,8 @@ class AbandonedOrderReminder extends Command
                     'body'    => $template->body,
                 ];
 
+                $rendered = app(AbandonedTemplateRenderer::class)->render($order, $payload);
+
                 try {
                     $mailable = new \Webkul\Shop\Mail\Order\AbandonedReminder($order, $payload);
 
@@ -53,15 +56,15 @@ class AbandonedOrderReminder extends Command
                         'category'        => 'abandoned_order',
                         'recipient_email' => $order->customer_email,
                         'recipient_name'  => $order->customer_full_name,
-                        'subject'         => $payload['subject'],
-                        'body'            => $payload['body'],
+                        'subject'         => $rendered['subject'],
+                        'body'            => $rendered['body'],
                         'status'          => 'queued',
                         'context_type'    => 'order',
                         'context_id'      => $order->id,
                         'order_id'        => $order->id,
                     ]);
 
-                    Mail::queue($mailable);
+                    Mail::queue(new \Webkul\Shop\Mail\Order\AbandonedReminder($order, $rendered));
 
                     $this->info("Queued abandoned reminder for order #{$order->increment_id}");
                 } catch (\Exception $e) {
@@ -73,4 +76,3 @@ class AbandonedOrderReminder extends Command
         return Command::SUCCESS;
     }
 }
-
