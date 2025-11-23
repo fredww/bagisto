@@ -266,7 +266,7 @@ class OrderController extends Controller
     public function sendAbandonedReminder(int $orderId)
     {
         $order = $this->orderRepository->findOrFail($orderId);
-
+        
         $subject = request()->input('subject');
         $body    = request()->input('body');
         $email   = request()->input('email') ?: $order->customer_email;
@@ -283,11 +283,8 @@ class OrderController extends Controller
         ];
 
         $rendered = app(AbandonedTemplateRenderer::class)->render($order, $payload);
-
         try {
             $mailable = new \Webkul\Shop\Mail\Order\AbandonedReminder($order, $rendered);
-
-            $envelope = $mailable->envelope();
 
             app(EmailLogRepository::class)->create([
                 'mailable_class'   => get_class($mailable),
@@ -296,13 +293,13 @@ class OrderController extends Controller
                 'recipient_name'  => $order->customer_full_name,
                 'subject'         => $rendered['subject'],
                 'body'            => $rendered['body'],
-                'status'          => 'queued',
+                'status'          => 'sent',
                 'context_type'    => 'order',
                 'context_id'      => $order->id,
                 'order_id'        => $order->id,
             ]);
 
-            \Mail::to($email)->queue($mailable);
+            \Mail::to($email)->send($mailable);
 
             $order->abandoned_email_sent_at = now();
             $order->save();
