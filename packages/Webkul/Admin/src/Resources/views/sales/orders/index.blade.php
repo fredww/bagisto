@@ -211,7 +211,7 @@
 
                                         <div class="grid gap-1.5">
                                             <label class="text-gray-600 dark:text-gray-300">内容</label>
-                                            <textarea name="body" rows="6" :value="getPreview(record).body" class="block w-full rounded-lg border bg-white py-1.5 leading-6 text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 ltr:pl-3 rtl:pr-3" placeholder="不填则使用默认模板内容"></textarea>
+                                            <textarea name="body" rows="20" :value="getPreview(record).body" class="block w-full rounded-lg border bg-white py-1.5 leading-6 text-gray-600 transition-all hover:border-gray-400 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300 ltr:pl-3 rtl:pr-3" placeholder="不填则使用默认模板内容"></textarea>
                                         </div>
 
                                         <div class="flex justify-end gap-2">
