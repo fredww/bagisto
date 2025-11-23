@@ -1,5 +1,6 @@
 @php
-    $canSend = in_array($order->status, [\Webkul\Sales\Models\Order::STATUS_PENDING, \Webkul\Sales\Models\Order::STATUS_PENDING_PAYMENT]) && ! $order->abandoned_email_sent_at;
+    $canSend = in_array($order->status, [\Webkul\Sales\Models\Order::STATUS_PENDING, \Webkul\Sales\Models\Order::STATUS_PENDING_PAYMENT]);
+    $hasSent = (bool) $order->abandoned_email_sent_at;
     $template = app(\Webkul\Marketing\Repositories\AbandonedOrderTemplateRepository::class)->allActive()->first();
     $defaultSubject = $template?->subject ?? 'Complete your order';
     $defaultBody = $template?->body ?? '';
@@ -17,7 +18,12 @@
     @if ($canSend)
         <x-admin::drawer>
             <x-slot:toggle>
-                <button type="button" class="primary-button">发送弃单提醒</button>
+                <div class="flex items-center">
+                    <button type="button" class="primary-button">发送弃单提醒</button>
+                    @if ($hasSent)
+                        <span class="icon-done text-emerald-600 text-3xl ml-3" aria-label="已发送"></span>
+                    @endif
+                </div>
             </x-slot:toggle>
 
             <x-slot:header>

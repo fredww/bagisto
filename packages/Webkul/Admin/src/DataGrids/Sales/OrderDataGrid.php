@@ -40,6 +40,7 @@ class OrderDataGrid extends DataGrid
                 'customer_email',
                 'orders.cart_id as items',
                 'orders.abandoned_email_sent_at',
+                DB::raw('CASE WHEN '.DB::getTablePrefix().'orders.abandoned_email_sent_at IS NULL THEN 0 ELSE 1 END as abandoned_email_sent'),
                 DB::raw('CONCAT('.DB::getTablePrefix().'orders.customer_first_name, " ", '.DB::getTablePrefix().'orders.customer_last_name) as full_name'),
                 DB::raw('CONCAT('.DB::getTablePrefix().'order_address_billing.city, ", ", '.DB::getTablePrefix().'order_address_billing.state,", ", '.DB::getTablePrefix().'order_address_billing.country) as location')
             )
@@ -225,11 +226,11 @@ class OrderDataGrid extends DataGrid
         ]);
 
         $this->addColumn([
-            'index'      => 'abandoned_email_sent_at',
+            'index'      => 'abandoned_email_status_label',
             'label'      => '弃单提醒状态',
             'type'       => 'string',
             'exportable' => true,
-            'sortable'   => true,
+            'sortable'   => false,
             'closure'    => function ($row) {
                 if ($row->abandoned_email_sent_at) {
                     return '<p class="label-active">已发送</p>';
@@ -237,6 +238,14 @@ class OrderDataGrid extends DataGrid
 
                 return '<p class="label-pending">未发送</p>';
             },
+        ]);
+
+        $this->addColumn([
+            'index'      => 'abandoned_email_sent',
+            'label'      => '弃单提醒已发送',
+            'type'       => 'boolean',
+            'exportable' => false,
+            'sortable'   => false,
         ]);
 
         $this->addColumn([

@@ -165,18 +165,29 @@
                     </div>
 
                     <!-- Abandoned Reminder Action -->
-                    <div class="mt-2">
+                    <div class="mt-2" v-if="['pending','pending_payment'].includes(record.status_code)">
                         <x-admin::drawer>
                             <x-slot:toggle>
-                                <button
-                                    type="button"
-                                    class="primary-button"
-                                    :disabled="!(record.abandoned_eligible == '1')"
-                                    :class="(record.abandoned_eligible == '1') ? '' : 'opacity-50 cursor-not-allowed'"
-                                    @click="fetchPreview(record.id)"
-                                >
-                                    发送弃单提醒
-                                </button>
+                                <div class="flex items-center">
+                                    <button
+                                        type="button"
+                                        class="primary-button"
+                                        @click="fetchPreview(record.id)"
+                                    >
+                                        发送弃单提醒
+                                    </button>
+                                    <span
+                                        v-if="record.abandoned_email_sent == '1' || record.abandoned_email_sent === 1"
+                                        class="icon-done text-emerald-600 text-3xl ml-3"
+                                        aria-label="已发送"
+                                    ></span>
+                                    
+<div class="mt-1 text-xs text-gray-500">
+  <span class="ml-1">@{{ JSON.stringify(record.abandoned_email_sent_at) }}</span>
+</div>
+
+
+                                </div>
                             </x-slot:toggle>
 
                             <x-slot:header>
