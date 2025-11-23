@@ -75,6 +75,7 @@ class OrderDataGrid extends DataGrid
             'searchable'         => true,
             'filterable'         => true,
             'filterable_type'    => 'dropdown',
+            'allow_multiple_values' => true,
             'filterable_options' => [
                 [
                     'label' => trans('admin::app.sales.orders.index.datagrid.processing'),

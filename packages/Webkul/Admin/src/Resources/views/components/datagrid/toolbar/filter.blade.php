@@ -17,6 +17,37 @@
         <!-- Empty slot for right toolbar before -->
         <slot name="right-toolbar-left-before"></slot>
 
+        <template v-if="isOrdersGrid">
+            <div class="flex items-center gap-x-2">
+                <button
+                    type="button"
+                    class="inline-flex max-w-max cursor-pointer items-center justify-between rounded-md border px-2.5 py-1.5 text-sm leading-6 transition-all hover:border-gray-400"
+                    :class="quickButtonClass(['processing'])"
+                    @click="applyQuickStatusFilter(['processing'])"
+                >
+                    @lang('admin::app.sales.orders.index.datagrid.processing')
+                </button>
+
+                <button
+                    type="button"
+                    class="inline-flex max-w-max cursor-pointer items-center justify-between rounded-md border px-2.5 py-1.5 text-sm leading-6 transition-all hover:border-gray-400"
+                    :class="quickButtonClass(['pending','pending_payment'])"
+                    @click="applyQuickStatusFilter(['pending','pending_payment'])"
+                >
+                    @lang('admin::app.sales.orders.index.datagrid.pending')
+                </button>
+
+                <button
+                    type="button"
+                    class="inline-flex max-w-max cursor-pointer items-center justify-between rounded-md border px-2.5 py-1.5 text-sm leading-6 transition-all hover:border-gray-400"
+                    :class="quickButtonClass(['canceled'])"
+                    @click="applyQuickStatusFilter(['canceled'])"
+                >
+                    @lang('admin::app.sales.orders.index.datagrid.canceled')
+                </button>
+            </div>
+        </template>
+
         <slot
             name="filter"
             :available="available"
@@ -901,6 +932,9 @@
                 getAppliedSavedFilter() {
                     return this.savedFilters.available.find((filter) => filter.id == this.applied.savedFilterId);
                 },
+                isOrdersGrid() {
+                    return this.src.includes('/sales/orders');
+                },
             },
 
             methods: {
@@ -962,6 +996,37 @@
                     };
 
                     this.isFilterDirty = true;
+                },
+
+                applyQuickStatusFilter(statuses) {
+                    const column = this.available.columns.find((c) => c.index === 'status');
+
+                    if (! column) {
+                        return;
+                    }
+
+                    this.removeAppliedColumnAllValues('status');
+
+                    statuses.forEach((s) => this.applyColumnValues(column, s));
+
+                    this.applyFilters();
+                },
+
+                quickButtonClass(statuses) {
+                    if (this.isQuickStatusActive(statuses)) {
+                        return 'border-blue-600 text-blue-600 bg-blue-50 dark:text-white dark:bg-blue-900';
+                    }
+
+                    return 'border-gray-300 text-gray-600 bg-white dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300';
+                },
+
+                isQuickStatusActive(statuses) {
+                    const vals = this.getAppliedColumnValues('status');
+                    if (! Array.isArray(vals)) return false;
+                    if (vals.length !== statuses.length) return false;
+                    const a = [...vals].sort().join('|');
+                    const b = [...statuses].sort().join('|');
+                    return a === b;
                 },
 
                 /**
