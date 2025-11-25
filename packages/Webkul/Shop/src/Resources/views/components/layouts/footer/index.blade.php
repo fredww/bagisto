@@ -134,7 +134,7 @@
                         :action="route('shop.subscription.store')"
                         class="mt-2.5 rounded max-sm:mt-0"
                     >
-                        <div class="relative w-full">
+                        <div class="relative w-full footer-subscribe">
                             <x-shop::form.control-group.control
                                 type="email"
                                 class="block w-[420px] max-w-full rounded-xl border-2 border-[#e9decc] bg-[#F1EADF] px-5 py-4 text-base max-1060:w-full max-md:p-3.5 max-sm:mb-0 max-sm:rounded-lg max-sm:border-2 max-sm:p-2 max-sm:text-sm"
