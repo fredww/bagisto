@@ -23,13 +23,20 @@ class GenerateSitemap extends Command
         $sitemap = Sitemap::create();
 
         $this->info('Adding homepage');
-        $sitemap->add(Url::create(url('/')));
+        $homeUrl = url('/');
+        if (! str_contains($homeUrl, '/root')) {
+            $sitemap->add(Url::create($homeUrl));
+        }
 
         $this->info('Adding categories');
         Category::query()->chunk(500, function ($items) use ($sitemap) {
             foreach ($items as $item) {
                 $tag = $item->toSitemapTag();
                 if (! empty($tag)) {
+                    $url = $this->getTagUrl($tag);
+                    if ($url && str_contains($url, '/root')) {
+                        continue;
+                    }
                     $sitemap->add($tag);
                 }
             }
@@ -40,6 +47,10 @@ class GenerateSitemap extends Command
             foreach ($items as $item) {
                 $tag = $item->toSitemapTag();
                 if (! empty($tag)) {
+                    $url = $this->getTagUrl($tag);
+                    if ($url && str_contains($url, '/root')) {
+                        continue;
+                    }
                     $sitemap->add($tag);
                 }
             }
@@ -50,6 +61,10 @@ class GenerateSitemap extends Command
             foreach ($items as $item) {
                 $tag = $item->toSitemapTag();
                 if (! empty($tag)) {
+                    $url = $this->getTagUrl($tag);
+                    if ($url && str_contains($url, '/root')) {
+                        continue;
+                    }
                     $sitemap->add($tag);
                 }
             }
@@ -98,5 +113,25 @@ class GenerateSitemap extends Command
         $dom->formatOutput = true;
         $dom->loadXML($xml);
         return $dom->saveXML();
+    }
+
+    protected function getTagUrl($tag): ?string
+    {
+        if ($tag instanceof Url) {
+            $u = $tag->url;
+            if (is_string($u)) {
+                return $u;
+            }
+            if (is_object($u)) {
+                return (string) $u;
+            }
+            return null;
+        }
+
+        if (is_string($tag)) {
+            return $tag;
+        }
+
+        return null;
     }
 }

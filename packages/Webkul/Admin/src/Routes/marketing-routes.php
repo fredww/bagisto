@@ -210,4 +210,16 @@ Route::prefix('marketing')->group(function () {
             Route::delete('edit/{id}', 'destroy')->name('admin.marketing.search_seo.sitemaps.delete');
         });
     });
+
+    Route::prefix('google')->group(function () {
+        Route::controller(\Webkul\Admin\Http\Controllers\Marketing\Google\GoogleFeedController::class)->group(function () {
+            Route::get('feed', 'index')->name('admin.marketing.google.feed.index');
+            Route::post('feed/generate', 'generate')->name('admin.marketing.google.feed.generate');
+        });
+
+        Route::controller(\Webkul\Admin\Http\Controllers\Marketing\Google\GoogleSitemapController::class)->group(function () {
+            Route::get('sitemap', 'index')->name('admin.marketing.google.sitemap.index');
+            Route::post('sitemap/generate', 'generate')->name('admin.marketing.google.sitemap.generate');
+        });
+    });
 });

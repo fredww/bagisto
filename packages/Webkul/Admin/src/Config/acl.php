@@ -486,6 +486,16 @@ return [
         'route' => 'admin.marketing.abandoned_templates.mass_delete',
         'sort'  => 3,
     ], [
+        'key'   => 'marketing.google_feed',
+        'name'  => 'Google Feed',
+        'route' => 'admin.marketing.google.feed.index',
+        'sort'  => 5,
+    ], [
+        'key'   => 'marketing.google_sitemap',
+        'name'  => 'Google Sitemap',
+        'route' => 'admin.marketing.google.sitemap.index',
+        'sort'  => 6,
+    ], [
         'key'   => 'marketing.search_seo',
         'name'  => 'admin::app.acl.search-seo',
         'route' => 'admin.marketing.search_seo.url_rewrites.index',

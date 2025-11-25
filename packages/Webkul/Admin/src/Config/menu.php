@@ -247,6 +247,19 @@ return [
         'sort'       => 4,
         'icon'       => '',
     ],
+    [
+        'key'        => 'marketing.google_feed',
+        'name'       => 'Google Feed',
+        'route'      => 'admin.marketing.google.feed.index',
+        'sort'       => 5,
+        'icon'       => '',
+    ], [
+        'key'        => 'marketing.google_sitemap',
+        'name'       => 'Google Sitemap',
+        'route'      => 'admin.marketing.google.sitemap.index',
+        'sort'       => 6,
+        'icon'       => '',
+    ],
 
     /**
      * Reporting.
