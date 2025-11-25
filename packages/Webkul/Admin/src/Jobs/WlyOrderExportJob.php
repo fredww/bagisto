@@ -29,20 +29,18 @@ class WlyOrderExportJob implements ShouldQueue
         $task = DxmOrderExport::findOrFail($this->taskId);
 
         $ordersQuery = Order::query()
-            ->join('fortune_payments', 'fortune_payments.order_no', '=', 'orders.increment_id')
-            ->where('fortune_payments.status', 'success')
-            ->select('orders.*');
+            ->whereIn('orders.status', [Order::STATUS_PROCESSING, Order::STATUS_COMPLETED]);
 
         if ($this->startDate || $this->endDate) {
             $start = $this->startDate ? Carbon::parse($this->startDate)->startOfDay() : null;
             $end = $this->endDate ? Carbon::parse($this->endDate)->endOfDay() : null;
 
             if ($start && $end) {
-                $ordersQuery->whereBetween('fortune_payments.updated_at', [$start, $end]);
+                $ordersQuery->whereBetween('orders.created_at', [$start, $end]);
             } elseif ($start) {
-                $ordersQuery->where('fortune_payments.updated_at', '>=', $start);
+                $ordersQuery->where('orders.created_at', '>=', $start);
             } elseif ($end) {
-                $ordersQuery->where('fortune_payments.updated_at', '<=', $end);
+                $ordersQuery->where('orders.created_at', '<=', $end);
             }
         }
 
@@ -77,17 +75,7 @@ class WlyOrderExportJob implements ShouldQueue
         $ordersQuery->orderBy('orders.id')->chunk(200, function ($orders) use ($sheet, &$rowIndex, $task) {
             foreach ($orders as $order) {
 
-                $paidAt = null;
-                try {
-                    $fp = FortunePayment::query()
-                        ->where('order_no', $order->increment_id)
-                        ->where('status', 'success')
-                        ->orderByDesc('updated_at')
-                        ->first();
-                    $paidAt = $fp?->updated_at ?? $order->created_at;
-                } catch (\Throwable $e) {
-                    $paidAt = $order->created_at;
-                }
+                $paidAt = $order->created_at;
 
                 $currency = $order->order_currency_code ?: 'USD';
 
