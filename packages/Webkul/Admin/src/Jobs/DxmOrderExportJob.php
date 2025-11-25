@@ -32,8 +32,7 @@ class DxmOrderExportJob implements ShouldQueue
         $date = $task->export_date;
 
         $ordersQuery = Order::query()
-            ->join('fortune_payments', 'fortune_payments.order_no', '=', 'orders.increment_id')
-            ->where('fortune_payments.status', 'success')
+            ->whereIn('status', ['processing', 'completed'])
             ->whereDate('orders.created_at', $date)
             ->select('orders.*');
 
