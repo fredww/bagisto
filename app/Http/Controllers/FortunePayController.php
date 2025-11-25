@@ -134,6 +134,10 @@ class FortunePayController extends Controller
             'notified_at' => now(),
         ]);
 
+        if ($status === 'success') {
+            $service->createInvoiceIfNeeded($orderNo);
+        }
+
         return response()->json(['code' => 200, 'msg' => 'ok']);
     }
 
@@ -172,6 +176,7 @@ class FortunePayController extends Controller
         }
 
         if ($valid && $status === 'success') {
+            $service->createInvoiceIfNeeded($orderNo);
             $orderRepo = app(\Webkul\Sales\Repositories\OrderRepository::class);
             $order = $orderRepo->findOneByField('increment_id', $orderNo);
             if ($order) {
@@ -226,6 +231,7 @@ class FortunePayController extends Controller
         }
 
         if ($valid && $status === 'success') {
+            $service->createInvoiceIfNeeded($orderNo);
             $orderRepo = app(\Webkul\Sales\Repositories\OrderRepository::class);
             $order = $orderRepo->findOneByField('increment_id', $orderNo);
             if ($order) {

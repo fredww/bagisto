@@ -301,4 +301,47 @@ class FortunePayService
         }
         return $q->latest('id')->first();
     }
+
+    public function createInvoiceIfNeeded(string $orderNo): void
+    {
+        try {
+            $orderRepo = app(\Webkul\Sales\Repositories\OrderRepository::class);
+            $invoiceRepo = app(\Webkul\Sales\Repositories\InvoiceRepository::class);
+
+            $order = $orderRepo->findOneByField('increment_id', $orderNo);
+
+            if (! $order) {
+                return;
+            }
+
+            if ($order->invoices()->exists()) {
+                return;
+            }
+
+            $items = [];
+            foreach ($order->items as $item) {
+                $qty = (int) $item->qty_to_invoice;
+                if ($qty > 0) {
+                    $items[$item->id] = $qty;
+                }
+            }
+
+            if (empty($items)) {
+                return;
+            }
+
+            $invoiceRepo->create([
+                'order_id' => $order->id,
+                'invoice'  => ['items' => $items],
+            ]);
+        } catch (\Throwable $e) {
+            $config = $this->getConfig();
+            if (!empty($config['debug_log'])) {
+                \Illuminate\Support\Facades\Log::channel('fortune')->warning('FortunePay auto invoice failed', [
+                    'order_no' => $orderNo,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+    }
 }
