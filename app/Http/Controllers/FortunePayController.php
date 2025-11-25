@@ -175,7 +175,8 @@ class FortunePayController extends Controller
             Log::warning('FortunePay return invalid signature', ['params' => $params]);
         }
 
-        if ($valid && $status === 'success') {
+        // 只有成功且无失败消息时才创建发票
+        if ($valid && $status === 'success' && $failure_msg === '') {
             $service->createInvoiceIfNeeded($orderNo);
             $orderRepo = app(\Webkul\Sales\Repositories\OrderRepository::class);
             $order = $orderRepo->findOneByField('increment_id', $orderNo);
@@ -230,7 +231,8 @@ class FortunePayController extends Controller
             Log::warning('FortunePay success invalid signature', ['params' => $params]);
         }
 
-        if ($valid && $status === 'success') {
+        // 只有成功且无失败消息时才创建发票
+        if ($valid && $status === 'success' && $failure_msg === '') {
             $service->createInvoiceIfNeeded($orderNo);
             $orderRepo = app(\Webkul\Sales\Repositories\OrderRepository::class);
             $order = $orderRepo->findOneByField('increment_id', $orderNo);
