@@ -82,6 +82,23 @@
 
         <style>
             {!! core()->getConfigData('general.content.custom_scripts.custom_css') !!}
+            :root {
+                --theme-font: {!! core()->getConfigData('general.design.theme.font_family') ?: 'Poppins, sans-serif' !!};
+                --theme-primary: {!! core()->getConfigData('general.design.theme.primary_color') ?: '#1f2937' !!};
+                --btn-bg: {!! core()->getConfigData('general.design.theme.button_bg') ?: '#1f2937' !!};
+                --btn-text: {!! core()->getConfigData('general.design.theme.button_text') ?: '#ffffff' !!};
+                --nav-bg: {!! core()->getConfigData('general.design.theme.nav_bg') ?: '#ffffff' !!};
+                --nav-text: {!! core()->getConfigData('general.design.theme.nav_text') ?: '#1f2937' !!};
+                --footer-bg: {!! core()->getConfigData('general.design.theme.footer_bg') ?: '#fef3c7' !!};
+                --footer-text: {!! core()->getConfigData('general.design.theme.footer_text') ?: '#1f2937' !!};
+            }
+
+            body { font-family: var(--theme-font) !important; }
+            .primary-button { background-color: var(--btn-bg) !important; color: var(--btn-text) !important; border-color: var(--btn-bg) !important; }
+            header { background-color: var(--nav-bg) !important; color: var(--nav-text) !important; }
+            header a, header span, header p { color: var(--nav-text) !important; }
+            footer { background-color: var(--footer-bg) !important; color: var(--footer-text) !important; }
+            footer a, footer p, footer h3, footer li { color: var(--footer-text) !important; }
         </style>
 
         @if(core()->getConfigData('general.content.speculation_rules.enabled'))

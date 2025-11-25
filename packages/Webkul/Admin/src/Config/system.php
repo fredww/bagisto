@@ -12,6 +12,62 @@ return [
         'info' => 'admin::app.configuration.index.general.info',
         'sort' => 1,
     ], [
+        'key'    => 'general.design.theme',
+        'name'   => 'Theme Styles',
+        'info'   => 'Configure storefront theme styles',
+        'sort'   => 4,
+        'fields' => [
+            [
+                'name'          => 'font_family',
+                'title'         => 'Font Family',
+                'type'          => 'text',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ], [
+                'name'          => 'primary_color',
+                'title'         => 'Primary Color (HEX or CSS color)',
+                'type'          => 'text',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ], [
+                'name'          => 'button_bg',
+                'title'         => 'Button Background',
+                'type'          => 'text',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ], [
+                'name'          => 'button_text',
+                'title'         => 'Button Text Color',
+                'type'          => 'text',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ], [
+                'name'          => 'nav_bg',
+                'title'         => 'Header Background',
+                'type'          => 'text',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ], [
+                'name'          => 'nav_text',
+                'title'         => 'Header Text Color',
+                'type'          => 'text',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ], [
+                'name'          => 'footer_bg',
+                'title'         => 'Footer Background',
+                'type'          => 'text',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ], [
+                'name'          => 'footer_text',
+                'title'         => 'Footer Text Color',
+                'type'          => 'text',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ],
+        ],
+    ], [
         'key'  => 'general.general',
         'name' => 'admin::app.configuration.index.general.general.title',
         'info' => 'admin::app.configuration.index.general.general.info',
