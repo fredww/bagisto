@@ -59,6 +59,31 @@
                         <x-admin::form.control-group.label>Exclude Category IDs</x-admin::form.control-group.label>
                         <x-admin::form.control-group.control type="text" name="exclude_category" placeholder="e.g. 56,78" />
                     </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>Brand (g:brand)</x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="text" name="brand" placeholder="e.g. Nike" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>Age Group (g:age_group)</x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="text" name="age_group" placeholder="e.g. adult" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>Gender (g:gender)</x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="text" name="gender" placeholder="e.g. unisex" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>Google Product Category (g:google_product_category)</x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="text" name="google_product_category" placeholder="e.g. Apparel & Accessories > Clothing" />
+                    </x-admin::form.control-group>
+
+                    <x-admin::form.control-group>
+                        <x-admin::form.control-group.label>Product Type (g:product_type)</x-admin::form.control-group.label>
+                        <x-admin::form.control-group.control type="text" name="product_type" placeholder="e.g. Tops > T-Shirts" />
+                    </x-admin::form.control-group>
                 </div>
 
                 <div class="mt-4">

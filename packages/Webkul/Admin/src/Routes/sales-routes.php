@@ -61,6 +61,12 @@ Route::prefix('sales')->group(function () {
         Route::get('download/{id}', 'download')->name('admin.sales.orders.dxm_export.download');
     });
 
+    Route::controller(\Webkul\Admin\Http\Controllers\Sales\WlyOrderExportController::class)->prefix('orders/wly-export')->group(function () {
+        Route::post('start', 'start')->name('admin.sales.orders.wly_export.start');
+        Route::get('status/{id}', 'status')->name('admin.sales.orders.wly_export.status');
+        Route::get('download/{id}', 'download')->name('admin.sales.orders.wly_export.download');
+    });
+
     /**
      * Refunds routes.
      */

@@ -15,6 +15,11 @@
         </p>
 
         <div class="flex items-center gap-x-2.5">
+            <x-admin::datagrid.wly-export 
+                start-url="{{ route('admin.sales.orders.wly_export.start') }}" 
+                status-url-base="{{ route('admin.sales.orders.wly_export.status', '') }}"
+            />
+
             <x-admin::datagrid.dxm-export 
                 start-url="{{ route('admin.sales.orders.dxm_export.start') }}" 
                 status-url-base="{{ route('admin.sales.orders.dxm_export.status', '') }}"

@@ -25,6 +25,11 @@ class GoogleFeedController extends Controller
             'base_url'          => 'nullable|url',
             'category'          => 'nullable|string',
             'exclude_category'  => 'nullable|string',
+            'brand'             => 'nullable|string',
+            'age_group'         => 'nullable|string',
+            'gender'            => 'nullable|string',
+            'google_product_category' => 'nullable|string',
+            'product_type'      => 'nullable|string',
         ]);
 
         $params = [];
@@ -51,6 +56,26 @@ class GoogleFeedController extends Controller
 
         if ($excludeCategory = request('exclude_category')) {
             $params['--exclude-category'] = $excludeCategory;
+        }
+
+        if ($brand = request('brand')) {
+            $params['--brand'] = $brand;
+        }
+
+        if ($ageGroup = request('age_group')) {
+            $params['--age-group'] = $ageGroup;
+        }
+
+        if ($gender = request('gender')) {
+            $params['--gender'] = $gender;
+        }
+
+        if ($googleCategory = request('google_product_category')) {
+            $params['--google-product-category'] = $googleCategory;
+        }
+
+        if ($productType = request('product_type')) {
+            $params['--product-type'] = $productType;
         }
 
         try {

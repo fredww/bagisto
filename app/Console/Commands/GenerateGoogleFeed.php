@@ -30,7 +30,12 @@ class GenerateGoogleFeed extends Command
                             {--output=public/google-feed.xml : Output file path}
                             {--category= : Category ID(s), comma-separated}
                             {--exclude-category= : Exclude Category ID(s), comma-separated}
-                            {--base-url= : Base URL for product links (default: from config)}';
+                            {--base-url= : Base URL for product links (default: from config)}
+                            {--brand= : Override g:brand}
+                            {--age-group= : Override g:age_group}
+                            {--gender= : Override g:gender}
+                            {--google-product-category= : Override g:google_product_category}
+                            {--product-type= : Override g:product_type}';
 
     /**
      * The console command description.
@@ -43,6 +48,11 @@ class GenerateGoogleFeed extends Command
     protected $channelRepository;
     protected $productImage;
     protected $attributeOptionRepository;
+    protected $overrideBrand;
+    protected $overrideAgeGroup;
+    protected $overrideGender;
+    protected $overrideGoogleProductCategory;
+    protected $overrideProductType;
 
     /**
      * Create a new command instance.
@@ -77,6 +87,11 @@ class GenerateGoogleFeed extends Command
         $baseUrl = $this->option('base-url') ?? config('app.url');
         $categoryOption = $this->option('category');
         $excludeCategoryOption = $this->option('exclude-category');
+        $this->overrideBrand = $this->option('brand') ?: null;
+        $this->overrideAgeGroup = $this->option('age-group') ?: null;
+        $this->overrideGender = $this->option('gender') ?: null;
+        $this->overrideGoogleProductCategory = $this->option('google-product-category') ?: null;
+        $this->overrideProductType = $this->option('product-type') ?: null;
 
         $this->info("开始生成 Google Feed...");
         $this->info("Channel: {$channelCode}");
@@ -331,16 +346,13 @@ class GenerateGoogleFeed extends Command
         // Condition (默认 new)
         $this->addChild($xml, $item, 'g:condition', 'new');
 
-        // Brand (默认 Kiaoa，如果有品牌属性则使用属性值)
-        $brand = $this->getAttributeValue($product, 'brand') ?? 'Kiaoa';
+        $brand = $this->overrideBrand ?? $this->getAttributeValue($product, 'brand') ?? 'Kiaoa';
         $this->addChild($xml, $item, 'g:brand', $this->cleanText($brand));
 
-        // Age Group (默认 Adult)
-        $ageGroup = $this->getAttributeValue($product, 'age_group') ?? 'adult';
+        $ageGroup = $this->overrideAgeGroup ?? $this->getAttributeValue($product, 'age_group') ?? 'adult';
         $this->addChild($xml, $item, 'g:age_group', $ageGroup);
 
-        // Gender (默认 Unisex)
-        $gender = $this->getAttributeValue($product, 'gender') ?? 'unisex';
+        $gender = $this->overrideGender ?? $this->getAttributeValue($product, 'gender') ?? 'unisex';
         $this->addChild($xml, $item, 'g:gender', $gender);
 
         // Weight (默认 999 g，如果有重量属性则使用属性值)
@@ -352,8 +364,8 @@ class GenerateGoogleFeed extends Command
             $this->addChild($xml, $item, 'g:shipping_weight', '1 kg');
         }
 
-        // Google Product Category (默认值)
-        $googleProductCategory = $this->getAttributeValue($product, 'google_product_category') 
+        $googleProductCategory = $this->overrideGoogleProductCategory 
+            ?? $this->getAttributeValue($product, 'google_product_category') 
             ?? 'Sporting Goods > Outdoor Recreation > Fishing';
         $this->addChild($xml, $item, 'g:google_product_category', $googleProductCategory);
 
@@ -371,8 +383,7 @@ class GenerateGoogleFeed extends Command
             $this->addChild($xml, $item, 'g:mpn', $mpn);
         }
 
-        // Product Type (分类)
-        $productType = $this->getProductType($product);
+        $productType = $this->overrideProductType ?? $this->getProductType($product);
         if ($productType) {
             $this->addChild($xml, $item, 'g:product_type', $this->cleanText($productType));
         }
@@ -614,20 +625,20 @@ class GenerateGoogleFeed extends Command
             $this->addChild($xml, $item, 'g:' . $name, $this->cleanText($value));
         }
 
-        // Brand (默认 Kiaoa，如果有品牌属性则使用属性值)
-        $brand = $this->getAttributeValue($product, 'brand') 
+        $brand = $this->overrideBrand 
+            ?? $this->getAttributeValue($product, 'brand') 
             ?? $this->getAttributeValue($parent->product, 'brand') 
             ?? 'Kiaoa';
         $this->addChild($xml, $item, 'g:brand', $this->cleanText($brand));
 
-        // Age Group (默认 Adult)
-        $ageGroup = $this->getAttributeValue($product, 'age_group') 
+        $ageGroup = $this->overrideAgeGroup 
+            ?? $this->getAttributeValue($product, 'age_group') 
             ?? $this->getAttributeValue($parent->product, 'age_group') 
             ?? 'adult';
         $this->addChild($xml, $item, 'g:age_group', $ageGroup);
 
-        // Gender (默认 Unisex)
-        $gender = $this->getAttributeValue($product, 'gender') 
+        $gender = $this->overrideGender 
+            ?? $this->getAttributeValue($product, 'gender') 
             ?? $this->getAttributeValue($parent->product, 'gender') 
             ?? 'unisex';
         $this->addChild($xml, $item, 'g:gender', $gender);
@@ -642,8 +653,8 @@ class GenerateGoogleFeed extends Command
             $this->addChild($xml, $item, 'g:shipping_weight', '999 g');
         }
 
-        // Google Product Category (默认值)
-        $googleProductCategory = $this->getAttributeValue($product, 'google_product_category') 
+        $googleProductCategory = $this->overrideGoogleProductCategory 
+            ?? $this->getAttributeValue($product, 'google_product_category') 
             ?? $this->getAttributeValue($parent->product, 'google_product_category') 
             ?? 'Sporting Goods > Outdoor Recreation > Fishing';
         $this->addChild($xml, $item, 'g:google_product_category', $googleProductCategory);
@@ -958,4 +969,3 @@ class GenerateGoogleFeed extends Command
         return $url;
     }
 }
-
