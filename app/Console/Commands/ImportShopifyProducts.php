@@ -35,7 +35,8 @@ class ImportShopifyProducts extends Command
                             {--collection=* : Specific collections to import (optional)}
                             {--limit=50 : Number of products to import per collection}
                             {--currency= : Currency code to request (e.g., USD)}
-                            {--dry-run : Run without actually importing}';
+                            {--dry-run : Run without actually importing}
+                            {--start-page=1 : Start from specific page when fetching products}';
 
     /**
      * The console command description.
@@ -92,6 +93,7 @@ class ImportShopifyProducts extends Command
         $collections = $this->option('collection');
         $limit = $this->option('limit');
         $currency = $this->option('currency');
+        $startPage = (int) ($this->option('start-page') ?? 1);
         $this->info("开始从 {$shopifyUrl} 导入产品...");
 
         try {
@@ -105,7 +107,7 @@ class ImportShopifyProducts extends Command
             $totalErrors = 0;
             foreach ($collections as $collection) {
                 $this->info("处理集合: {$collection}");
-                $result = $this->importCollectionProducts($shopifyUrl, $collection, $limit, $currency);
+                $result = $this->importCollectionProducts($shopifyUrl, $collection, $limit, $currency, $startPage);
                 $totalImported += $result['imported'];
                 $totalErrors += $result['errors'];
             }
@@ -139,11 +141,11 @@ class ImportShopifyProducts extends Command
     /**
      * Import products from specified collection
      */
-    protected function importCollectionProducts($shopifyUrl, $collection, $limit, $currency = null)
+    protected function importCollectionProducts($shopifyUrl, $collection, $limit, $currency = null, $startPage = 1)
     {
         $imported = 0;
         $errors = 0;
-        $page = 1;
+        $page = max(1, (int) $startPage);
 
         while ($imported < $limit) {
             $productsUrl = "{$shopifyUrl}/collections/{$collection}/products.json?limit=50&page={$page}";
