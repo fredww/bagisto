@@ -138,7 +138,7 @@ class FortunePayController extends Controller
             $service->createInvoiceIfNeeded($orderNo);
         }
 
-        return response()->json(['code' => 200, 'msg' => 'ok']);
+        return response('ok',200);
     }
 
     /**
@@ -164,6 +164,7 @@ class FortunePayController extends Controller
         if ($failure_msg === '用户取消') {
             $failure_msg = 'canceled';
         }
+        $failure_msg = strtolower($failure_msg);
 
         if ($valid) {
             $service->updatePaymentStatus($orderNo, $invoiceId, $status, [
@@ -176,7 +177,7 @@ class FortunePayController extends Controller
         }
 
         // 只有成功且无失败消息时才创建发票
-        if ($valid && $status === 'success' && $failure_msg === '') {
+        if ($valid && $status === 'success' && ($failure_msg === '' || $failure_msg === 'success')) {
             $service->createInvoiceIfNeeded($orderNo);
             $orderRepo = app(\Webkul\Sales\Repositories\OrderRepository::class);
             $order = $orderRepo->findOneByField('increment_id', $orderNo);
@@ -218,6 +219,7 @@ class FortunePayController extends Controller
         if ($failure_msg === '用户取消') {
             $failure_msg = 'canceled';
         }
+        $failure_msg = strtolower($failure_msg);
 
         if ($valid) {
             $service->updatePaymentStatus($orderNo, $invoiceId, $status, [
@@ -232,7 +234,7 @@ class FortunePayController extends Controller
         }
 
         // 只有成功且无失败消息时才创建发票
-        if ($valid && $status === 'success' && $failure_msg === '') {
+        if ($valid && $status === 'success' && ($failure_msg === '' || $failure_msg === 'success')) {
             $service->createInvoiceIfNeeded($orderNo);
             $orderRepo = app(\Webkul\Sales\Repositories\OrderRepository::class);
             $order = $orderRepo->findOneByField('increment_id', $orderNo);

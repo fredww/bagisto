@@ -14,55 +14,156 @@ return [
     ], [
         'key'    => 'general.design.theme',
         'name'   => 'Theme Styles',
-        'info'   => 'Configure storefront theme styles',
+        'info'   => 'Configure storefront theme styles - Rose Gold Premium Design System',
         'sort'   => 4,
         'fields' => [
+            // Typography
             [
                 'name'          => 'font_family',
-                'title'         => 'Font Family',
+                'title'         => 'Body Font Family',
                 'type'          => 'text',
+                'default'       => 'Inter, Poppins, sans-serif',
                 'channel_based' => true,
                 'locale_based'  => false,
             ], [
+                'name'          => 'font_heading',
+                'title'         => 'Heading Font Family',
+                'type'          => 'text',
+                'default'       => 'Playfair Display, DM Serif Display, serif',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ],
+            
+            // Primary Colors
+            [
                 'name'          => 'primary_color',
-                'title'         => 'Primary Color (HEX or CSS color)',
+                'title'         => 'Primary Color - Rose Gold',
                 'type'          => 'text',
+                'default'       => '#D4A5A5',
                 'channel_based' => true,
                 'locale_based'  => false,
             ], [
-                'name'          => 'button_bg',
-                'title'         => 'Button Background',
+                'name'          => 'primary_dark',
+                'title'         => 'Primary Dark - Deep Rose',
                 'type'          => 'text',
+                'default'       => '#B88B8B',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ], [
+                'name'          => 'primary_light',
+                'title'         => 'Primary Light - Soft Rose Background',
+                'type'          => 'text',
+                'default'       => '#F5E6E6',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ],
+            
+            // Secondary & Accent Colors
+            [
+                'name'          => 'secondary_color',
+                'title'         => 'Secondary Color - Warm Gray Brown',
+                'type'          => 'text',
+                'default'       => '#8B7E74',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ], [
+                'name'          => 'accent_color',
+                'title'         => 'Accent Color - Milk Tea',
+                'type'          => 'text',
+                'default'       => '#C9A690',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ],
+            
+            // Neutral Colors
+            [
+                'name'          => 'neutral_dark',
+                'title'         => 'Neutral Dark - Text Color',
+                'type'          => 'text',
+                'default'       => '#2D2D2D',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ], [
+                'name'          => 'neutral_medium',
+                'title'         => 'Neutral Medium - Secondary Text',
+                'type'          => 'text',
+                'default'       => '#6B6B6B',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ], [
+                'name'          => 'neutral_light',
+                'title'         => 'Neutral Light - Background',
+                'type'          => 'text',
+                'default'       => '#F8F5F2',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ],
+            
+            // Functional Colors
+            [
+                'name'          => 'success_color',
+                'title'         => 'Success Color - Soft Green',
+                'type'          => 'text',
+                'default'       => '#A8C5A3',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ], [
+                'name'          => 'warning_color',
+                'title'         => 'Warning Color - Soft Orange',
+                'type'          => 'text',
+                'default'       => '#E8C4A0',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ], [
+                'name'          => 'error_color',
+                'title'         => 'Error Color',
+                'type'          => 'text',
+                'default'       => '#D4A5A5',
+                'channel_based' => true,
+                'locale_based'  => false,
+            ],
+            
+            // Legacy fields (kept for backward compatibility)
+            [
+                'name'          => 'button_bg',
+                'title'         => 'Button Background (Legacy)',
+                'type'          => 'text',
+                'default'       => '#D4A5A5',
                 'channel_based' => true,
                 'locale_based'  => false,
             ], [
                 'name'          => 'button_text',
-                'title'         => 'Button Text Color',
+                'title'         => 'Button Text Color (Legacy)',
                 'type'          => 'text',
+                'default'       => '#ffffff',
                 'channel_based' => true,
                 'locale_based'  => false,
             ], [
                 'name'          => 'nav_bg',
-                'title'         => 'Header Background',
+                'title'         => 'Header Background (Legacy)',
                 'type'          => 'text',
+                'default'       => '#ffffff',
                 'channel_based' => true,
                 'locale_based'  => false,
             ], [
                 'name'          => 'nav_text',
-                'title'         => 'Header Text Color',
+                'title'         => 'Header Text Color (Legacy)',
                 'type'          => 'text',
+                'default'       => '#2D2D2D',
                 'channel_based' => true,
                 'locale_based'  => false,
             ], [
                 'name'          => 'footer_bg',
-                'title'         => 'Footer Background',
+                'title'         => 'Footer Background (Legacy)',
                 'type'          => 'text',
+                'default'       => '#F5E6E6',
                 'channel_based' => true,
                 'locale_based'  => false,
             ], [
                 'name'          => 'footer_text',
-                'title'         => 'Footer Text Color',
+                'title'         => 'Footer Text Color (Legacy)',
                 'type'          => 'text',
+                'default'       => '#2D2D2D',
                 'channel_based' => true,
                 'locale_based'  => false,
             ],
