@@ -239,7 +239,8 @@
         </script>
 
         <script type="module">
-            let galleryImages = @json(product_image()->getGalleryImages($product));
+            const baseGalleryImages = @json(product_image()->getGalleryImages($product));
+            let galleryImages = baseGalleryImages.slice();
 
             app.component('v-product-configurable-options', {
                 template: '#v-product-configurable-options-template',
@@ -257,6 +258,7 @@
                         selectedOptionVariant: '',
 
                         galleryImages: [],
+                        baseGalleryImages: baseGalleryImages,
                     }
                 },
 
@@ -426,7 +428,7 @@
                     },
 
                     reloadImages () {
-                        galleryImages.splice(0, galleryImages.length)
+                        galleryImages.splice(0, galleryImages.length);
 
                         if (this.possibleOptionVariant) {
                             this.config.variant_images[this.possibleOptionVariant].forEach(function(image) {
@@ -438,15 +440,32 @@
                             });
                         }
 
-                        this.galleryImages.forEach(function(image) {
+                        this.baseGalleryImages.forEach(function(image) {
                             galleryImages.push(image);
                         });
 
-                        if (galleryImages.length) {
-                            this.$parent.$parent.$refs.gallery.media.images =  [...galleryImages];
+                        const seen = new Set();
+                        const unique = [];
+                        const getFileName = (url) => {
+                            if (! url || typeof url !== 'string') return '';
+                            const clean = url.split('?')[0];
+                            const parts = clean.split('/');
+                            return (parts[parts.length - 1] || clean).toLowerCase();
+                        };
+                        galleryImages.forEach(function(media) {
+                            const url = media.original_image_url || media.large_image_url || media.video_url || '';
+                            const key = getFileName(url) || JSON.stringify(media);
+                            if (! seen.has(key)) {
+                                seen.add(key);
+                                unique.push(media);
+                            }
+                        });
+
+                        if (unique.length) {
+                            this.$parent.$parent.$refs.gallery.media.images =  [...unique];
                         }
 
-                        this.$emitter.emit('configurable-variant-update-images-event', galleryImages);
+                        this.$emitter.emit('configurable-variant-update-images-event', unique);
                     },
 
                     initializeSelectionFromQuery() {

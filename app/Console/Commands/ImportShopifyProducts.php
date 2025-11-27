@@ -25,13 +25,13 @@ class ImportShopifyProducts extends Command
 {
     /**
      * # 导入单个产品
-     * php artisan shopify:import-products https://7pp15d-mn.myshopify.com --collection=spinning-reel --limit=1
+     * sudo -u www php artisan shopify:import-products https://loakia.com/products/sweetheart-hair-claw-clip-in-two-scoops --currency=USD
      * # 批量导入
      * sudo -u www php artisan shopify:import-products https://ghacnj.com --collection=zyn --currency=USD
      * @var string
     */
     protected $signature = 'shopify:import-products 
-                            {shopify_url : The Shopify store URL (e.g., https://7pp15d-mn.myshopify.com/)}
+                            {shopify_url : Shopify store URL or product URL (e.g., https://loakia.com or https://loakia.com/products/handle)}
                             {--collection=* : Specific collections to import (optional)}
                             {--limit=50 : Number of products to import per collection}
                             {--currency= : Currency code to request (e.g., USD)}
@@ -97,6 +97,14 @@ class ImportShopifyProducts extends Command
         $this->info("开始从 {$shopifyUrl} 导入产品...");
 
         try {
+            // 如果传入的是单个产品链接（/products/{handle}[.json]），直接导入该产品
+            if ($this->isProductUrl($shopifyUrl)) {
+                $this->info('检测到单个产品链接，开始按产品链接导入');
+                $result = $this->importSingleProductByUrl($shopifyUrl, $currency);
+                $this->info("导入完成! 成功: {$result['imported']}, 错误: {$result['errors']}");
+                return 0;
+            }
+
             // 获取所有集合或指定集合
             // Get all collections or specified collections
             if (empty($collections)) {
@@ -238,6 +246,97 @@ class ImportShopifyProducts extends Command
     }
 
     /**
+     * 按产品链接导入单个产品
+     * Import a single product by product URL
+     */
+    protected function importSingleProductByUrl($productUrl, $currency = null)
+    {
+        $imported = 0;
+        $errors = 0;
+
+        // 规范化为 .json 链接
+        $jsonUrl = Str::endsWith($productUrl, '.json') ? $productUrl : ($productUrl . '.json');
+        $connector = (str_contains($jsonUrl, '?')) ? '&' : '?';
+        if (!empty($currency)) {
+            $jsonUrl .= $connector . 'currency=' . urlencode($currency);
+            $connector = '&';
+        }
+        $jsonUrl .= $connector . '_ts=' . time();
+
+        $this->info("获取产品JSON: {$jsonUrl}");
+
+        try {
+            $response = Http::timeout(60)
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+                    'Accept' => 'application/json, text/plain, */*',
+                    'Cache-Control' => 'no-cache',
+                    'Pragma' => 'no-cache',
+                ])
+                ->get($jsonUrl);
+
+            $this->info("响应状态码: {$response->status()}");
+            if (!$response->successful()) {
+                $this->error('无法获取产品数据');
+                return ['imported' => 0, 'errors' => 1];
+            }
+
+            $data = $response->json();
+
+            // 保存采集数据
+            try {
+                $slug = Str::slug(parse_url($productUrl, PHP_URL_PATH) ?? 'product', '_');
+                $fileName = 'single_' . $slug . '.json';
+                Storage::disk('local')->put('shopify/' . $fileName, json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT));
+                $this->info('已保存单品采集数据: ' . storage_path('app/shopify/' . $fileName));
+            } catch (\Throwable $e) {
+                $this->warn('保存单品采集数据失败: ' . $e->getMessage());
+            }
+
+            // 兼容 {product: {...}} 或 {products: [...]}
+            $shopifyProduct = null;
+            if (!empty($data['product']) && is_array($data['product'])) {
+                $shopifyProduct = $data['product'];
+            } elseif (!empty($data['products']) && is_array($data['products'])) {
+                $shopifyProduct = $data['products'][0] ?? null;
+            }
+
+            if (!$shopifyProduct) {
+                $this->error('产品JSON中未找到有效产品数据');
+                return ['imported' => 0, 'errors' => 1];
+            }
+
+            // 用 product_type 或 vendor 作为分类名，回退为 products
+            $collectionName = $shopifyProduct['product_type'] ?? ($shopifyProduct['vendor'] ?? 'products');
+
+            try {
+                $this->importSingleProduct($shopifyProduct, $collectionName);
+                $this->info("✓ 导入产品: {$shopifyProduct['title']}");
+                $imported++;
+            } catch (\Exception $e) {
+                $this->error("✗ 导入产品失败 {$shopifyProduct['title']}: " . $e->getMessage());
+                $errors++;
+            }
+
+        } catch (\Exception $e) {
+            $this->error('获取产品JSON失败: ' . $e->getMessage());
+            $errors++;
+        }
+
+        return ['imported' => $imported, 'errors' => $errors];
+    }
+
+    /**
+     * 判断是否为产品链接
+     * Determine if URL is a Shopify product URL
+     */
+    protected function isProductUrl($url)
+    {
+        $path = parse_url($url, PHP_URL_PATH) ?? '';
+        return (bool) preg_match('#/products/[^/]+(\.json)?$#', rtrim($path, '/'));
+    }
+
+    /**
      * 导入单个产品
      * Import a single product
      */
@@ -275,7 +374,7 @@ class ImportShopifyProducts extends Command
             // Rule 1: If Shopify product has no variants, treat as simple product
             // 规则2：如果Shopify产品有变体，则视为configurable产品的子产品
             // Rule 2: If Shopify product has variants, treat as configurable product with child products
-            if (!empty($shopifyProduct['variants']) && count($shopifyProduct['variants']) > 1) {
+            if (!empty($shopifyProduct['variants']) && count($shopifyProduct['variants']) >= 1 && !empty($shopifyProduct['options'])) {
                 // 有多个变体，创建可配置产品
                 // Has multiple variants, create configurable product
                 $this->createConfigurableProduct($shopifyProduct, $category, $attributeFamily, $channel, $inventorySource, $sku);
@@ -349,7 +448,67 @@ class ImportShopifyProducts extends Command
 
         // 更新产品详细信息（包括属性值）
         // Update product details (including attribute values)
+        // 为单变体的 simple 产品写入 Shopify 选项对应的属性
+        $options = $shopifyProduct['options'] ?? [];
+        $firstVariant = (!empty($shopifyProduct['variants']) && is_array($shopifyProduct['variants']))
+            ? $shopifyProduct['variants'][0]
+            : null;
+
+        $attributeAssignments = [];
+        if (!empty($options)) {
+            foreach ($options as $index => $option) {
+                $optionName = $option['name'] ?? null;
+                $optionValues = $option['values'] ?? [];
+                if (!$optionName || empty($optionValues)) {
+                    continue;
+                }
+
+                $attribute = $this->createOrGetAttribute($optionName, $optionValues, $attributeFamily);
+
+                $selectedValue = null;
+                if ($firstVariant) {
+                    $optionKey = 'option' . ($index + 1);
+                    $selectedValue = $firstVariant[$optionKey] ?? null;
+                }
+
+                if (!$selectedValue) {
+                    $selectedValue = $optionValues[0] ?? null;
+                }
+
+                if ($selectedValue) {
+                    $attributeOption = $this->getOrCreateAttributeOption($attribute, $selectedValue);
+                    $attributeAssignments[$attribute->code] = $attributeOption->id;
+                }
+            }
+        }
+
+        if (!empty($attributeAssignments)) {
+            foreach ($attributeAssignments as $code => $optionId) {
+                $productData[$code] = $optionId;
+            }
+            $this->info("写入简单产品属性: " . count($attributeAssignments) . " 个");
+        }
+
         $this->productRepository->update($productData, $product->id);
+
+        // 通过 ProductAttributeValueRepository 再次确保属性值正确保存
+        if (!empty($attributeAssignments)) {
+            try {
+                $attributeValueRepository = app(\Webkul\Product\Repositories\ProductAttributeValueRepository::class);
+                $attributes = $this->attributeRepository->findWhereIn('code', array_keys($attributeAssignments));
+
+                $payload = $attributeAssignments;
+                // 对于非 per_channel / 非 per_locale 的属性，仓库内部会处理为 NULL
+                $payload['channel'] = $channel->code;
+                $payload['locale'] = core()->getCurrentLocaleCode() ?? 'en';
+
+                $attributeValueRepository->saveValues($payload, $product, $attributes);
+                Event::dispatch('catalog.product.update.after', $product);
+                $this->info('已通过属性值仓库保存 simple 产品的可见属性');
+            } catch (\Throwable $e) {
+                $this->warn('保存简单产品属性值失败（将使用主更新结果）：' . $e->getMessage());
+            }
+        }
         
         // 触发产品更新事件以更新flat表
         // Trigger product update event to update flat table
@@ -1514,6 +1673,34 @@ class ImportShopifyProducts extends Command
                         $group->custom_attributes()->save($attribute, ['position' => $position + 1]);
                     }
                 }
+
+                // 确保现有属性在前台可见、用于平表与筛选，并使用 swatch 展示
+                $needsUpdate = false;
+                $updatePayload = [];
+                if (! $attribute->is_visible_on_front) {
+                    $updatePayload['is_visible_on_front'] = true;
+                    $needsUpdate = true;
+                }
+                if (! $attribute->use_in_flat) {
+                    $updatePayload['use_in_flat'] = true;
+                    $needsUpdate = true;
+                }
+                if (! $attribute->is_filterable) {
+                    $updatePayload['is_filterable'] = true;
+                    $needsUpdate = true;
+                }
+                if (! $attribute->is_configurable) {
+                    $updatePayload['is_configurable'] = true;
+                    $needsUpdate = true;
+                }
+                if (empty($attribute->swatch_type) || $attribute->swatch_type === 'dropdown') {
+                    $updatePayload['swatch_type'] = 'text';
+                    $needsUpdate = true;
+                }
+                if ($needsUpdate) {
+                    $attribute->update($updatePayload);
+                    $this->info("已更新属性可见性/筛选/平表设置: {$attribute->code}");
+                }
             } catch (\Throwable $th) {}
 
             return $attribute;
@@ -1534,7 +1721,7 @@ class ImportShopifyProducts extends Command
             'value_per_locale' => false,
             'value_per_channel' => false,
             'position' => 1,
-            'swatch_type' => null,
+            'swatch_type' => 'text',
             'use_in_flat' => true,
             'is_comparable' => false,
         ];
@@ -1577,6 +1764,35 @@ class ImportShopifyProducts extends Command
         
         if ($option) {
             $this->info("选项已存在: {$optionValue}");
+
+            // 确保所有站点语言都有翻译
+            try {
+                $locales = collect(core()->getAllLocales())->pluck('code')->all();
+            } catch (\Throwable $e) {
+                $locales = ['en'];
+            }
+
+            $existingTranslations = DB::table('attribute_option_translations')
+                ->where('attribute_option_id', $option->id)
+                ->pluck('locale')
+                ->all();
+
+            $missingLocales = array_diff($locales, $existingTranslations);
+            if (!empty($missingLocales)) {
+                $rows = [];
+                foreach ($missingLocales as $locale) {
+                    $rows[] = [
+                        'attribute_option_id' => $option->id,
+                        'locale' => $locale,
+                        'label' => $optionValue,
+                    ];
+                }
+                if (!empty($rows)) {
+                    DB::table('attribute_option_translations')->insert($rows);
+                    $this->info("为选项补充翻译: " . implode(',', $missingLocales));
+                }
+            }
+
             return $option;
         }
 
@@ -1592,20 +1808,23 @@ class ImportShopifyProducts extends Command
 
         $option = $this->attributeOptionRepository->create($optionData);
         
-        // 创建多语言标签
-        // Create multilingual labels
-        DB::table('attribute_option_translations')->insert([
-            [
+        // 创建多语言标签（覆盖所有已配置语言）
+        // Create multilingual labels for all configured locales
+        try {
+            $locales = collect(core()->getAllLocales())->pluck('code')->all();
+        } catch (\Throwable $e) {
+            $locales = ['en'];
+        }
+
+        $rows = [];
+        foreach ($locales as $locale) {
+            $rows[] = [
                 'attribute_option_id' => $option->id,
-                'locale' => 'en',
+                'locale' => $locale,
                 'label' => $optionValue,
-            ],
-            [
-                'attribute_option_id' => $option->id,
-                'locale' => 'zh_CN',
-                'label' => $optionValue,
-            ],
-        ]);
+            ];
+        }
+        DB::table('attribute_option_translations')->insert($rows);
 
         return $option;
     }

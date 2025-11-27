@@ -485,6 +485,19 @@
                                     {!! $product->short_description !!}
                                 </p>
 
+                                @php
+                                    $inlineAttributes = collect($attributeData)->take(3);
+                                @endphp
+                                @if ($inlineAttributes->count())
+                                    <div class="mt-3 text-sm text-zinc-600">
+                                        @foreach ($inlineAttributes as $attr)
+                                            @if (! empty($attr['value']))
+                                                <span class="mr-4">{{ $attr['label'] }}: {{ $attr['value'] }}</span>
+                                            @endif
+                                        @endforeach
+                                    </div>
+                                @endif
+
                                 {!! view_render_event('bagisto.shop.products.short_description.after', ['product' => $product]) !!}
 
                                 @include('shop::products.view.types.simple')
