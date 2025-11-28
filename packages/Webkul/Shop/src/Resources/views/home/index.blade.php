@@ -34,56 +34,65 @@
     </x-slot>
 
     <!-- Loop over the theme customization -->
-    @foreach ($customizations as $customization)
-        @php ($data = $customization->options) @endphp
+    <div class="flex flex-col gap-12 pb-12">
+        @foreach ($customizations as $customization)
+            @php ($data = $customization->options) @endphp
 
-        <!-- Static content -->
-        @switch ($customization->type)
-            @case ($customization::IMAGE_CAROUSEL)
-                <!-- Image Carousel -->
-                <x-shop::carousel
-                    :options="$data"
-                    aria-label="{{ trans('shop::app.home.index.image-carousel') }}"
-                />
+            <!-- Static content -->
+            @switch ($customization->type)
+                @case ($customization::IMAGE_CAROUSEL)
+                    <!-- Image Carousel -->
+                    <div class="homepage-hero">
+                        <x-shop::carousel
+                            :options="$data"
+                            aria-label="{{ trans('shop::app.home.index.image-carousel') }}"
+                        />
+                    </div>
 
-                @break
-            @case ($customization::STATIC_CONTENT)
-                <!-- push style -->
-                @if (! empty($data['css']))
-                    @push ('styles')
-                        <style>
-                            {{ $data['css'] }}
-                        </style>
-                    @endpush
-                @endif
+                    @break
+                @case ($customization::STATIC_CONTENT)
+                    <!-- push style -->
+                    @if (! empty($data['css']))
+                        @push ('styles')
+                            <style>
+                                {{ $data['css'] }}
+                            </style>
+                        @endpush
+                    @endif
 
-                <!-- render html -->
-                @if (! empty($data['html']))
-                    {!! $data['html'] !!}
-                @endif
+                    <!-- render html -->
+                    @if (! empty($data['html']))
+                        <div class="container px-[60px] max-lg:px-8 max-md:px-4">
+                            {!! $data['html'] !!}
+                        </div>
+                    @endif
 
-                @break
-            @case ($customization::CATEGORY_CAROUSEL)
-                <!-- Categories carousel -->
-                @break <!-- 不显示分类 -->
-                <x-shop::categories.carousel
-                    :title="$data['title'] ?? ''"
-                    :src="route('shop.api.categories.index', $data['filters'] ?? [])"
-                    :navigation-link="route('shop.home.index')"
-                    aria-label="{{ trans('shop::app.home.index.categories-carousel') }}"
-                />
+                    @break
+                @case ($customization::CATEGORY_CAROUSEL)
+                    <!-- Categories carousel -->
+                    <div class="container px-[60px] max-lg:px-8 max-md:px-4">
+                        <x-shop::categories.carousel
+                            :title="$data['title'] ?? ''"
+                            :src="route('shop.api.categories.index', $data['filters'] ?? [])"
+                            :navigation-link="route('shop.home.index')"
+                            aria-label="{{ trans('shop::app.home.index.categories-carousel') }}"
+                        />
+                    </div>
 
-                @break
-            @case ($customization::PRODUCT_CAROUSEL)
-                <!-- Product Carousel -->
-                <x-shop::products.carousel
-                    :title="$data['title'] ?? ''"
-                    :src="route('shop.api.products.index', array_merge($data['filters'] ?? [], (($data['title'] ?? '') === 'All Products') ? ['exclude_name_contains' => 'zyn'] : []))"
-                    :navigation-link="route('shop.search.index', array_merge($data['filters'] ?? [], (($data['title'] ?? '') === 'All Products') ? ['exclude_name_contains' => 'zyn'] : []))"
-                    aria-label="{{ trans('shop::app.home.index.product-carousel') }}"
-                />
+                    @break
+                @case ($customization::PRODUCT_CAROUSEL)
+                    <!-- Product Carousel -->
+                    <div class="container px-[60px] max-lg:px-8 max-md:px-4">
+                        <x-shop::products.carousel
+                            :title="$data['title'] ?? ''"
+                            :src="route('shop.api.products.index', array_merge($data['filters'] ?? [], (($data['title'] ?? '') === 'All Products') ? ['exclude_name_contains' => 'zyn'] : []))"
+                            :navigation-link="route('shop.search.index', array_merge($data['filters'] ?? [], (($data['title'] ?? '') === 'All Products') ? ['exclude_name_contains' => 'zyn'] : []))"
+                            aria-label="{{ trans('shop::app.home.index.product-carousel') }}"
+                        />
+                    </div>
 
-                @break
-        @endswitch
-    @endforeach
+                    @break
+            @endswitch
+        @endforeach
+    </div>
 </x-shop::layouts>

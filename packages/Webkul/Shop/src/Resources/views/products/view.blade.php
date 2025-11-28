@@ -62,11 +62,13 @@
 
     <!-- Breadcrumbs -->
     @if ((core()->getConfigData('general.general.breadcrumbs.shop')))
-        <div class="flex justify-center px-7 max-lg:hidden">
-            <x-shop::breadcrumbs
-                name="product"
-                :entity="$product"
-            />
+        <div class="container px-[60px] max-1180:px-0 max-lg:hidden">
+            <div class="flex justify-start">
+                <x-shop::breadcrumbs
+                    name="product"
+                    :entity="$product"
+                />
+            </div>
         </div>
     @endif
 
@@ -533,8 +535,7 @@
 
                                         <x-shop::button
                                             type="submit"
-                                            class="secondary-button w-full max-w-full max-md:py-3 max-sm:rounded-lg max-sm:py-1.5"
-                                            button-type="secondary-button"
+                                            class="primary-solid-button w-full max-w-full max-md:py-3 max-sm:rounded-lg max-sm:py-1.5"
                                             :loading="false"
                                             :title="trans('shop::app.products.view.add-to-cart')"
                                             :disabled="! $product->isSaleable(1)"
@@ -555,7 +556,6 @@
                                         <x-shop::button
                                             type="submit"
                                             class="primary-button mt-5 w-full max-w-[470px] max-md:py-3 max-sm:mt-3 max-sm:rounded-lg max-sm:py-1.5"
-                                            button-type="primary-button"
                                             :title="trans('shop::app.products.view.buy-now')"
                                             :disabled="! $product->isSaleable(1)"
                                             ::loading="isStoring.buyNow"
@@ -565,6 +565,34 @@
                                     @endif
 
                                     {!! view_render_event('bagisto.shop.products.view.buy_now.after', ['product' => $product]) !!}
+                                @endif
+
+                                <!-- Trust Badges -->
+                                @if (core()->getConfigData('general.design.theme_settings.show_trust_badges'))
+                                    <div class="mt-8 border-t pt-6">
+                                        @if ($trustBadgeImage = core()->getConfigData('general.design.theme_settings.trust_badge_image'))
+                                            <img
+                                                src="{{ Storage::url($trustBadgeImage) }}"
+                                                alt="Trust Badges"
+                                                class="h-10 object-contain"
+                                            />
+                                        @else
+                                            <div class="flex flex-wrap gap-6 text-zinc-500">
+                                                <div class="flex items-center gap-2">
+                                                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                                        <path d="M12 2l7 4v5c0 5-3.5 9-7 11-3.5-2-7-6-7-11V6l7-4z" />
+                                                    </svg>
+                                                    <span class="text-sm font-medium">Secure Payment</span>
+                                                </div>
+                                                <div class="flex items-center gap-2">
+                                                    <svg class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                                        <path d="M2 12l19-9-9 19-2-7-8-3z" />
+                                                    </svg>
+                                                    <span class="text-sm font-medium">Fast Shipping</span>
+                                                </div>
+                                            </div>
+                                        @endif
+                                    </div>
                                 @endif
 
                                 <!-- Shipping Info and Description -->
@@ -632,6 +660,25 @@
                         </div>
                     </div>
                 </form>
+
+                <!-- Sticky Add to Cart (Mobile) -->
+                @if (core()->getConfigData('general.design.theme_settings.enable_sticky_add_to_cart'))
+                    <div
+                        v-if="isMobile && showStickyFooter"
+                        class="fixed bottom-0 left-0 z-[999] w-full border-t bg-white p-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] transition-transform duration-300"
+                    >
+                        <div class="flex gap-3">
+                            <x-shop::button
+                                type="button"
+                                class="primary-solid-button w-full flex-1 py-3 text-sm"
+                                :title="trans('shop::app.products.view.add-to-cart')"
+                                :disabled="! $product->isSaleable(1)"
+                                ::loading="isStoring.addToCart"
+                                @click="is_buy_now=0; addToCart()"
+                            />
+                        </div>
+                    </div>
+                @endif
             </x-shop::form>
         </script>
 
@@ -652,10 +699,24 @@
 
                             buyNow: false,
                         },
+
+                        showStickyFooter: false,
                     }
                 },
 
+                mounted() {
+                    window.addEventListener('scroll', this.handleScroll);
+                },
+
+                beforeUnmount() {
+                    window.removeEventListener('scroll', this.handleScroll);
+                },
+
                 methods: {
+                    handleScroll() {
+                        this.showStickyFooter = window.scrollY > 500;
+                    },
+
                     addToCart(params) {
                         const operation = this.is_buy_now ? 'buyNow' : 'addToCart';
 

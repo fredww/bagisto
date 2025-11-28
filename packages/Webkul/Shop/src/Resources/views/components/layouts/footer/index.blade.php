@@ -29,7 +29,7 @@
     <div class="grid grid-cols-4 gap-x-6 gap-y-8 p-[60px] max-md:gap-5 max-md:p-8 max-1060:grid-cols-2 max-sm:grid-cols-1 max-sm:px-4 max-sm:py-5">
         <!-- 公司信息列：统一第一列 -->
         <div class="grid gap-5">
-        <h3 class="text-base font-semibold text-gray-800 mb-1 cursor-pointer select-none flex items-center justify-between"
+        <h3 class="text-lg font-bold text-gray-800 mb-1 cursor-pointer select-none flex items-center justify-between"
                     data-toggle-for="footer-section-column_0"
                     aria-controls="footer-section-column_0"
                     aria-expanded="true"
@@ -37,12 +37,12 @@
                     tabindex="0">
             <span>Company</span>
             <!-- 中文：箭头图标仅在移动端显示，用于提示可点击展开；英文：Chevron icon shows on mobile to indicate collapsible -->
-            <svg data-arrow class="w-4 h-4 ml-2 transition-transform duration-200 text-gray-500" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <svg data-arrow class="w-4 h-4 ml-2 transition-transform duration-200 text-gray-600" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <path d="M5.5 7.5L10 12l4.5-4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
             </svg>
         </h3>
             @php
-                $companyInfoHtml = core()->getConfigData('general.content.footer_company.company_info') ?? '<ul class="grid gap-3 text-sm"><li>Store Name:Kiaoa</li><li>Hours: Monday - Friday : 9am-5pm</li><li>Saturday - Sunday : Closed</li><li>Address:715 S Washington St</li><li>apt c2,Alexandria,VA,22314</li><li>Phoen:+1（703）356-7108</li><li>Email:help@kiaoa.com</li></ul>';
+                $companyInfoHtml = core()->getConfigData('general.content.footer_company.company_info') ?? '<ul class="grid gap-3 text-sm leading-relaxed"><li>Store Name: Kiaoa</li><li>Hours: Monday - Friday : 9am-5pm</li><li>Saturday - Sunday : Closed</li><li>Address: 715 S Washington St, apt c2, Alexandria, VA, 22314</li><li>Phone: +1 (703) 356-7108</li><li>Email: help@kiaoa.com</li></ul>';
             @endphp
 
             <div id="footer-section-column_0" class="grid gap-3 text-sm" data-collapsible="mobile">
@@ -67,7 +67,7 @@
                 <div class="grid gap-3">
                     @if (isset($columnTitles[$columnKey]))
                         <h3
-                            class="text-base font-semibold text-gray-800 mb-1 {{ $isCollapsible ? 'cursor-pointer select-none flex items-center justify-between' : '' }}"
+                            class="text-lg font-bold text-gray-800 mb-1 {{ $isCollapsible ? 'cursor-pointer select-none flex items-center justify-between' : '' }}"
                             @if($isCollapsible)
                                 data-toggle-for="{{ $sectionId }}"
                                 aria-controls="{{ $sectionId }}"
@@ -79,7 +79,7 @@
                             <span>{{ $columnTitles[$columnKey] }}</span>
                             @if($isCollapsible)
                                 <!-- 中文：箭头图标仅在移动端显示；英文：Chevron icon shows on mobile only -->
-                                <svg data-arrow class="w-4 h-4 ml-2 transition-transform duration-200 text-gray-500" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <svg data-arrow class="w-4 h-4 ml-2 transition-transform duration-200 text-gray-600" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                     <path d="M5.5 7.5L10 12l4.5-4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             @endif
@@ -102,7 +102,7 @@
 
                         @foreach ($footerLinkSection as $link)
                             <li>
-                                <a href="{{ $link['url'] }}" class="text-gray-600 hover:text-gray-800 transition-colors">
+                                <a href="{{ $link['url'] }}" class="text-gray-600 hover:text-black transition-colors duration-200">
                                     {{ $link['title'] }}
                                 </a>
                             </li>
@@ -118,7 +118,8 @@
         @if (core()->getConfigData('customer.settings.newsletter.subscription'))
             <div class="grid gap-2.5">
                 <p
-                    class="max-w-[288px] text-3xl italic leading-[45px] text-navyBlue max-md:text-2xl max-sm:text-lg"
+                    class="max-w-[288px] text-3xl leading-[45px] max-md:text-2xl max-sm:text-lg"
+                    style="font-family: var(--font-heading); color: var(--neutral-dark);"
                     role="heading"
                     aria-level="2"
                 >
@@ -137,7 +138,8 @@
                         <div class="relative w-full footer-subscribe">
                             <x-shop::form.control-group.control
                                 type="email"
-                                class="block w-[420px] max-w-full rounded-xl border-2 border-[#e9decc] bg-[#F1EADF] px-5 py-4 text-base max-1060:w-full max-md:p-3.5 max-sm:mb-0 max-sm:rounded-lg max-sm:border-2 max-sm:p-2 max-sm:text-sm"
+                                class="block w-[420px] max-w-full rounded-xl border-2 px-5 py-4 text-base max-1060:w-full max-md:p-3.5 max-sm:mb-0 max-sm:rounded-lg max-sm:border-2 max-sm:p-2 max-sm:text-sm"
+                                style="border-color: var(--primary-color) !important; background-color: var(--primary-light);"
                                 name="email"
                                 rules="required|email"
                                 label="Email"
@@ -149,7 +151,8 @@
 
                             <button
                                 type="submit"
-                                class="absolute top-1.5 flex w-max items-center rounded-xl bg-white px-7 py-2.5 font-medium hover:bg-zinc-100 max-md:top-1 max-md:px-5 max-md:text-xs max-sm:mt-0 max-sm:rounded-lg max-sm:px-4 max-sm:py-2 ltr:right-2 rtl:left-2"
+                                class="absolute top-1.5 flex w-max h-[48px] items-center rounded-xl px-7 font-medium hover:opacity-90 max-md:top-1 max-md:px-5 max-md:text-xs max-sm:mt-0 max-sm:rounded-lg max-sm:px-4 max-sm:py-2 ltr:right-2 rtl:left-2"
+                                style="background-color: var(--btn-bg) !important; color: var(--btn-text) !important;"
                             >
                                 @lang('shop::app.components.layouts.footer.subscribe')
                             </button>
@@ -283,7 +286,7 @@
     <div class="flex justify-between bg-[#F1EADF] px-[60px] py-3.5 max-md:justify-center max-sm:px-5">
         {!! view_render_event('bagisto.shop.layout.footer.footer_text.before') !!}
 
-        <p class="text-sm text-zinc-600 max-md:text-center">
+        <p class="text-sm text-gray-600 max-md:text-center">
             @lang('shop::app.components.layouts.footer.footer-text', ['current_year'=> date('Y') ])
         </p>
 

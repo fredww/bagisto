@@ -31,14 +31,14 @@
 
                         @if (core()->getConfigData('sales.checkout.my_cart.summary') == 'display_item_quantity')
                             <span
-                                class="absolute -top-4 rounded-[44px] bg-navyBlue px-2 py-1.5 text-xs font-semibold leading-[9px] text-white ltr:left-5 rtl:right-5 max-md:ltr:left-4 max-md:rtl:right-4"
+                                class="mini-cart-count absolute -top-4 rounded-[44px] bg-primary px-2 py-1.5 text-xs font-semibold leading-[9px] text-white ltr:left-5 rtl:right-5 max-md:ltr:left-4 max-md:rtl:right-4"
                                 v-if="cart?.items_qty"
                             >
                                 @{{ cart.items_qty }}
                             </span>
                         @else
                             <span
-                                class="absolute -top-4 rounded-[44px] bg-navyBlue px-2 py-1.5 text-xs font-semibold leading-[9px] text-white ltr:left-5 rtl:right-5 max-md:px-2 max-md:py-1.5 max-md:ltr:left-4 max-md:rtl:right-4"
+                                class="mini-cart-count absolute -top-4 rounded-[44px] bg-primary px-2 py-1.5 text-xs font-semibold leading-[9px] text-white ltr:left-5 rtl:right-5 max-md:px-2 max-md:py-1.5 max-md:ltr:left-4 max-md:rtl:right-4"
                                 v-if="cart?.items_count"
                             >
                                 @{{ cart.items_count }}
@@ -74,14 +74,17 @@
                         </template>
 
                         <template v-else>
-                            <p class="text-base max-md:text-zinc-500 max-sm:text-xs">
-                                Buy $@{{ formattedRemaining }} more to enjoy FREE Shipping
-                            </p>
+                            <div class="flex items-center gap-2 rounded-xl bg-primary-light px-4 py-2">
+                                <span class="icon-star text-lg text-accent"></span>
+                                <p class="text-lg font-medium text-accent">
+                                    Buy <span class="font-semibold text-cart-red">$@{{ formattedRemaining }}</span> more to enjoy <span class="font-semibold text-cart-red">FREE Shipping</span>
+                                </p>
+                            </div>
 
                             <div class="relative mt-2 h-3 w-full rounded-full bg-zinc-200">
-                                <div class="h-3 rounded-full" :style="{ width: progressPercent + '%', backgroundColor: '#f59e0b' }"></div>
+                                <div class="h-3 rounded-full" :style="{ width: progressPercent + '%', backgroundColor: 'var(--primary-color)' }"></div>
                                 <span class="absolute z-10" :style="{ left: 'calc(' + progressPercent + '% - 12px)', top: '50%', transform: 'translateY(-50%)' }">
-                                    <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white" :style="{ border: '2px solid #f59e0b', color: '#f59e0b' }" >
+                                    <span class="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white" :style="{ border: '2px solid var(--primary-color)', color: 'var(--primary-color)' }" >
                                         <span class="icon-star text-base"></span>
                                     </span>
                                 </span>
@@ -360,7 +363,7 @@
 
                         <a
                             href="{{ route('shop.checkout.onepage.index') }}"
-                            class="mx-auto block w-full cursor-pointer rounded-2xl bg-navyBlue px-11 py-4 text-center text-base font-medium text-white max-md:rounded-lg max-md:px-5 max-md:py-2"
+                            class="primary-solid-button mx-auto block w-full cursor-pointer px-11 py-4 text-center text-base font-medium max-md:px-5 max-md:py-2"
                         >
                             @lang('shop::app.checkout.cart.mini-cart.continue-to-checkout')
                         </a>

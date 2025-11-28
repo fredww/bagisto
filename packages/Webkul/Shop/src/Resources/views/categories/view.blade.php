@@ -200,7 +200,7 @@
         </script>
 
         <style>
-        .grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        .grid-cols-4 { grid-template-columns: repeat(var(--grid-columns, 4), minmax(0, 1fr)); }
         @media (max-width: 767px) {
             .grid-cols-4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
         }

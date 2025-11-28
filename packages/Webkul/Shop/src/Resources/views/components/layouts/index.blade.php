@@ -85,38 +85,53 @@
             
             :root {
                 /* ===== Typography ===== */
-                --font-heading: {!! core()->getConfigData('general.design.theme.font_heading') ?: "'Playfair Display', 'DM Serif Display', serif" !!};
-                --font-body: {!! core()->getConfigData('general.design.theme.font_family') ?: "'Inter', 'Poppins', sans-serif" !!};
+                --font-heading: {!! core()->getConfigData('general.design.theme.font_heading') ?: config('themes.default_styles.font_heading') !!};
+                --font-body: {!! core()->getConfigData('general.design.theme.font_family') ?: config('themes.default_styles.font_family') !!};
                 
                 /* ===== Primary Colors - Rose Gold ===== */
-                --primary-color: {!! core()->getConfigData('general.design.theme.primary_color') ?: '#D4A5A5' !!};
-                --primary-dark: {!! core()->getConfigData('general.design.theme.primary_dark') ?: '#B88B8B' !!};
-                --primary-light: {!! core()->getConfigData('general.design.theme.primary_light') ?: '#F5E6E6' !!};
+                --primary-color: {!! core()->getConfigData('general.design.theme.primary_color') ?: config('themes.default_styles.primary_color') !!};
+                --primary-dark: {!! core()->getConfigData('general.design.theme.primary_dark') ?: config('themes.default_styles.primary_dark') !!};
+                --primary-light: {!! core()->getConfigData('general.design.theme.primary_light') ?: config('themes.default_styles.primary_light') !!};
                 
                 /* ===== Secondary & Accent Colors ===== */
-                --secondary-color: {!! core()->getConfigData('general.design.theme.secondary_color') ?: '#8B7E74' !!};
-                --accent-color: {!! core()->getConfigData('general.design.theme.accent_color') ?: '#C9A690' !!};
+                --secondary-color: {!! core()->getConfigData('general.design.theme.secondary_color') ?: config('themes.default_styles.secondary_color') !!};
+                --accent-color: {!! core()->getConfigData('general.design.theme.accent_color') ?: config('themes.default_styles.accent_color') !!};
+
+                /* ===== Button Colors ===== */
+                --btn-bg: var(--primary-color);
+                --btn-text: #ffffff;
+                --btn-hover: var(--primary-dark);
+            }
+
+            /* Universal Utilities */
+            .text-primary { color: var(--primary-color) !important; }
+            .hover-text-primary:hover { color: var(--primary-color) !important; }
+            .border-primary { border-color: var(--primary-color) !important; }
+            .hover-border-primary:hover { border-color: var(--primary-color) !important; }
+            .bg-primary { background-color: var(--primary-color) !important; }
+            .hover-bg-primary:hover { background-color: var(--primary-dark) !important; }
                 
+                :root {
                 /* ===== Neutral Colors ===== */
-                --neutral-dark: {!! core()->getConfigData('general.design.theme.neutral_dark') ?: '#2D2D2D' !!};
-                --neutral-medium: {!! core()->getConfigData('general.design.theme.neutral_medium') ?: '#6B6B6B' !!};
-                --neutral-light: {!! core()->getConfigData('general.design.theme.neutral_light') ?: '#F8F5F2' !!};
+                --neutral-dark: {!! core()->getConfigData('general.design.theme.neutral_dark') ?: config('themes.default_styles.neutral_dark') !!};
+                --neutral-medium: {!! core()->getConfigData('general.design.theme.neutral_medium') ?: config('themes.default_styles.neutral_medium') !!};
+                --neutral-light: {!! core()->getConfigData('general.design.theme.neutral_light') ?: config('themes.default_styles.neutral_light') !!};
                 --white: #FFFFFF;
                 
                 /* ===== Functional Colors ===== */
-                --success: {!! core()->getConfigData('general.design.theme.success_color') ?: '#A8C5A3' !!};
-                --warning: {!! core()->getConfigData('general.design.theme.warning_color') ?: '#E8C4A0' !!};
-                --error: {!! core()->getConfigData('general.design.theme.error_color') ?: '#D4A5A5' !!};
+                --success: {!! core()->getConfigData('general.design.theme.success_color') ?: config('themes.default_styles.success_color') !!};
+                --warning: {!! core()->getConfigData('general.design.theme.warning_color') ?: config('themes.default_styles.warning_color') !!};
+                --error: {!! core()->getConfigData('general.design.theme.error_color') ?: config('themes.default_styles.error_color') !!};
                 
                 /* ===== Legacy Variables (for backward compatibility) ===== */
                 --theme-font: var(--font-body);
                 --theme-primary: var(--primary-color);
-                --btn-bg: {!! core()->getConfigData('general.design.theme.button_bg') ?: '#D4A5A5' !!};
-                --btn-text: {!! core()->getConfigData('general.design.theme.button_text') ?: '#ffffff' !!};
-                --nav-bg: {!! core()->getConfigData('general.design.theme.nav_bg') ?: '#ffffff' !!};
-                --nav-text: {!! core()->getConfigData('general.design.theme.nav_text') ?: '#2D2D2D' !!};
-                --footer-bg: {!! core()->getConfigData('general.design.theme.footer_bg') ?: '#F5E6E6' !!};
-                --footer-text: {!! core()->getConfigData('general.design.theme.footer_text') ?: '#2D2D2D' !!};
+                --btn-bg: {!! core()->getConfigData('general.design.theme.button_bg') ?: config('themes.default_styles.button_bg') !!};
+                --btn-text: {!! core()->getConfigData('general.design.theme.button_text') ?: config('themes.default_styles.button_text') !!};
+                --nav-bg: {!! core()->getConfigData('general.design.theme.nav_bg') ?: config('themes.default_styles.nav_bg') !!};
+                --nav-text: {!! core()->getConfigData('general.design.theme.nav_text') ?: config('themes.default_styles.nav_text') !!};
+                --footer-bg: {!! core()->getConfigData('general.design.theme.footer_bg') ?: config('themes.default_styles.footer_bg') !!};
+                --footer-text: {!! core()->getConfigData('general.design.theme.footer_text') ?: config('themes.default_styles.footer_text') !!};
                 
                 /* ===== Spacing System ===== */
                 --spacing-xs: 0.25rem;   /* 4px */
@@ -139,6 +154,9 @@
                 --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
                 --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
                 --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+                
+                /* ===== Layout Config ===== */
+                --grid-columns: {!! core()->getConfigData('general.design.theme_settings.product_grid_columns') ?: '4' !!};
             }
 
             /* ===== Base Typography ===== */
@@ -154,13 +172,14 @@
             
             /* ===== Premium Button Styles ===== */
             .primary-button,
-            button[type="submit"]:not(.secondary-button),
+            button[type="submit"]:not(.secondary-button):not(.primary-solid-button),
             .btn-primary {
                 background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%) !important;
                 color: var(--btn-text) !important;
                 border: none !important;
                 border-radius: var(--radius-md) !important;
                 padding: 12px 32px !important;
+                min-height: 48px !important;
                 font-weight: 600 !important;
                 letter-spacing: 0.3px !important;
                 box-shadow: var(--shadow-sm) !important;
@@ -175,6 +194,16 @@
                 box-shadow: var(--shadow-md) !important;
                 transform: translateY(-2px) !important;
             }
+
+            .primary-button:focus,
+            .btn-primary:focus,
+            a.primary-button:focus,
+            button[type="submit"]:not(.secondary-button):focus {
+                color: var(--btn-text) !important;
+                background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-color) 100%) !important;
+                box-shadow: 0 0 0 3px rgba(212, 165, 165, 0.25) !important;
+                outline: none !important;
+            }
             
             .secondary-button,
             .btn-secondary {
@@ -183,8 +212,32 @@
                 border: 2px solid var(--primary-color) !important;
                 border-radius: var(--radius-md) !important;
                 padding: 10px 30px !important;
+                min-height: 48px !important;
                 font-weight: 600 !important;
                 transition: all 0.3s ease !important;
+            }
+
+            /* Solid Primary Button (pure color, not gradient) */
+            .primary-solid-button,
+            .btn-primary-solid {
+                background: var(--primary-color) !important;
+                color: var(--btn-text) !important;
+                border: none !important;
+                border-radius: var(--radius-md) !important;
+                padding: 12px 32px !important;
+                min-height: 48px !important;
+                font-weight: 600 !important;
+                letter-spacing: 0.3px !important;
+                box-shadow: var(--shadow-sm) !important;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                cursor: pointer !important;
+            }
+            .primary-solid-button:hover,
+            .btn-primary-solid:hover {
+                background: var(--primary-dark) !important;
+                box-shadow: var(--shadow-md) !important;
+                transform: translateY(-2px) !important;
+                color: var(--btn-text) !important;
             }
             
             .secondary-button:hover,
@@ -203,7 +256,6 @@
             }
             
             header a,
-            header span,
             header p,
             header button {
                 color: var(--nav-text) !important;
@@ -305,6 +357,7 @@
             .text-primary { color: var(--primary-color) !important; }
             .text-secondary { color: var(--secondary-color) !important; }
             .text-accent { color: var(--accent-color) !important; }
+            .text-cart-red { color: #ff6600 !important; }
             .bg-primary { background-color: var(--primary-color) !important; }
             .bg-primary-light { background-color: var(--primary-light) !important; }
             .bg-neutral-light { background-color: var(--neutral-light) !important; }
