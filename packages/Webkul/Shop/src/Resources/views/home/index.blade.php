@@ -70,6 +70,7 @@
                     @break
                 @case ($customization::CATEGORY_CAROUSEL)
                     <!-- Categories carousel -->
+                    @if (1==2)
                     <div class="container px-[60px] max-lg:px-8 max-md:px-4">
                         <x-shop::categories.carousel
                             :title="$data['title'] ?? ''"
@@ -78,6 +79,7 @@
                             aria-label="{{ trans('shop::app.home.index.categories-carousel') }}"
                         />
                     </div>
+                    @endif
 
                     @break
                 @case ($customization::PRODUCT_CAROUSEL)
