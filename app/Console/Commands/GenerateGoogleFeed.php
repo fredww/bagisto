@@ -660,7 +660,7 @@ class GenerateGoogleFeed extends Command
 
         $this->addChild($xml, $item, 'g:min_handling_time', '1');
         $this->addChild($xml, $item, 'g:max_handling_time', '3');
-        $this->addChild($xml, $item, 'g:min_transit_time', '5');
+        $this->addChild($xml, $item, 'g:min_transit_time', '7');
         $this->addChild($xml, $item, 'g:max_transit_time', '15');
 
         $googleProductCategory = $this->overrideGoogleProductCategory 
