@@ -364,6 +364,11 @@ class GenerateGoogleFeed extends Command
             $this->addChild($xml, $item, 'g:shipping_weight', '1 kg');
         }
 
+        $this->addChild($xml, $item, 'g:min_handling_time', '1');
+        $this->addChild($xml, $item, 'g:max_handling_time', '3');
+        $this->addChild($xml, $item, 'g:min_transit_time', '7');
+        $this->addChild($xml, $item, 'g:max_transit_time', '15');
+
         $googleProductCategory = $this->overrideGoogleProductCategory 
             ?? $this->getAttributeValue($product, 'google_product_category') 
             ?? 'Sporting Goods > Outdoor Recreation > Fishing';
@@ -652,6 +657,11 @@ class GenerateGoogleFeed extends Command
             // 默认值 999 g
             $this->addChild($xml, $item, 'g:shipping_weight', '999 g');
         }
+
+        $this->addChild($xml, $item, 'g:min_handling_time', '1');
+        $this->addChild($xml, $item, 'g:max_handling_time', '3');
+        $this->addChild($xml, $item, 'g:min_transit_time', '5');
+        $this->addChild($xml, $item, 'g:max_transit_time', '15');
 
         $googleProductCategory = $this->overrideGoogleProductCategory 
             ?? $this->getAttributeValue($product, 'google_product_category') 

@@ -65,6 +65,24 @@
 
                     <input
                         type="hidden"
+                        :name="'{{ $currentLocale->code }}[options]['+ index +'][description]'"
+                        :value="image.description"
+                    />
+
+                    <input
+                        type="hidden"
+                        :name="'{{ $currentLocale->code }}[options]['+ index +'][button_text]'"
+                        :value="image.button_text"
+                    />
+
+                    <input
+                        type="hidden"
+                        :name="'{{ $currentLocale->code }}[options]['+ index +'][alignment]'"
+                        :value="image.alignment"
+                    />
+
+                    <input
+                        type="hidden"
                         :name="'{{ $currentLocale->code }}[options]['+ index +'][image]'"
                         :value="image.image"
                     />
@@ -95,6 +113,30 @@
                                 </p>
 
                                 <p class="text-gray-600 dark:text-gray-300">
+                                    Description: 
+
+                                    <span class="text-gray-600 transition-all dark:text-gray-300">
+                                        @{{ image.description }}
+                                    </span>
+                                </p>
+
+                                <p class="text-gray-600 dark:text-gray-300">
+                                    Button Text: 
+
+                                    <span class="text-gray-600 transition-all dark:text-gray-300">
+                                        @{{ image.button_text }}
+                                    </span>
+                                </p>
+
+                                <p class="text-gray-600 dark:text-gray-300">
+                                    Content Position: 
+
+                                    <span class="text-gray-600 transition-all dark:text-gray-300">
+                                        @{{ image.alignment || 'left' }}
+                                    </span>
+                                </p>
+
+                                <p class="text-gray-600 dark:text-gray-300">
                                     @lang('admin::app.settings.themes.edit.image'): 
 
                                     <span class="text-gray-600 transition-all dark:text-gray-300">
@@ -115,6 +157,12 @@
 
                         <!-- Actions -->
                         <div class="grid place-content-start gap-1 text-right">
+                            <p 
+                                class="cursor-pointer text-blue-600 transition-all hover:underline"
+                                @click="openEdit(image, index)"
+                            > 
+                                Edit
+                            </p>
                             <p 
                                 class="cursor-pointer text-red-600 transition-all hover:underline"
                                 @click="remove(image)"
@@ -196,6 +244,45 @@
                             </x-admin::form.control-group>
 
                             <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Description
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="textarea"
+                                    name="{{ $currentLocale->code }}[description]"
+                                    :placeholder="'Description'"
+                                />
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Button Text
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="text"
+                                    name="{{ $currentLocale->code }}[button_text]"
+                                    :placeholder="'Shop Now'"
+                                />
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Content Position
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    name="{{ $currentLocale->code }}[alignment]"
+                                >
+                                    <option value="left">Left</option>
+                                    <option value="center">Center</option>
+                                    <option value="right">Right</option>
+                                </x-admin::form.control-group.control>
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group>
                                 <x-admin::form.control-group.label class="required">
                                     @lang('admin::app.settings.themes.edit.slider-image')
                                 </x-admin::form.control-group.label>
@@ -227,6 +314,125 @@
                     </x-admin::modal>
                 </form>
             </x-admin::form>
+
+            <x-admin::form
+                v-slot="{ meta, errors, handleSubmit }"
+                as="div"
+            >
+                <form 
+                    @submit="handleSubmit($event, updateSliderImage)"
+                    enctype="multipart/form-data"
+                    ref="updateSliderForm"
+                >
+                    <x-admin::modal ref="editSliderModal">
+                        <x-slot:header>
+                            <p class="text-lg font-bold text-gray-800 dark:text-white">
+                                Edit Slider
+                            </p>
+                        </x-slot>
+
+                        <x-slot:content>
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label class="required">
+                                    @lang('admin::app.settings.themes.edit.image-title')
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="text"
+                                    name="{{ $currentLocale->code }}[title]"
+                                    rules="required"
+                                    :placeholder="trans('admin::app.settings.themes.edit.image-title')"
+                                    :label="trans('admin::app.settings.themes.edit.image-title')"
+                                    ::value="editing.title"
+                                />
+
+                                <x-admin::form.control-group.error control-name="{{ $currentLocale->code }}[title]" />
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.settings.themes.edit.link')
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="text"
+                                    name="{{ $currentLocale->code }}[link]"
+                                    :placeholder="trans('admin::app.settings.themes.edit.link')"
+                                    ::value="editing.link"
+                                />
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Description
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="textarea"
+                                    name="{{ $currentLocale->code }}[description]"
+                                    :placeholder="'Description'"
+                                    ::value="editing.description"
+                                />
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Button Text
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="text"
+                                    name="{{ $currentLocale->code }}[button_text]"
+                                    :placeholder="'Shop Now'"
+                                    ::value="editing.button_text"
+                                />
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    Content Position
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="select"
+                                    name="{{ $currentLocale->code }}[alignment]"
+                                    ::value="editing.alignment"
+                                >
+                                    <option value="left">Left</option>
+                                    <option value="center">Center</option>
+                                    <option value="right">Right</option>
+                                </x-admin::form.control-group.control>
+                            </x-admin::form.control-group>
+
+                            <x-admin::form.control-group>
+                                <x-admin::form.control-group.label>
+                                    @lang('admin::app.settings.themes.edit.slider-image')
+                                </x-admin::form.control-group.label>
+
+                                <x-admin::form.control-group.control
+                                    type="image"
+                                    name="slider_image"
+                                    :is-multiple="false"
+                                />
+
+                                <x-admin::form.control-group.error control-name="slider_image" />
+                            </x-admin::form.control-group>
+
+                            <p class="text-xs text-gray-600 dark:text-gray-300">
+                                @lang('admin::app.settings.themes.edit.image-size')
+                            </p>
+                        </x-slot>
+
+                        <x-slot:footer>
+                            <x-admin::button
+                                button-type="submit"
+                                class="primary-button justify-center"
+                                :title="trans('admin::app.settings.themes.edit.save-btn')"
+                            />
+                        </x-slot>
+                    </x-admin::modal>
+                </form>
+            </x-admin::form>
         </div>
     </script>
 
@@ -241,6 +447,14 @@
                     sliders: @json($theme->translate($currentLocale->code)['options'] ?? null),
 
                     deletedSliders: [],
+                    editingIndex: null,
+                    editing: {
+                        title: '',
+                        link: '',
+                        description: '',
+                        button_text: '',
+                        alignment: 'left',
+                    },
                 };
             },
             
@@ -266,6 +480,9 @@
 
                         this.sliders.images.push({
                             title: formData.get("{{ $currentLocale->code }}[title]"),
+                            description: formData.get("{{ $currentLocale->code }}[description]"),
+                            button_text: formData.get("{{ $currentLocale->code }}[button_text]"),
+                            alignment: formData.get("{{ $currentLocale->code }}[alignment]") || 'left',
                             link: formData.get("{{ $currentLocale->code }}[link]"),
                             slider_image: sliderImage,
                         });
@@ -277,6 +494,55 @@
                         resetForm();
 
                         this.$refs.addSliderModal.toggle();
+                    } catch (error) {
+                        setErrors({'slider_image': [error.message]});
+                    }
+                },
+
+                openEdit(image, index) {
+                    this.editingIndex = index;
+
+                    this.editing = {
+                        title: image.title || '',
+                        link: image.link || '',
+                        description: image.description || '',
+                        button_text: image.button_text || '',
+                        alignment: image.alignment || 'left',
+                    };
+
+                    this.$refs.editSliderModal.toggle();
+                },
+
+                updateSliderImage(params, { resetForm ,setErrors }) {
+                    try {
+                        const formData = new FormData(this.$refs.updateSliderForm);
+
+                        const index = this.editingIndex;
+
+                        if (index === null || typeof this.sliders.images[index] === 'undefined') {
+                            throw new Error('Invalid slider index');
+                        }
+
+                        const sliderImage = formData.get("slider_image[]");
+
+                        const updated = this.sliders.images[index];
+
+                        updated.title = formData.get("{{ $currentLocale->code }}[title]") || '';
+                        updated.link = formData.get("{{ $currentLocale->code }}[link]") || '';
+                        updated.description = formData.get("{{ $currentLocale->code }}[description]") || '';
+                        updated.button_text = formData.get("{{ $currentLocale->code }}[button_text]") || '';
+                        updated.alignment = formData.get("{{ $currentLocale->code }}[alignment]") || 'left';
+
+                        if (sliderImage instanceof File) {
+                            updated.slider_image = sliderImage;
+                            this.setFile(sliderImage, index);
+                        }
+
+                        resetForm();
+
+                        this.editingIndex = null;
+
+                        this.$refs.editSliderModal.toggle();
                     } catch (error) {
                         setErrors({'slider_image': [error.message]});
                     }
@@ -304,6 +570,9 @@
                             this.sliders.images = this.sliders.images.filter(item => {
                                 return (
                                     item.title !== image.title || 
+                                    item.description !== image.description || 
+                                    item.button_text !== image.button_text || 
+                                    item.alignment !== image.alignment || 
                                     item.link !== image.link || 
                                     item.image !== image.image
                                 );

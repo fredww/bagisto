@@ -18,7 +18,7 @@
                 ref="sliderContainer"
             >
                 <div
-                    class="max-h-screen w-screen bg-cover bg-no-repeat"
+                    class="relative max-h-screen w-screen bg-cover bg-no-repeat"
                     v-for="(image, index) in images"
                     :key="index"
                     @click="visitLink(image)"
@@ -40,6 +40,39 @@
                         ::fetchpriority="index === 0 ? 'high' : 'low'"
                         ::decoding="index === 0 ? 'sync' : 'async'"
                     />
+
+                    <div class="absolute inset-0 md:block hidden pointer-events-none">
+                        <div class="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent"></div>
+                    </div>
+
+                    <div
+                        class="absolute inset-0 flex items-center px-4 md:px-16 pointer-events-none"
+                        :class="{
+                            'justify-start text-left': (image.alignment || 'left') === 'left',
+                            'justify-center text-center': (image.alignment || 'left') === 'center',
+                            'justify-end text-right': (image.alignment || 'left') === 'right'
+                        }"
+                    >
+                        <div class="max-w-xl">
+                            <p class="text-white text-2xl md:text-5xl font-bold drop-shadow-sm">
+                                @{{ image.title }}
+                            </p>
+
+                            <p class="mt-3 text-white/90 text-sm md:text-lg whitespace-pre-line">
+                                @{{ image.description }}
+                            </p>
+
+                            <div class="mt-5">
+                                <a
+                                    v-if="image.button_text && image.link"
+                                    class="inline-block rounded bg-white/90 px-5 py-2 text-gray-900 font-semibold hover:bg-white pointer-events-auto"
+                                    :href="image.link"
+                                >
+                                    @{{ image.button_text }}
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
