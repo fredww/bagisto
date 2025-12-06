@@ -44,7 +44,12 @@ class AppServiceProvider extends ServiceProvider
             Artisan::call('db:seed');
         });
 
-        if (str_starts_with((string) config('app.url'), 'https://')) {
+        $xfp = (string) request()->header('X-Forwarded-Proto');
+        $isHttps = str_starts_with((string) config('app.url'), 'https://')
+            || request()->isSecure()
+            || str_contains(strtolower($xfp), 'https');
+
+        if ($isHttps || app()->environment('production')) {
             URL::forceScheme('https');
         }
     }

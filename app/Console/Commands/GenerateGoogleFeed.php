@@ -361,7 +361,7 @@ class GenerateGoogleFeed extends Command
             $this->addChild($xml, $item, 'g:shipping_weight', $weight);
         } else {
             // 默认值 999 g
-            $this->addChild($xml, $item, 'g:shipping_weight', '1 kg');
+            $this->addChild($xml, $item, 'g:shipping_weight', '999 g');
         }
 
         $this->addChild($xml, $item, 'g:min_handling_time', '1');
