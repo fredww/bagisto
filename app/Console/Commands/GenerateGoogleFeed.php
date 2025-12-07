@@ -14,6 +14,7 @@ use Webkul\Attribute\Repositories\AttributeOptionRepository;
  * sudo -u www php artisan google:generate-feed --channel=default --locale=en --output=public/feeds.xml --base-url=https://kiaoa.com
  * sudo -u www php artisan google:generate-feed --channel=default --locale=en --output=public/zyn.xml --base-url=https://kiaoa.com --category=34
  * sudo -u www php artisan google:generate-feed --channel=default --locale=en --output=public/feeds.xml --base-url=https://kiaoa.com --exclude-category=34
+ * sudo -u www php artisan google:generate-feed --channel=default --locale=en --output=public/accessories-feed.xml --base-url=https://kiaoa.com
  * 生成 Google Merchant Center Feed 的命令
  * Command to generate Google Merchant Center Feed
  */
@@ -53,6 +54,7 @@ class GenerateGoogleFeed extends Command
     protected $overrideGender;
     protected $overrideGoogleProductCategory;
     protected $overrideProductType;
+    protected $applyAccessoriesFilter = false;
 
     /**
      * Create a new command instance.
@@ -84,6 +86,7 @@ class GenerateGoogleFeed extends Command
         $locale = $this->option('locale');
         $outputOption = $this->option('output') ?? 'public/google-feed.xml';
         $path = $this->resolveOutputPath($outputOption);
+        $this->applyAccessoriesFilter = stripos($outputOption, 'accessories') !== false;
         $baseUrl = $this->option('base-url') ?? config('app.url');
         $categoryOption = $this->option('category');
         $excludeCategoryOption = $this->option('exclude-category');
@@ -283,6 +286,22 @@ class GenerateGoogleFeed extends Command
             return null;
         }
 
+        if ($this->applyAccessoriesFilter) {
+            if ($product->type === 'configurable') {
+                $parentColor = $this->getAttributeValue($product, 'color');
+                if ($parentColor === null || $parentColor === '') {
+                    $this->warn("跳过父产品 {$productFlat->sku}: 缺少 color 属性（configurable）");
+                    $skipParent = true;
+                }
+            } else {
+                $simpleColor = $this->getAttributeValue($product, 'color');
+                if ($simpleColor === null || $simpleColor === '') {
+                    $this->warn("跳过产品 {$productFlat->sku}: 缺少 color 属性（simple）");
+                    return null;
+                }
+            }
+        }
+
         $item = $xml->createElement('item');
         
         // ID (SKU)
@@ -419,7 +438,9 @@ class GenerateGoogleFeed extends Command
         }
 
         if ($product->type === 'configurable') {
-            $this->addChild($xml, $item, 'g:item_group_id', $productFlat->sku);
+            if (! isset($skipParent) || ! $skipParent) {
+                $this->addChild($xml, $item, 'g:item_group_id', $productFlat->sku);
+            }
         }
 
         // 处理变体产品（configurable products）
@@ -449,6 +470,25 @@ class GenerateGoogleFeed extends Command
                     }
                 }
             }
+        }
+
+        if ($this->applyAccessoriesFilter) {
+            $colorValue = $this->getAttributeValue($product, 'color');
+            if ($product->type !== 'configurable') {
+                if ($colorValue) {
+                    $this->addChild($xml, $item, 'g:color', $this->cleanText($colorValue));
+                }
+            } else {
+                if (! isset($skipParent) || ! $skipParent) {
+                    if ($colorValue) {
+                        $this->addChild($xml, $item, 'g:color', $this->cleanText($colorValue));
+                    }
+                }
+            }
+        }
+
+        if (isset($skipParent) && $skipParent) {
+            return null;
         }
 
         return $item;
@@ -523,6 +563,14 @@ class GenerateGoogleFeed extends Command
         
         if (!$product) {
             return null;
+        }
+
+        if ($this->applyAccessoriesFilter) {
+            $variantColor = $this->getAttributeValue($product, 'color');
+            if ($variantColor === null || $variantColor === '') {
+                $this->warn("跳过子产品 {$variant->sku}: 缺少 color 属性（variant）");
+                return null;
+            }
         }
 
         $item = $xml->createElement('item');
@@ -629,6 +677,8 @@ class GenerateGoogleFeed extends Command
         foreach ($variantAttrs as $name => $value) {
             $this->addChild($xml, $item, 'g:' . $name, $this->cleanText($value));
         }
+
+        // accessories 字段不属于 Google 标准属性，避免输出导致校验问题
 
         $brand = $this->overrideBrand 
             ?? $this->getAttributeValue($product, 'brand') 
