@@ -25,6 +25,9 @@
         <testsuite name="Shop Feature Test">
             <directory suffix="Test.php">packages/Webkul/Shop/tests/Feature</directory>
         </testsuite>
+        <testsuite name="Airwallex Feature Test">
+            <directory suffix="Test.php">packages/Webkul/Airwallex/tests/Feature</directory>
+        </testsuite>
     </testsuites>
 
     <source>

@@ -37,6 +37,7 @@ return [
     Webkul\Rule\Providers\RuleServiceProvider::class,
     Webkul\Sales\Providers\SalesServiceProvider::class,
     Webkul\SecurityPayment\Providers\SecurityPaymentServiceProvider::class,
+    Webkul\Airwallex\Providers\AirwallexServiceProvider::class,
     Webkul\Shipping\Providers\ShippingServiceProvider::class,
     Webkul\Shop\Providers\ShopServiceProvider::class,
     Webkul\Sitemap\Providers\SitemapServiceProvider::class,
