@@ -34,19 +34,21 @@ class AirwallexService
         try {
             $resp = Http::timeout(10)
                 ->withHeaders([
-                    'x-api-key' => $cfg['apiKey'],
+                    'x-api-key'   => $cfg['apiKey'],
                     'x-client-id' => $cfg['clientId'],
                 ])
-                ->post(rtrim($cfg['baseUrl'], '/') . '/api/v1/authentication/login');
+                ->post(rtrim($cfg['baseUrl'], '/').'/api/v1/authentication/login');
 
             if (! $resp->ok()) {
                 Log::warning('Airwallex login HTTP error', ['status' => $resp->status(), 'body' => $resp->body()]);
+
                 return null;
             }
 
             return (string) Arr::get($resp->json(), 'token');
         } catch (\Throwable $e) {
             Log::error('Airwallex obtainAccessToken exception', ['error' => $e->getMessage()]);
+
             return null;
         }
     }
@@ -59,7 +61,7 @@ class AirwallexService
             return ['success' => false, 'msg' => 'auth_failed'];
         }
 
-        $url = rtrim($cfg['baseUrl'], '/') . '/api/v1/pa/payment_links/create';
+        $url = rtrim($cfg['baseUrl'], '/').'/api/v1/pa/payment_links/create';
 
         try {
             $resp = Http::timeout(12)
@@ -72,9 +74,11 @@ class AirwallexService
             }
 
             $json = $resp->json();
+
             return ['success' => true, 'data' => $json];
         } catch (\Throwable $e) {
             Log::error('Airwallex createPaymentLink exception', ['error' => $e->getMessage()]);
+
             return ['success' => false, 'msg' => 'exception'];
         }
     }
@@ -88,8 +92,8 @@ class AirwallexService
         }
 
         $base = rtrim($cfg['baseUrl'], '/');
-        $primary = $base . '/api/v1/pa/payment_intents/create';
-        $fallback = $base . '/api/v1/pa/payment_intents';
+        $primary = $base.'/api/v1/pa/payment_intents/create';
+        $fallback = $base.'/api/v1/pa/payment_intents';
 
         try {
             $resp = Http::timeout(12)->withToken($token)->asJson()->post($primary, $payload);
@@ -104,6 +108,7 @@ class AirwallexService
             return ['success' => true, 'data' => $resp->json()];
         } catch (\Throwable $e) {
             Log::error('Airwallex createPaymentIntent exception', ['error' => $e->getMessage()]);
+
             return ['success' => false, 'msg' => 'exception'];
         }
     }
@@ -116,7 +121,7 @@ class AirwallexService
             return ['success' => false, 'msg' => 'auth_failed'];
         }
 
-        $url = rtrim($cfg['baseUrl'], '/') . '/api/v1/pa/payment_intents/' . $intentId . '/confirm';
+        $url = rtrim($cfg['baseUrl'], '/').'/api/v1/pa/payment_intents/'.$intentId.'/confirm';
 
         try {
             $resp = Http::timeout(12)->withToken($token)->asJson()->post($url, $payload);
@@ -127,6 +132,7 @@ class AirwallexService
             return ['success' => true, 'data' => $resp->json()];
         } catch (\Throwable $e) {
             Log::error('Airwallex confirmPaymentIntent exception', ['error' => $e->getMessage()]);
+
             return ['success' => false, 'msg' => 'exception'];
         }
     }
@@ -139,7 +145,7 @@ class AirwallexService
             return ['success' => false, 'msg' => 'auth_failed'];
         }
 
-        $url = rtrim($cfg['baseUrl'], '/') . '/api/v1/pa/payment_intents/' . $intentId;
+        $url = rtrim($cfg['baseUrl'], '/').'/api/v1/pa/payment_intents/'.$intentId;
 
         try {
             $resp = Http::timeout(10)->withToken($token)->get($url);
@@ -150,6 +156,7 @@ class AirwallexService
             return ['success' => true, 'data' => $resp->json()];
         } catch (\Throwable $e) {
             Log::error('Airwallex getPaymentIntent exception', ['error' => $e->getMessage()]);
+
             return ['success' => false, 'msg' => 'exception'];
         }
     }
@@ -163,8 +170,8 @@ class AirwallexService
         }
 
         $base = rtrim($cfg['baseUrl'], '/');
-        $primary = $base . '/api/v1/pa/refunds/create';
-        $fallback = $base . '/api/v1/pa/refunds';
+        $primary = $base.'/api/v1/pa/refunds/create';
+        $fallback = $base.'/api/v1/pa/refunds';
 
         try {
             $resp = Http::timeout(12)->withToken($token)->asJson()->post($primary, $payload);
@@ -179,6 +186,7 @@ class AirwallexService
             return ['success' => true, 'data' => $resp->json()];
         } catch (\Throwable $e) {
             Log::error('Airwallex createRefund exception', ['error' => $e->getMessage()]);
+
             return ['success' => false, 'msg' => 'exception'];
         }
     }
@@ -187,6 +195,7 @@ class AirwallexService
     {
         $mac = hash_hmac('sha256', $nonce, $sharedSecret, true);
         $expected = base64_encode($mac);
+
         return hash_equals($expected, $signature);
     }
 }

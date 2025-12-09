@@ -15,4 +15,3 @@ Route::group(['middleware' => ['web']], function () {
     Route::post('/airwallex/refund', [\Webkul\Airwallex\Http\Controllers\AirwallexController::class, 'refund'])
         ->name('airwallex.refund');
 });
-

@@ -1,11 +1,11 @@
 <?php
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Webkul\Airwallex\Services\AirwallexService;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
+use Tests\TestCase;
+use Webkul\Airwallex\Services\AirwallexService;
 
-uses(RefreshDatabase::class);
+uses(TestCase::class);
 
 function seedAirwallexConfig(): void
 {
@@ -24,7 +24,7 @@ it('obtains access token', function () {
         'https://api-demo.airwallex.com/api/v1/authentication/login' => Http::response(['token' => 't123'], 200),
     ]);
 
-    $svc = new AirwallexService();
+    $svc = new AirwallexService;
     expect($svc->obtainAccessToken())->toBe('t123');
 });
 
@@ -32,11 +32,11 @@ it('creates payment link', function () {
     seedAirwallexConfig();
 
     Http::fake([
-        'https://api-demo.airwallex.com/api/v1/authentication/login' => Http::response(['token' => 't123'], 200),
+        'https://api-demo.airwallex.com/api/v1/authentication/login'    => Http::response(['token' => 't123'], 200),
         'https://api-demo.airwallex.com/api/v1/pa/payment_links/create' => Http::response(['url' => 'https://link.example'], 200),
     ]);
 
-    $svc = new AirwallexService();
+    $svc = new AirwallexService;
     $res = $svc->createPaymentLink(['amount' => '10.00', 'currency' => 'USD']);
     expect($res['success'])->toBeTrue();
     expect($res['data']['url'])->toBe('https://link.example');
@@ -46,12 +46,12 @@ it('creates and confirms payment intent', function () {
     seedAirwallexConfig();
 
     Http::fake([
-        'https://api-demo.airwallex.com/api/v1/authentication/login' => Http::response(['token' => 't123'], 200),
-        'https://api-demo.airwallex.com/api/v1/pa/payment_intents/create' => Http::response(['id' => 'pi_1'], 200),
+        'https://api-demo.airwallex.com/api/v1/authentication/login'            => Http::response(['token' => 't123'], 200),
+        'https://api-demo.airwallex.com/api/v1/pa/payment_intents/create'       => Http::response(['id' => 'pi_1'], 200),
         'https://api-demo.airwallex.com/api/v1/pa/payment_intents/pi_1/confirm' => Http::response(['status' => 'succeeded'], 200),
     ]);
 
-    $svc = new AirwallexService();
+    $svc = new AirwallexService;
     $create = $svc->createPaymentIntent(['amount' => '10.00', 'currency' => 'USD']);
     expect($create['success'])->toBeTrue();
 
@@ -65,10 +65,10 @@ it('creates refund', function () {
 
     Http::fake([
         'https://api-demo.airwallex.com/api/v1/authentication/login' => Http::response(['token' => 't123'], 200),
-        'https://api-demo.airwallex.com/api/v1/pa/refunds/create' => Http::response(['id' => 'rf_1', 'status' => 'succeeded'], 200),
+        'https://api-demo.airwallex.com/api/v1/pa/refunds/create'    => Http::response(['id' => 'rf_1', 'status' => 'succeeded'], 200),
     ]);
 
-    $svc = new AirwallexService();
+    $svc = new AirwallexService;
     $res = $svc->createRefund(['payment_intent_id' => 'pi_1', 'amount' => '10.00', 'currency' => 'USD']);
     expect($res['success'])->toBeTrue();
     expect($res['data']['status'])->toBe('succeeded');
@@ -79,6 +79,6 @@ it('verifies webhook signature', function () {
     $secret = 'shared_secret';
     $signature = base64_encode(hash_hmac('sha256', $nonce, $secret, true));
 
-    $svc = new AirwallexService();
+    $svc = new AirwallexService;
     expect($svc->verifyWebhookSignature($nonce, $signature, $secret))->toBeTrue();
 });

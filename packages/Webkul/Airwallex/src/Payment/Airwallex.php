@@ -29,4 +29,3 @@ class Airwallex extends Payment
         return $url ? Storage::url($url) : bagisto_asset('images/money-transfer.png', 'shop');
     }
 }
-

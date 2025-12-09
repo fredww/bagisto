@@ -1,10 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Http;
+use Tests\TestCase;
 
-uses(RefreshDatabase::class);
+uses(TestCase::class);
 
 function seedAirwallexConfigBasic(): void
 {
@@ -20,7 +20,7 @@ it('returns payment intent status', function () {
     seedAirwallexConfigBasic();
 
     Http::fake([
-        'https://api-demo.airwallex.com/api/v1/authentication/login' => Http::response(['token' => 't123'], 200),
+        'https://api-demo.airwallex.com/api/v1/authentication/login'    => Http::response(['token' => 't123'], 200),
         'https://api-demo.airwallex.com/api/v1/pa/payment_intents/pi_1' => Http::response(['id' => 'pi_1', 'status' => 'succeeded'], 200),
     ]);
 
@@ -34,13 +34,13 @@ it('creates refund via route', function () {
 
     Http::fake([
         'https://api-demo.airwallex.com/api/v1/authentication/login' => Http::response(['token' => 't123'], 200),
-        'https://api-demo.airwallex.com/api/v1/pa/refunds/create' => Http::response(['id' => 'rf_1', 'status' => 'succeeded'], 200),
+        'https://api-demo.airwallex.com/api/v1/pa/refunds/create'    => Http::response(['id' => 'rf_1', 'status' => 'succeeded'], 200),
     ]);
 
     $resp = $this->postJson('/airwallex/refund', [
         'payment_intent_id' => 'pi_1',
-        'amount' => 10.00,
-        'currency' => 'USD',
+        'amount'            => 10.00,
+        'currency'          => 'USD',
     ]);
 
     $resp->assertStatus(200);

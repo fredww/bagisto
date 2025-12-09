@@ -13,6 +13,7 @@ use Webkul\Sales\Repositories\OrderRepository;
 class AirwallexController extends Controller
 {
     protected AirwallexService $service;
+
     protected OrderRepository $orderRepository;
 
     public function __construct(AirwallexService $service, OrderRepository $orderRepository)
@@ -32,11 +33,11 @@ class AirwallexController extends Controller
         $cancelUrl = route('shop.checkout.cart.index');
 
         $payload = [
-            'amount' => $amount,
-            'currency' => $currency,
+            'amount'            => $amount,
+            'currency'          => $currency,
             'merchant_order_id' => (string) $cart->id,
-            'return_url' => $successUrl,
-            'cancel_url' => $cancelUrl,
+            'return_url'        => $successUrl,
+            'cancel_url'        => $cancelUrl,
         ];
 
         $resp = $this->service->createPaymentLink($payload);
@@ -60,6 +61,7 @@ class AirwallexController extends Controller
 
         if (! $nonce || ! $signature || ! $sharedSecret || ! $this->service->verifyWebhookSignature($nonce, $signature, $sharedSecret)) {
             Log::warning('Airwallex webhook signature invalid');
+
             return response()->json(['success' => false], 401);
         }
 
@@ -72,9 +74,9 @@ class AirwallexController extends Controller
                 $cart = Cart::getCart();
                 $order = $this->orderRepository->create([
                     'payment' => [
-                        'method' => 'airwallex',
+                        'method'       => 'airwallex',
                         'method_title' => 'Airwallex',
-                        'additional' => [
+                        'additional'   => [
                             'payment_intent_id' => $intentId,
                         ],
                     ],
@@ -83,6 +85,7 @@ class AirwallexController extends Controller
                 return response()->json(['success' => true, 'order_id' => $order->id]);
             } catch (\Throwable $e) {
                 Log::error('Airwallex webhook order creation failed', ['error' => $e->getMessage()]);
+
                 return response()->json(['success' => false], 500);
             }
         }
@@ -104,14 +107,14 @@ class AirwallexController extends Controller
     {
         $payload = $request->validate([
             'payment_intent_id' => 'required|string',
-            'amount' => 'required|numeric',
-            'currency' => 'required|string',
+            'amount'            => 'required|numeric',
+            'currency'          => 'required|string',
         ]);
 
         $resp = $this->service->createRefund([
             'payment_intent_id' => (string) $payload['payment_intent_id'],
-            'amount' => (string) number_format((float) $payload['amount'], 2, '.', ''),
-            'currency' => (string) $payload['currency'],
+            'amount'            => (string) number_format((float) $payload['amount'], 2, '.', ''),
+            'currency'          => (string) $payload['currency'],
         ]);
 
         if (! Arr::get($resp, 'success')) {
@@ -121,4 +124,3 @@ class AirwallexController extends Controller
         return response()->json($resp['data']);
     }
 }
-
