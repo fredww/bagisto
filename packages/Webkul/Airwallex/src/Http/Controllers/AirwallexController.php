@@ -9,17 +9,20 @@ use Illuminate\Support\Facades\Log;
 use Webkul\Airwallex\Services\AirwallexService;
 use Webkul\Checkout\Facades\Cart;
 use Webkul\Sales\Repositories\OrderRepository;
+use Webkul\Sales\Repositories\InvoiceRepository;
 
 class AirwallexController extends Controller
 {
     protected AirwallexService $service;
 
     protected OrderRepository $orderRepository;
+    protected InvoiceRepository $invoiceRepository;
 
-    public function __construct(AirwallexService $service, OrderRepository $orderRepository)
+    public function __construct(AirwallexService $service, OrderRepository $orderRepository, InvoiceRepository $invoiceRepository)
     {
         $this->service = $service;
         $this->orderRepository = $orderRepository;
+        $this->invoiceRepository = $invoiceRepository;
     }
 
     public function redirect(Request $request)
@@ -77,22 +80,61 @@ class AirwallexController extends Controller
         $type = (string) Arr::get($event, 'type', '');
 
         if ($type === 'payment_intent.succeeded') {
-            $intentId = (string) Arr::get($event, 'data.id');
+            $intentId = (string) Arr::get($event, 'data.id', '');
+
             try {
-                $cart = Cart::getCart();
-                $order = $this->orderRepository->create([
-                    'payment' => [
-                        'method'       => 'airwallex',
-                        'method_title' => 'Airwallex',
-                        'additional'   => [
-                            'payment_intent_id' => $intentId,
+                $intent = $intentId ? $this->service->getPaymentIntent($intentId) : ['success' => false];
+
+                if (! Arr::get($intent, 'success')) {
+                    Log::warning('Airwallex webhook intent fetch failed', ['intentId' => $intentId]);
+
+                    return response()->json(['success' => false], 400);
+                }
+
+                $intentData = (array) Arr::get($intent, 'data', []);
+                $orderNo = (string) (Arr::get($intentData, 'merchant_order_id') ?? Arr::get($event, 'data.merchant_order_id', ''));
+
+                $order = null;
+                if ($orderNo) {
+                    $order = $this->orderRepository->findOneByField('increment_id', $orderNo);
+                    if (! $order && is_numeric($orderNo)) {
+                        $order = $this->orderRepository->find((int) $orderNo);
+                    }
+                }
+
+                if (! $order) {
+                    Log::warning('Airwallex webhook order not found', ['merchant_order_id' => $orderNo, 'intentId' => $intentId]);
+
+                    return response()->json(['success' => false, 'msg' => 'order_not_found'], 404);
+                }
+
+                if ($order->payment) {
+                    $additional = (array) ($order->payment->additional ?? []);
+                    $additional['payment_intent_id'] = $intentId;
+                    $order->payment->additional = $additional;
+                    $order->payment->save();
+                }
+
+                $items = [];
+                foreach ($order->items as $item) {
+                    $qty = (int) $item->qty_to_invoice;
+                    if ($qty > 0) {
+                        $items[$item->id] = $qty;
+                    }
+                }
+
+                if (! empty($items)) {
+                    $this->invoiceRepository->create([
+                        'order_id' => $order->id,
+                        'invoice'  => [
+                            'items' => $items,
                         ],
-                    ],
-                ]);
+                    ]);
+                }
 
                 return response()->json(['success' => true, 'order_id' => $order->id]);
             } catch (\Throwable $e) {
-                Log::error('Airwallex webhook order creation failed', ['error' => $e->getMessage()]);
+                Log::error('Airwallex webhook processing failed', ['error' => $e->getMessage()]);
 
                 return response()->json(['success' => false], 500);
             }
@@ -140,6 +182,40 @@ class AirwallexController extends Controller
         if (! $order) {
             $orderId = (int) $request->query('order_id', 0);
             $order = $orderId ? $this->orderRepository->find($orderId) : null;
+        }
+
+        $intentId = (string) $request->query('payment_intent_id', '');
+        if ($order && $intentId) {
+            try {
+                $intent = $this->service->getPaymentIntent($intentId);
+                if (Arr::get($intent, 'success') && (string) Arr::get($intent, 'data.status', '') === 'succeeded') {
+                    if ($order->payment) {
+                        $additional = (array) ($order->payment->additional ?? []);
+                        $additional['payment_intent_id'] = $intentId;
+                        $order->payment->additional = $additional;
+                        $order->payment->save();
+                    }
+
+                    $items = [];
+                    foreach ($order->items as $item) {
+                        $qty = (int) $item->qty_to_invoice;
+                        if ($qty > 0) {
+                            $items[$item->id] = $qty;
+                        }
+                    }
+
+                    if (! empty($items)) {
+                        $this->invoiceRepository->create([
+                            'order_id' => $order->id,
+                            'invoice'  => [
+                                'items' => $items,
+                            ],
+                        ]);
+                    }
+                }
+            } catch (\Throwable $e) {
+                Log::warning('Airwallex callback invoice update failed', ['error' => $e->getMessage()]);
+            }
         }
 
         if ($order) {

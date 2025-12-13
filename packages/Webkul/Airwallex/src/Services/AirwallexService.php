@@ -70,6 +70,10 @@ class AirwallexService
             $payload['reusable'] = false;
         }
 
+        if (empty($payload['return_url']) && ! empty($cfg['callbackUrl'])) {
+            $payload['return_url'] = (string) $cfg['callbackUrl'];
+        }
+
         $methods = array_values(array_filter(array_map('trim', explode(',', (string) $cfg['paymentMethods']))));
         if (! empty($methods)) {
             $payload['payment_method_types'] = $methods;
