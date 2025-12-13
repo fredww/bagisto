@@ -24,18 +24,26 @@ class AirwallexController extends Controller
 
     public function redirect(Request $request)
     {
-        $cart = Cart::getCart();
+        $orderId = session('order_id');
+        $order = $orderId ? $this->orderRepository->find($orderId) : null;
 
-        $amount = (string) number_format($cart->grand_total, 2, '.', '');
-        $currency = (string) core()->getCurrentCurrencyCode();
+        if (! $order) {
+            return redirect()->route('shop.checkout.cart.index');
+        }
 
-        $successUrl = route('shop.checkout.success');
+        $amount = (string) number_format((float) $order->grand_total, 2, '.', '');
+        $currency = (string) $order->order_currency_code;
+        $orderNo = (string) ($order->increment_id ?? $order->id);
+
+        $successUrl = route('airwallex.callback', ['order_no' => $orderNo]);
         $cancelUrl = route('shop.checkout.cart.index');
 
         $payload = [
             'amount'            => $amount,
             'currency'          => $currency,
-            'merchant_order_id' => (string) $cart->id,
+            'merchant_order_id' => $orderNo,
+            'title'             => 'Order '.$orderNo,
+            'reusable'          => false,
             'return_url'        => $successUrl,
             'cancel_url'        => $cancelUrl,
         ];
@@ -122,5 +130,22 @@ class AirwallexController extends Controller
         }
 
         return response()->json($resp['data']);
+    }
+
+    public function callback(Request $request)
+    {
+        $orderNo = (string) $request->query('order_no', '');
+        $order = $orderNo ? $this->orderRepository->findOneByField('increment_id', $orderNo) : null;
+
+        if (! $order) {
+            $orderId = (int) $request->query('order_id', 0);
+            $order = $orderId ? $this->orderRepository->find($orderId) : null;
+        }
+
+        if ($order) {
+            session(['order_id' => $order->id]);
+        }
+
+        return redirect()->route('shop.checkout.onepage.success');
     }
 }

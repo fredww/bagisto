@@ -9,6 +9,9 @@ Route::group(['middleware' => ['web']], function () {
     Route::post('/airwallex/webhook', [\Webkul\Airwallex\Http\Controllers\AirwallexController::class, 'webhook'])
         ->name('airwallex.webhook');
 
+    Route::get('/airwallex/callback', [\Webkul\Airwallex\Http\Controllers\AirwallexController::class, 'callback'])
+        ->name('airwallex.callback');
+
     Route::get('/airwallex/status/{intentId}', [\Webkul\Airwallex\Http\Controllers\AirwallexController::class, 'status'])
         ->name('airwallex.status');
 

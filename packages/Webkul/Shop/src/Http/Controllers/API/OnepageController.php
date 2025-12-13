@@ -166,7 +166,7 @@ class OnepageController extends APIController
         $cart = Cart::getCart();
 
         if ($redirectUrl = Payment::getRedirectUrl($cart)) {
-            if ($cart->payment && $cart->payment->method === 'fortune_pay') {
+            if ($cart->payment && in_array($cart->payment->method, ['fortune_pay', 'airwallex', 'paypal'], true)) {
                 $data = (new OrderResource($cart))->jsonSerialize();
                 $order = $this->orderRepository->create($data);
                 Cart::deActivateCart();

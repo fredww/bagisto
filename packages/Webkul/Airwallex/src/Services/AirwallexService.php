@@ -39,7 +39,7 @@ class AirwallexService
                 ])
                 ->post(rtrim($cfg['baseUrl'], '/').'/api/v1/authentication/login');
 
-            if (! $resp->ok()) {
+            if (! $resp->successful()) {
                 Log::warning('Airwallex login HTTP error', ['status' => $resp->status(), 'body' => $resp->body()]);
 
                 return null;
@@ -61,6 +61,14 @@ class AirwallexService
             return ['success' => false, 'msg' => 'auth_failed'];
         }
 
+        if (! array_key_exists('title', $payload)) {
+            $payload['title'] = 'Order '.$payload['merchant_order_id'] ?? 'Order';
+        }
+
+        if (! array_key_exists('reusable', $payload)) {
+            $payload['reusable'] = false;
+        }
+
         $url = rtrim($cfg['baseUrl'], '/').'/api/v1/pa/payment_links/create';
 
         try {
@@ -69,7 +77,7 @@ class AirwallexService
                 ->asJson()
                 ->post($url, $payload);
 
-            if (! $resp->ok()) {
+            if (! $resp->successful()) {
                 return ['success' => false, 'status' => $resp->status(), 'msg' => 'http_error', 'body' => $resp->body()];
             }
 
@@ -125,7 +133,7 @@ class AirwallexService
 
         try {
             $resp = Http::timeout(12)->withToken($token)->asJson()->post($url, $payload);
-            if (! $resp->ok()) {
+            if (! $resp->successful()) {
                 return ['success' => false, 'status' => $resp->status(), 'msg' => 'http_error', 'body' => $resp->body()];
             }
 
@@ -149,7 +157,7 @@ class AirwallexService
 
         try {
             $resp = Http::timeout(10)->withToken($token)->get($url);
-            if (! $resp->ok()) {
+            if (! $resp->successful()) {
                 return ['success' => false, 'status' => $resp->status(), 'msg' => 'http_error'];
             }
 
@@ -179,7 +187,7 @@ class AirwallexService
                 $resp = Http::timeout(12)->withToken($token)->asJson()->post($fallback, $payload);
             }
 
-            if (! $resp->ok()) {
+            if (! $resp->successful()) {
                 return ['success' => false, 'status' => $resp->status(), 'msg' => 'http_error', 'body' => $resp->body()];
             }
 
