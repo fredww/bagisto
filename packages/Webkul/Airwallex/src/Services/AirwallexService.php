@@ -17,6 +17,7 @@ class AirwallexService
         $merchantId = (string) (core()->getConfigData('sales.payment_methods.airwallex.merchant_id') ?? env('AIRWALLEX_MERCHANT_ID', ''));
         $callbackUrl = (string) (core()->getConfigData('sales.payment_methods.airwallex.callback_url') ?? env('AIRWALLEX_CALLBACK_URL', ''));
         $webhookSecret = (string) (core()->getConfigData('sales.payment_methods.airwallex.webhook_secret') ?? env('AIRWALLEX_WEBHOOK_SECRET', ''));
+        $paymentMethods = (string) (core()->getConfigData('sales.payment_methods.airwallex.methods') ?? env('AIRWALLEX_PAYMENT_METHODS', ''));
 
         if ($sandbox) {
             $baseUrl = $baseUrl ?: 'https://api-demo.airwallex.com';
@@ -24,7 +25,7 @@ class AirwallexService
             $baseUrl = $baseUrl ?: 'https://api.airwallex.com';
         }
 
-        return compact('sandbox', 'baseUrl', 'clientId', 'apiKey', 'merchantId', 'callbackUrl', 'webhookSecret');
+        return compact('sandbox', 'baseUrl', 'clientId', 'apiKey', 'merchantId', 'callbackUrl', 'webhookSecret', 'paymentMethods');
     }
 
     public function obtainAccessToken(): ?string
@@ -67,6 +68,11 @@ class AirwallexService
 
         if (! array_key_exists('reusable', $payload)) {
             $payload['reusable'] = false;
+        }
+
+        $methods = array_values(array_filter(array_map('trim', explode(',', (string) $cfg['paymentMethods']))));
+        if (! empty($methods)) {
+            $payload['payment_method_types'] = $methods;
         }
 
         $url = rtrim($cfg['baseUrl'], '/').'/api/v1/pa/payment_links/create';

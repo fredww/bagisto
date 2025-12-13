@@ -88,6 +88,14 @@ return [
                 'locale_based'  => false,
                 'default_value' => 'USD',
             ], [
+                'name'          => 'methods',
+                'title'         => 'airwallex::app.admin.system.methods',
+                'type'          => 'text',
+                'depends'       => 'active:1',
+                'channel_based' => true,
+                'locale_based'  => false,
+                'default_value' => 'card,applepay,googlepay,paypal,skrill',
+            ], [
                 'name'          => 'order_status',
                 'title'         => 'admin::app.configuration.index.sales.payment-methods.set-order-status',
                 'type'          => 'select',

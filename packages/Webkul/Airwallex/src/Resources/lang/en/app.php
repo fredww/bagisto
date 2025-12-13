@@ -12,6 +12,7 @@ return [
                 'base-url'       => 'Base URL',
                 'callback-url'   => 'Callback URL',
                 'webhook-secret' => 'Webhook Shared Secret',
+                'methods'        => 'Allowed Methods (CSV)',
             ],
         ],
     ],

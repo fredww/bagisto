@@ -12,6 +12,7 @@ return [
                 'base-url'       => '接口基础地址',
                 'callback-url'   => '回调 URL',
                 'webhook-secret' => 'Webhook 共享密钥',
+                'methods'        => '支持的支付方式（逗号分隔）',
             ],
         ],
     ],
