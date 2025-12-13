@@ -33,7 +33,7 @@ return [
                 'channel_based' => true,
                 'locale_based'  => false,
             ],
-            
+
             // Primary Colors
             [
                 'name'          => 'primary_color',
@@ -57,7 +57,7 @@ return [
                 'channel_based' => true,
                 'locale_based'  => false,
             ],
-            
+
             // Secondary & Accent Colors
             [
                 'name'          => 'secondary_color',
@@ -74,7 +74,7 @@ return [
                 'channel_based' => true,
                 'locale_based'  => false,
             ],
-            
+
             // Neutral Colors
             [
                 'name'          => 'neutral_dark',
@@ -98,7 +98,7 @@ return [
                 'channel_based' => true,
                 'locale_based'  => false,
             ],
-            
+
             // Functional Colors
             [
                 'name'          => 'success_color',
@@ -122,7 +122,7 @@ return [
                 'channel_based' => true,
                 'locale_based'  => false,
             ],
-            
+
             // Legacy fields (kept for backward compatibility)
             [
                 'name'          => 'button_bg',
@@ -3128,7 +3128,7 @@ return [
         'fields' => [
             [
                 'name'    => 'active',
-                'title'   => 'admin::app.configuration.index.sales.payment-methods.active',
+                'title'   => 'admin::app.configuration.index.sales.payment-methods.status',
                 'type'    => 'boolean',
                 'default' => 0,
             ], [
@@ -3185,8 +3185,8 @@ return [
                 'channel_based' => true,
                 'default'       => 'web',
                 'options'       => [
-                    [ 'title' => 'Redirect Pay', 'value' => 'redirect_pay' ],
-                    [ 'title' => 'Iframe', 'value' => 'iframe' ],
+                    ['title' => 'Redirect Pay', 'value' => 'redirect_pay'],
+                    ['title' => 'Iframe', 'value' => 'iframe'],
                 ],
             ], [
                 'name'    => 'notify_url',
@@ -3218,6 +3218,88 @@ return [
                 'title'   => 'Debug Log',
                 'type'    => 'boolean',
                 'default' => 0,
+            ],
+        ],
+    ],
+    [
+        // 支付方式：添加 Asiabill 到「配置 → 销售 → 支付方式」
+        'key'    => 'sales.payment_methods.asiabill',
+        'name'   => 'Asiabill',
+        'info'   => 'Configure Asiabill on-site payment',
+        'sort'   => 100,
+        'fields' => [
+            [
+                'name'    => 'active',
+                'title'   => 'admin::app.configuration.index.sales.payment-methods.status',
+                'type'    => 'boolean',
+                'default' => 0,
+            ], [
+                'name'          => 'title',
+                'title'         => 'admin::app.configuration.index.sales.payment-methods.title',
+                'type'          => 'text',
+                'depends'       => 'active:1',
+                'validation'    => 'required_if:active,1',
+                'channel_based' => true,
+                'locale_based'  => true,
+                'default'       => 'Asiabill',
+            ], [
+                'name'          => 'description',
+                'title'         => 'admin::app.configuration.index.sales.payment-methods.description',
+                'type'          => 'textarea',
+                'channel_based' => true,
+                'locale_based'  => true,
+            ], [
+                'name'          => 'image',
+                'title'         => 'admin::app.configuration.index.sales.payment-methods.logo',
+                'type'          => 'image',
+                'info'          => 'admin::app.configuration.index.sales.payment-methods.logo-information',
+                'channel_based' => false,
+                'locale_based'  => false,
+                'validation'    => 'mimes:bmp,jpeg,jpg,png,webp',
+            ], [
+                'name'          => 'mode',
+                'title'         => 'Mode',
+                'type'          => 'select',
+                'default'       => 'test',
+                'info'          => 'Use test for sandbox; live for production',
+                'options'       => [
+                    ['title' => 'Test', 'value' => 'test'],
+                    ['title' => 'Live', 'value' => 'live'],
+                ],
+            ], [
+                'name'          => 'gateway_no',
+                'title'         => 'Gateway No',
+                'type'          => 'text',
+                'depends'       => 'active:1',
+                'validation'    => 'required_if:active,1',
+                'info'          => 'Provided by Asiabill for your account',
+                'channel_based' => true,
+            ], [
+                'name'          => 'sign_key',
+                'title'         => 'Sign Key',
+                'type'          => 'text',
+                'depends'       => 'active:1',
+                'validation'    => 'required_if:active,1',
+                'info'          => 'Secret key for signing requests; keep it safe',
+                'channel_based' => true,
+            ], [
+                'name'          => 'callback_url',
+                'title'         => 'Callback URL',
+                'type'          => 'text',
+                'depends'       => 'active:1',
+                'info'          => 'Default: route(asiabill.notify). Example: https://yourdomain.com/asiabill/notify',
+            ], [
+                'name'          => 'return_url',
+                'title'         => 'Return URL',
+                'type'          => 'text',
+                'depends'       => 'active:1',
+                'info'          => 'Default: route(asiabill.return). Example: https://yourdomain.com/asiabill/return',
+            ], [
+                'name'    => 'debug_log',
+                'title'   => 'Debug Log',
+                'type'    => 'boolean',
+                'default' => 0,
+                'info'    => 'Writes SDK logs to storage/logs/asiabill; enable only for debugging',
             ],
         ],
     ],

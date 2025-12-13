@@ -28,4 +28,14 @@ return [
         'active'      => true,
         'sort'        => 50,
     ],
+
+    // Asiabill On-Site payment method registration
+    'asiabill' => [
+        'code'        => 'asiabill',
+        'title'       => 'Asiabill',
+        'description' => 'Asiabill On-Site Payment',
+        'class'       => 'App\\Payment\\Asiabill\\OnSite',
+        'active'      => false,
+        'sort'        => 51,
+    ],
 ];
