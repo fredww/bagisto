@@ -4,8 +4,57 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e849169692b9bf5d00d89416cb47ad16",
+    "content-hash": "0b5046bce63950bbfcb4c60dd2cc55d8",
     "packages": [
+        {
+            "name": "asiabill/asiabill_php_sdk",
+            "version": "v1.5",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Asiabill/asiabill_php_sdk.git",
+                "reference": "1ac6fa13ebc03926cbeee5d1ca506f830497f0d1"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Asiabill/asiabill_php_sdk/zipball/1ac6fa13ebc03926cbeee5d1ca506f830497f0d1",
+                "reference": "1ac6fa13ebc03926cbeee5d1ca506f830497f0d1",
+                "shasum": ""
+            },
+            "require": {
+                "ext-curl": "*",
+                "ext-json": "*",
+                "ext-openssl": "*",
+                "php": ">=5.6"
+            },
+            "type": "1",
+            "autoload": {
+                "psr-4": {
+                    "Asiabill\\Classes\\": "classes/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "AGPL-3.0-or-later"
+            ],
+            "authors": [
+                {
+                    "name": "Asiabill",
+                    "homepage": "https://www.asiabill.com"
+                }
+            ],
+            "description": "You can quickly access the PHP SDK of asiabill payment",
+            "keywords": [
+                "asiabill",
+                "creditcard",
+                "payment",
+                "shop"
+            ],
+            "support": {
+                "issues": "https://github.com/Asiabill/asiabill_php_sdk/issues",
+                "source": "https://github.com/Asiabill/asiabill_php_sdk/tree/v1.5"
+            },
+            "time": "2022-08-22T08:17:40+00:00"
+        },
         {
             "name": "astrotomic/laravel-translatable",
             "version": "v11.15.1",
