@@ -16,7 +16,8 @@
       client_secret: '{{ $clientSecret }}',
       currency: '{{ $currency }}',
       country_code: '{{ $countryCode }}',
-      successUrl: '{{ $successUrl }}'
+      successUrl: '{{ $successUrl }}',
+      failUrl: '{{ $failUrl }}'
     });
   } catch (e) {
     window.location.href = '{{ $failUrl }}';
