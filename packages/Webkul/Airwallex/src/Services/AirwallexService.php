@@ -70,6 +70,11 @@ class AirwallexService
             return ['success' => false, 'msg' => 'auth_failed'];
         }
 
+        if (! array_key_exists('request_id', $payload)) {
+            $orderNo = (string) ($payload['merchant_order_id'] ?? 'order');
+            $payload['request_id'] = 'pl-'.$orderNo.'-'.bin2hex(random_bytes(6));
+        }
+
         if (! array_key_exists('title', $payload)) {
             $payload['title'] = 'Order '.((string) ($payload['merchant_order_id'] ?? 'Order'));
         }
@@ -118,6 +123,11 @@ class AirwallexService
         $token = $this->obtainAccessToken();
         if (! $token) {
             return ['success' => false, 'msg' => 'auth_failed'];
+        }
+
+        if (! array_key_exists('request_id', $payload)) {
+            $orderNo = (string) ($payload['merchant_order_id'] ?? 'order');
+            $payload['request_id'] = 'pi-'.$orderNo.'-'.bin2hex(random_bytes(6));
         }
 
         $base = rtrim($cfg['baseUrl'], '/');
