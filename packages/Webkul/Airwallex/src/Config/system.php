@@ -75,6 +75,13 @@ return [
                 'channel_based' => true,
                 'locale_based'  => false,
             ], [
+                'name'          => 'use_hpp',
+                'title'         => 'Use Hosted Payment Page',
+                'type'          => 'boolean',
+                'channel_based' => true,
+                'locale_based'  => false,
+                'default_value' => false,
+            ], [
                 'name'          => 'webhook_secret',
                 'title'         => 'airwallex::app.admin.system.webhook-secret',
                 'type'          => 'password',

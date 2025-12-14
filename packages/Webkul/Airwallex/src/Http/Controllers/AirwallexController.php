@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 use Webkul\Airwallex\Services\AirwallexService;
 use Webkul\Sales\Repositories\InvoiceRepository;
 use Webkul\Sales\Repositories\OrderRepository;
@@ -49,6 +50,11 @@ class AirwallexController extends Controller
             'reusable'          => false,
             'return_url'        => $successUrl,
             'cancel_url'        => $cancelUrl,
+            'merchant_urls'     => [
+                'success' => $successUrl,
+                'error'   => $cancelUrl,
+                'cancel'  => $cancelUrl,
+            ],
         ];
 
         $resp = $this->service->createPaymentLink($payload);
@@ -62,6 +68,54 @@ class AirwallexController extends Controller
         }
 
         return redirect()->away($url);
+    }
+
+    public function hpp(Request $request)
+    {
+        $orderId = session('order_id');
+        $order = $orderId ? $this->orderRepository->find($orderId) : null;
+
+        if (! $order) {
+            return redirect()->route('shop.checkout.cart.index');
+        }
+
+        $amount = (string) number_format((float) $order->grand_total, 2, '.', '');
+        $currency = (string) $order->order_currency_code;
+        $orderNo = (string) ($order->increment_id ?? $order->id);
+
+        $successUrl = route('airwallex.callback', ['order_no' => $orderNo]);
+        $payload = [
+            'amount'            => $amount,
+            'currency'          => $currency,
+            'merchant_order_id' => $orderNo,
+            'return_url'        => $successUrl,
+        ];
+
+        $resp = $this->service->createPaymentIntent($payload);
+        if (! Arr::get($resp, 'success')) {
+            return redirect()->route('shop.checkout.cart.index')->with('error', 'Unable to initialize Airwallex HPP');
+        }
+
+        $data = (array) Arr::get($resp, 'data', []);
+        $intentId = (string) Arr::get($data, 'id', '');
+        $clientSecret = (string) Arr::get($data, 'client_secret', '');
+        if (! $intentId || ! $clientSecret) {
+            return redirect()->route('shop.checkout.cart.index')->with('error', 'Invalid Airwallex intent');
+        }
+
+        $billing = $order->billing_address;
+        $countryCode = (string) ($billing?->country ?? 'US');
+        $env = $this->service->getConfig()['sandbox'] ? 'demo' : 'prod';
+        $failUrl = route('shop.checkout.cart.index');
+
+        return view('airwallex::hpp', [
+            'env'          => $env,
+            'intentId'     => $intentId,
+            'clientSecret' => $clientSecret,
+            'currency'     => $currency,
+            'countryCode'  => $countryCode,
+            'failUrl'      => $failUrl,
+        ]);
     }
 
     public function webhook(Request $request)
@@ -176,6 +230,8 @@ class AirwallexController extends Controller
                     Log::info('Airwallex webhook no items to invoice', ['order_id' => $order->id]);
                 }
 
+                $this->reportGaPurchase($order);
+
                 return response()->json(['success' => true, 'order_id' => $order->id]);
             } catch (\Throwable $e) {
                 Log::error('Airwallex webhook processing failed', ['error' => $e->getMessage()]);
@@ -270,5 +326,46 @@ class AirwallexController extends Controller
         }
 
         return redirect()->route('shop.checkout.onepage.success');
+    }
+
+    protected function reportGaPurchase($order): void
+    {
+        try {
+            $measurementId = (string) (core()->getConfigData('general.content.analytics.ga4_measurement_id') ?: env('GA_MEASUREMENT_ID', ''));
+            $apiSecret = (string) (core()->getConfigData('general.content.analytics.ga4_api_secret') ?: env('GA_API_SECRET', ''));
+            if (! $measurementId || ! $apiSecret) {
+                return;
+            }
+
+            $items = [];
+            foreach ($order->items as $item) {
+                $items[] = [
+                    'item_id'   => (string) ($item->sku ?? $item->id),
+                    'item_name' => (string) $item->name,
+                    'quantity'  => (int) ($item->qty_ordered ?? $item->qty_to_invoice ?? 1),
+                    'price'     => (float) $item->price,
+                ];
+            }
+
+            $payload = [
+                'user_id' => (string) $order->id,
+                'events'  => [[
+                    'name'   => 'purchase',
+                    'params' => [
+                        'transaction_id' => (string) ($order->increment_id ?? $order->id),
+                        'currency'       => (string) $order->order_currency_code,
+                        'value'          => (float) $order->grand_total,
+                        'items'          => $items,
+                    ],
+                ]],
+            ];
+
+            $url = 'https://www.google-analytics.com/mp/collect';
+            Http::asJson()
+                ->withOptions(['query' => ['measurement_id' => $measurementId, 'api_secret' => $apiSecret]])
+                ->post($url, $payload);
+        } catch (\Throwable $e) {
+            Log::warning('GA4 purchase report failed', ['error' => $e->getMessage()]);
+        }
     }
 }

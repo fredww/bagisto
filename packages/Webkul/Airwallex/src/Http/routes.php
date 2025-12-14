@@ -7,6 +7,9 @@ Route::group(['middleware' => ['web']], function () {
     Route::get('/airwallex/redirect', [\Webkul\Airwallex\Http\Controllers\AirwallexController::class, 'redirect'])
         ->name('airwallex.redirect');
 
+    Route::get('/airwallex/hpp', [\Webkul\Airwallex\Http\Controllers\AirwallexController::class, 'hpp'])
+        ->name('airwallex.hpp');
+
     Route::post('/airwallex/webhook', [\Webkul\Airwallex\Http\Controllers\AirwallexController::class, 'webhook'])
         ->name('airwallex.webhook')
         ->withoutMiddleware(ValidateCsrfToken::class);

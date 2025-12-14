@@ -11,7 +11,9 @@ class Airwallex extends Payment
 
     public function getRedirectUrl()
     {
-        return route('airwallex.redirect');
+        return $this->getConfigData('use_hpp')
+            ? route('airwallex.hpp')
+            : route('airwallex.redirect');
     }
 
     public function isAvailable(): bool
