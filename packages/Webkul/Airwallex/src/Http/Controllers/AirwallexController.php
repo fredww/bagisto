@@ -66,11 +66,15 @@ class AirwallexController extends Controller
 
     public function webhook(Request $request)
     {
+        $timestamp = (string) $request->header('x-timestamp', '');
         $nonce = (string) $request->header('x-nonce', '');
         $signature = (string) $request->header('x-signature', '');
         $sharedSecret = (string) (core()->getConfigData('sales.payment_methods.airwallex.webhook_secret') ?? '');
+        $body = (string) $request->getContent();
 
-        if (! $nonce || ! $signature || ! $sharedSecret || ! $this->service->verifyWebhookSignature($nonce, $signature, $sharedSecret)) {
+        $signingValue = $timestamp ?: $nonce;
+
+        if (! $signingValue || ! $signature || ! $sharedSecret || ! $this->service->verifyWebhookSignature($signingValue, $signature, $sharedSecret, $body)) {
             Log::warning('Airwallex webhook signature invalid');
 
             return response()->json(['success' => false], 401);

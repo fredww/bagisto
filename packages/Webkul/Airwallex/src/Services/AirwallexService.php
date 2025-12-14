@@ -63,7 +63,7 @@ class AirwallexService
         }
 
         if (! array_key_exists('title', $payload)) {
-            $payload['title'] = 'Order '.$payload['merchant_order_id'] ?? 'Order';
+            $payload['title'] = 'Order '.((string) ($payload['merchant_order_id'] ?? 'Order'));
         }
 
         if (! array_key_exists('reusable', $payload)) {

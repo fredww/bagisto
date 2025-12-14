@@ -82,3 +82,13 @@ it('verifies webhook signature', function () {
     $svc = new AirwallexService;
     expect($svc->verifyWebhookSignature($nonce, $signature, $secret))->toBeTrue();
 });
+
+it('verifies webhook signature with timestamp and body', function () {
+    $timestamp = '1734150000';
+    $secret = 'shared_secret';
+    $body = '{"type":"payment_intent.succeeded"}';
+    $signature = base64_encode(hash_hmac('sha256', $timestamp.$body, $secret, true));
+
+    $svc = new AirwallexService;
+    expect($svc->verifyWebhookSignature($timestamp, $signature, $secret, $body))->toBeTrue();
+});
