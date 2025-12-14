@@ -123,13 +123,23 @@ class AirwallexController extends Controller
                     ?? Arr::get($event, 'data.merchant_order_id')
                     ?? Arr::get($event, 'data.object.merchant_order_id', '')
                 );
-                Log::info('Airwallex webhook order number resolved', ['merchant_order_id' => $orderNo]);
+                if (! $orderNo) {
+                    $title = (string) (
+                        Arr::get($intentData, 'title')
+                        ?? Arr::get($event, 'data.title')
+                        ?? Arr::get($event, 'data.object.title', '')
+                    );
+                    $orderNo = $title;
+                }
+                $orderNoNormalized = trim((string) $orderNo);
+                $orderNoNormalized = (string) preg_replace('/^Order\s+/i', '', $orderNoNormalized);
+                Log::info('Airwallex webhook order number resolved', ['merchant_order_id' => $orderNo, 'normalized' => $orderNoNormalized]);
 
                 $order = null;
-                if ($orderNo) {
-                    $order = $this->orderRepository->findOneByField('increment_id', $orderNo);
-                    if (! $order && is_numeric($orderNo)) {
-                        $order = $this->orderRepository->find((int) $orderNo);
+                if ($orderNoNormalized) {
+                    $order = $this->orderRepository->findOneByField('increment_id', $orderNoNormalized);
+                    if (! $order && is_numeric($orderNoNormalized)) {
+                        $order = $this->orderRepository->find((int) $orderNoNormalized);
                     }
                 }
 
