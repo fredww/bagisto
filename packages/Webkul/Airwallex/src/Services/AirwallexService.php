@@ -18,6 +18,7 @@ class AirwallexService
         $callbackUrl = (string) (core()->getConfigData('sales.payment_methods.airwallex.callback_url') ?? env('AIRWALLEX_CALLBACK_URL', ''));
         $webhookSecret = (string) (core()->getConfigData('sales.payment_methods.airwallex.webhook_secret') ?? env('AIRWALLEX_WEBHOOK_SECRET', ''));
         $paymentMethods = (string) (core()->getConfigData('sales.payment_methods.airwallex.methods') ?? env('AIRWALLEX_PAYMENT_METHODS', ''));
+        $debug = (bool) (core()->getConfigData('sales.payment_methods.airwallex.debug') ?? env('AIRWALLEX_DEBUG', false));
 
         if ($sandbox) {
             $baseUrl = $baseUrl ?: 'https://api-demo.airwallex.com';
@@ -25,7 +26,7 @@ class AirwallexService
             $baseUrl = $baseUrl ?: 'https://api.airwallex.com';
         }
 
-        return compact('sandbox', 'baseUrl', 'clientId', 'apiKey', 'merchantId', 'callbackUrl', 'webhookSecret', 'paymentMethods');
+        return compact('sandbox', 'baseUrl', 'clientId', 'apiKey', 'merchantId', 'callbackUrl', 'webhookSecret', 'paymentMethods', 'debug');
     }
 
     public function obtainAccessToken(): ?string
@@ -33,19 +34,26 @@ class AirwallexService
         $cfg = $this->getConfig();
 
         try {
+            $loginUrl = rtrim($cfg['baseUrl'], '/').'/api/v1/authentication/login';
+            $this->debugLog('login_request', [
+                'url'     => $loginUrl,
+                'headers' => ['x-api-key' => $cfg['apiKey'], 'x-client-id' => $cfg['clientId']],
+            ]);
             $resp = Http::timeout(10)
                 ->withHeaders([
                     'x-api-key'   => $cfg['apiKey'],
                     'x-client-id' => $cfg['clientId'],
                 ])
-                ->post(rtrim($cfg['baseUrl'], '/').'/api/v1/authentication/login');
+                ->post($loginUrl);
 
             if (! $resp->successful()) {
+                $this->debugLog('login_response', ['status' => $resp->status(), 'body' => $resp->body()]);
                 Log::warning('Airwallex login HTTP error', ['status' => $resp->status(), 'body' => $resp->body()]);
 
                 return null;
             }
 
+            $this->debugLog('login_response', ['status' => $resp->status(), 'body' => $resp->body()]);
             return (string) Arr::get($resp->json(), 'token');
         } catch (\Throwable $e) {
             Log::error('Airwallex obtainAccessToken exception', ['error' => $e->getMessage()]);
@@ -82,17 +90,20 @@ class AirwallexService
         $url = rtrim($cfg['baseUrl'], '/').'/api/v1/pa/payment_links/create';
 
         try {
+            $this->debugLog('payment_link_request', ['url' => $url, 'payload' => $payload]);
             $resp = Http::timeout(12)
                 ->withToken($token)
                 ->asJson()
                 ->post($url, $payload);
 
             if (! $resp->successful()) {
+                $this->debugLog('payment_link_response', ['status' => $resp->status(), 'body' => $resp->body()]);
                 return ['success' => false, 'status' => $resp->status(), 'msg' => 'http_error', 'body' => $resp->body()];
             }
 
             $json = $resp->json();
 
+            $this->debugLog('payment_link_response', ['status' => $resp->status(), 'body' => $resp->body()]);
             return ['success' => true, 'data' => $json];
         } catch (\Throwable $e) {
             Log::error('Airwallex createPaymentLink exception', ['error' => $e->getMessage()]);
@@ -114,9 +125,13 @@ class AirwallexService
         $fallback = $base.'/api/v1/pa/payment_intents';
 
         try {
+            $this->debugLog('payment_intent_request', ['url' => $primary, 'payload' => $payload]);
             $resp = Http::timeout(12)->withToken($token)->asJson()->post($primary, $payload);
+            $this->debugLog('payment_intent_response', ['status' => $resp->status(), 'body' => $resp->body()]);
             if ($resp->status() === 404) {
+                $this->debugLog('payment_intent_fallback_request', ['url' => $fallback, 'payload' => $payload]);
                 $resp = Http::timeout(12)->withToken($token)->asJson()->post($fallback, $payload);
+                $this->debugLog('payment_intent_fallback_response', ['status' => $resp->status(), 'body' => $resp->body()]);
             }
 
             if (! $resp->successful()) {
@@ -142,11 +157,14 @@ class AirwallexService
         $url = rtrim($cfg['baseUrl'], '/').'/api/v1/pa/payment_intents/'.$intentId.'/confirm';
 
         try {
+            $this->debugLog('confirm_intent_request', ['url' => $url, 'payload' => $payload, 'intent_id' => $intentId]);
             $resp = Http::timeout(12)->withToken($token)->asJson()->post($url, $payload);
             if (! $resp->successful()) {
+                $this->debugLog('confirm_intent_response', ['status' => $resp->status(), 'body' => $resp->body(), 'intent_id' => $intentId]);
                 return ['success' => false, 'status' => $resp->status(), 'msg' => 'http_error', 'body' => $resp->body()];
             }
 
+            $this->debugLog('confirm_intent_response', ['status' => $resp->status(), 'body' => $resp->body(), 'intent_id' => $intentId]);
             return ['success' => true, 'data' => $resp->json()];
         } catch (\Throwable $e) {
             Log::error('Airwallex confirmPaymentIntent exception', ['error' => $e->getMessage()]);
@@ -166,11 +184,14 @@ class AirwallexService
         $url = rtrim($cfg['baseUrl'], '/').'/api/v1/pa/payment_intents/'.$intentId;
 
         try {
+            $this->debugLog('get_intent_request', ['url' => $url, 'intent_id' => $intentId]);
             $resp = Http::timeout(10)->withToken($token)->get($url);
             if (! $resp->successful()) {
+                $this->debugLog('get_intent_response', ['status' => $resp->status(), 'body' => $resp->body(), 'intent_id' => $intentId]);
                 return ['success' => false, 'status' => $resp->status(), 'msg' => 'http_error'];
             }
 
+            $this->debugLog('get_intent_response', ['status' => $resp->status(), 'body' => $resp->body(), 'intent_id' => $intentId]);
             return ['success' => true, 'data' => $resp->json()];
         } catch (\Throwable $e) {
             Log::error('Airwallex getPaymentIntent exception', ['error' => $e->getMessage()]);
@@ -192,9 +213,13 @@ class AirwallexService
         $fallback = $base.'/api/v1/pa/refunds';
 
         try {
+            $this->debugLog('refund_request', ['url' => $primary, 'payload' => $payload]);
             $resp = Http::timeout(12)->withToken($token)->asJson()->post($primary, $payload);
+            $this->debugLog('refund_response', ['status' => $resp->status(), 'body' => $resp->body()]);
             if ($resp->status() === 404) {
+                $this->debugLog('refund_fallback_request', ['url' => $fallback, 'payload' => $payload]);
                 $resp = Http::timeout(12)->withToken($token)->asJson()->post($fallback, $payload);
+                $this->debugLog('refund_fallback_response', ['status' => $resp->status(), 'body' => $resp->body()]);
             }
 
             if (! $resp->successful()) {
@@ -226,5 +251,43 @@ class AirwallexService
         }
 
         return false;
+    }
+
+    protected function debugLog(string $label, array $data): void
+    {
+        $cfg = $this->getConfig();
+        if (empty($cfg['debug'])) {
+            return;
+        }
+        $path = storage_path('logs/airwallex.log');
+        $line = '['.date('c').'] '.$label.' '.json_encode($this->maskArray($data), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        @file_put_contents($path, $line.PHP_EOL, FILE_APPEND);
+    }
+
+    protected function maskArray($value)
+    {
+        $keys = ['x-api-key', 'x-client-id', 'authorization', 'client_secret', 'api_key', 'client_id', 'token', 'access_token'];
+        if (is_array($value)) {
+            $masked = [];
+            foreach ($value as $k => $v) {
+                if (is_string($k) && in_array(strtolower($k), $keys, true)) {
+                    $masked[$k] = '***';
+                } else {
+                    $masked[$k] = $this->maskArray($v);
+                }
+            }
+            return $masked;
+        }
+        if (is_string($value)) {
+            $decoded = json_decode($value, true);
+            if (is_array($decoded)) {
+                return json_encode($this->maskArray($decoded), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            }
+            foreach ($keys as $k) {
+                $value = preg_replace('/("'.$k.'"\s*:\s*")([^"]+)"/i', '$1***"', $value);
+            }
+            return $value;
+        }
+        return $value;
     }
 }

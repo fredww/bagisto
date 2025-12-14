@@ -82,6 +82,13 @@ return [
                 'locale_based'  => false,
                 'default_value' => false,
             ], [
+                'name'          => 'debug',
+                'title'         => 'airwallex::app.admin.system.debug',
+                'type'          => 'boolean',
+                'channel_based' => true,
+                'locale_based'  => false,
+                'default_value' => false,
+            ], [
                 'name'          => 'webhook_secret',
                 'title'         => 'airwallex::app.admin.system.webhook-secret',
                 'type'          => 'password',

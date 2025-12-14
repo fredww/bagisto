@@ -13,6 +13,7 @@ return [
                 'callback-url'   => 'Callback URL',
                 'webhook-secret' => 'Webhook Shared Secret',
                 'methods'        => 'Allowed Methods (CSV)',
+                'debug'          => 'Enable Debug Logging',
             ],
         ],
     ],
