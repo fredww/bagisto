@@ -119,7 +119,7 @@ class AirwallexService
                 $resp = Http::timeout(12)->withToken($token)->asJson()->post($fallback, $payload);
             }
 
-            if (! $resp->ok()) {
+            if (! $resp->successful()) {
                 return ['success' => false, 'status' => $resp->status(), 'msg' => 'http_error', 'body' => $resp->body()];
             }
 
