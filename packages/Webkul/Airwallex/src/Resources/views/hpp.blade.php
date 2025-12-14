@@ -6,16 +6,17 @@
     <title>Redirecting to Airwallex</title>
 </head>
 <body>
-<script src="https://js.airwallex.com/v1/airwallex.js"></script>
+<script src="https://static.airwallex.com/components/sdk/v1/index.js"></script>
 <script>
 (async function () {
   try {
-    const payment = await window.Airwallex.init({ env: '{{ $env }}', enabledElements: ['payments'] });
-    await payment.redirectToCheckout({
+    const { payments } = await window.Airwallex.init({ env: '{{ $env }}', enabledElements: ['payments'] });
+    await payments.redirectToCheckout({
       intent_id: '{{ $intentId }}',
       client_secret: '{{ $clientSecret }}',
       currency: '{{ $currency }}',
-      country_code: '{{ $countryCode }}'
+      country_code: '{{ $countryCode }}',
+      successUrl: '{{ $successUrl }}'
     });
   } catch (e) {
     window.location.href = '{{ $failUrl }}';
@@ -24,4 +25,3 @@
 </script>
 </body>
 </html>
-

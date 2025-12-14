@@ -115,6 +115,7 @@ class AirwallexController extends Controller
             'currency'     => $currency,
             'countryCode'  => $countryCode,
             'failUrl'      => $failUrl,
+            'successUrl'   => $successUrl,
         ]);
     }
 
