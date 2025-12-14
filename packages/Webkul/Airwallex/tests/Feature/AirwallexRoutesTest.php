@@ -16,6 +16,42 @@ function seedAirwallexConfigBasic(): void
     Config::set('services.airwallex.api_key', 'key_xyz');
 }
 
+it('accepts valid webhook with timestamp signature', function () {
+    seedAirwallexConfigBasic();
+    putenv('AIRWALLEX_WEBHOOK_SECRET=shared_secret');
+    putenv('AIRWALLEX_WEBHOOK_TOLERANCE_SECONDS=600');
+
+    $ts = (string) time();
+    $payload = ['type' => 'payment_intent.pending'];
+    $body = json_encode($payload);
+    $sig = hash_hmac('sha256', $ts.$body, 'shared_secret');
+
+    $resp = $this->postJson('/airwallex/webhook', $payload, [
+        'x-timestamp'  => $ts,
+        'x-signature'  => $sig,
+    ]);
+
+    $resp->assertStatus(200);
+});
+
+it('rejects webhook when timestamp outside tolerance', function () {
+    seedAirwallexConfigBasic();
+    putenv('AIRWALLEX_WEBHOOK_SECRET=shared_secret');
+    putenv('AIRWALLEX_WEBHOOK_TOLERANCE_SECONDS=60');
+
+    $ts = (string) (time() - 3600);
+    $payload = ['type' => 'payment_intent.pending'];
+    $body = json_encode($payload, JSON_UNESCAPED_SLASHES);
+    $sig = base64_encode(hash_hmac('sha256', $ts.$body, 'shared_secret', true));
+
+    $resp = $this->postJson('/airwallex/webhook', $payload, [
+        'x-timestamp'  => $ts,
+        'x-signature'  => $sig,
+    ]);
+
+    $resp->assertStatus(401);
+});
+
 it('returns payment intent status', function () {
     seedAirwallexConfigBasic();
 

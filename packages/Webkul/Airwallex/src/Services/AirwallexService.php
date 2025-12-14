@@ -212,16 +212,19 @@ class AirwallexService
     public function verifyWebhookSignature(string $nonce, string $signature, string $sharedSecret, ?string $body = null): bool
     {
         $payload = $nonce.((string) ($body ?? ''));
-        $mac = hash_hmac('sha256', $payload, $sharedSecret, true);
-        $expected = base64_encode($mac);
 
-        if (hash_equals($expected, $signature)) {
+        $macRaw = hash_hmac('sha256', $payload, $sharedSecret, true);
+        $macHex = hash_hmac('sha256', $payload, $sharedSecret, false);
+        $expectedB64 = base64_encode($macRaw);
+
+        if (hash_equals($expectedB64, $signature) || hash_equals($macHex, $signature)) {
             return true;
         }
 
-        $mac2 = hash_hmac('sha256', $nonce, $sharedSecret, true);
-        $expected2 = base64_encode($mac2);
+        $macRaw2 = hash_hmac('sha256', $nonce, $sharedSecret, true);
+        $macHex2 = hash_hmac('sha256', $nonce, $sharedSecret, false);
+        $expectedB642 = base64_encode($macRaw2);
 
-        return hash_equals($expected2, $signature);
+        return hash_equals($expectedB642, $signature) || hash_equals($macHex2, $signature);
     }
 }

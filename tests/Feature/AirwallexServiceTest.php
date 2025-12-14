@@ -106,3 +106,22 @@ it('verifies webhook signature with timestamp and body', function () {
     $svc = new AirwallexService();
     expect($svc->verifyWebhookSignature($timestamp, $signature, $secret, $body))->toBeTrue();
 });
+
+it('verifies webhook signature hex with timestamp and body', function () {
+    $timestamp = '1734150001';
+    $secret = 'shared_secret';
+    $body = '{"type":"payment_intent.succeeded"}';
+    $signatureHex = hash_hmac('sha256', $timestamp.$body, $secret);
+
+    $svc = new AirwallexService();
+    expect($svc->verifyWebhookSignature($timestamp, $signatureHex, $secret, $body))->toBeTrue();
+});
+
+it('verifies webhook signature hex with nonce only', function () {
+    $nonce = '1650458086181.somenonce';
+    $secret = 'shared_secret';
+    $signatureHex = hash_hmac('sha256', $nonce, $secret);
+
+    $svc = new AirwallexService();
+    expect($svc->verifyWebhookSignature($nonce, $signatureHex, $secret))->toBeTrue();
+});
