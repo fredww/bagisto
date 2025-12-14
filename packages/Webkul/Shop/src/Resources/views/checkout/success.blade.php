@@ -73,7 +73,7 @@
                 var alreadyEmitted = false;
                 try { alreadyEmitted = !!localStorage.getItem(key); } catch (_) {}
 
-                if (!orderId || !isPaid || !validStatus || isBot || alreadyEmitted) {
+                if (!orderId || !validStatus || isBot || alreadyEmitted) {
                     if (window.GAIntegration && window.GAIntegration.debugLog) {
                         window.GAIntegration.debugLog('success.purchase skipped', { orderId, isPaid, validStatus, isBot, alreadyEmitted });
                     }
