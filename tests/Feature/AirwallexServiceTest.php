@@ -88,14 +88,7 @@ it('creates refund', function () {
     expect($res['data']['status'])->toBe('succeeded');
 });
 
-it('verifies webhook signature', function () {
-    $nonce = '1650458086181.somenonce';
-    $secret = 'shared_secret';
-    $signature = base64_encode(hash_hmac('sha256', $nonce, $secret, true));
-
-    $svc = new AirwallexService();
-    expect($svc->verifyWebhookSignature($nonce, $signature, $secret))->toBeTrue();
-});
+// removed legacy nonce-only signature verification test
 
 it('verifies webhook signature with timestamp and body', function () {
     $timestamp = '1734150000';
@@ -117,11 +110,4 @@ it('verifies webhook signature hex with timestamp and body', function () {
     expect($svc->verifyWebhookSignature($timestamp, $signatureHex, $secret, $body))->toBeTrue();
 });
 
-it('verifies webhook signature hex with nonce only', function () {
-    $nonce = '1650458086181.somenonce';
-    $secret = 'shared_secret';
-    $signatureHex = hash_hmac('sha256', $nonce, $secret);
-
-    $svc = new AirwallexService();
-    expect($svc->verifyWebhookSignature($nonce, $signatureHex, $secret))->toBeTrue();
-});
+// removed legacy nonce-only signature verification hex test

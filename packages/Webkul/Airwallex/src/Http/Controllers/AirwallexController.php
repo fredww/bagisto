@@ -67,12 +67,11 @@ class AirwallexController extends Controller
     public function webhook(Request $request)
     {
         $timestamp = (string) $request->header('x-timestamp', '');
-        $nonce = (string) $request->header('x-nonce', '');
         $signature = (string) $request->header('x-signature', '');
         $sharedSecret = (string) (core()->getConfigData('sales.payment_methods.airwallex.webhook_secret') ?: env('AIRWALLEX_WEBHOOK_SECRET', ''));
         $body = (string) $request->getContent();
 
-        $signingValue = $timestamp ?: $nonce;
+        $signingValue = $timestamp;
 
         $tolerance = (int) (core()->getConfigData('sales.payment_methods.airwallex.webhook_tolerance_seconds') ?: env('AIRWALLEX_WEBHOOK_TOLERANCE_SECONDS', 600));
         if ($timestamp && is_numeric($timestamp) && $tolerance > 0) {
@@ -87,16 +86,18 @@ class AirwallexController extends Controller
             }
         }
 
-        Log::warning('test:'.printf('%s %s %s', $signingValue, $signature, $sharedSecret));
-        Log::warning('body:'.printf('%s', $body));
+        Log::warning('Airwallex webhook debug', ['timestamp' => $signingValue, 'signature' => $signature, 'secret_present' => (bool) $sharedSecret, 'body_length' => strlen($body)]);
         if (! $signingValue || ! $signature || ! $sharedSecret || ! $this->service->verifyWebhookSignature($signingValue, $signature, $sharedSecret, $body)) {
             Log::warning('Airwallex webhook signature invalid');
 
             return response()->json(['success' => false], 401);
         }
 
-        $event = $request->json()->all();
-        $type = (string) Arr::get($event, 'type', '');
+        $event = json_decode($body, true);
+        if (! is_array($event)) {
+            $event = $request->json()->all();
+        }
+        $type = (string) (Arr::get($event, 'type') ?: Arr::get($event, 'name') ?: Arr::get($event, 'event_type', ''));
         Log::info('Airwallex webhook received', ['type' => $type]);
 
         if ($type === 'payment_intent.succeeded') {

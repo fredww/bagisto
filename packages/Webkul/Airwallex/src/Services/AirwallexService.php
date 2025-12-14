@@ -209,22 +209,22 @@ class AirwallexService
         }
     }
 
-    public function verifyWebhookSignature(string $nonce, string $signature, string $sharedSecret, ?string $body = null): bool
+    public function verifyWebhookSignature(string $timestamp, string $signature, string $sharedSecret, ?string $body = null): bool
     {
-        $payload = $nonce.((string) ($body ?? ''));
+        $rawBody = (string) ($body ?? '');
+        $valueToDigest = $timestamp.$rawBody;
 
-        $macRaw = hash_hmac('sha256', $payload, $sharedSecret, true);
-        $macHex = hash_hmac('sha256', $payload, $sharedSecret, false);
-        $expectedB64 = base64_encode($macRaw);
-
-        if (hash_equals($expectedB64, $signature) || hash_equals($macHex, $signature)) {
+        $macHex = hash_hmac('sha256', $valueToDigest, $sharedSecret, false);
+        if (hash_equals($macHex, $signature)) {
             return true;
         }
 
-        $macRaw2 = hash_hmac('sha256', $nonce, $sharedSecret, true);
-        $macHex2 = hash_hmac('sha256', $nonce, $sharedSecret, false);
-        $expectedB642 = base64_encode($macRaw2);
+        $macRaw = hash_hmac('sha256', $valueToDigest, $sharedSecret, true);
+        $expectedB64 = base64_encode($macRaw);
+        if (hash_equals($expectedB64, $signature)) {
+            return true;
+        }
 
-        return hash_equals($expectedB642, $signature) || hash_equals($macHex2, $signature);
+        return false;
     }
 }

@@ -18,8 +18,11 @@ class MessageSentListener
         if (! empty($to)) {
             /** @var SymfonyAddress $addr */
             $addr = $to[0];
-            app(EmailLogRepository::class)
-                ->findQueuedByRecipientAndSubject($addr->getAddress(), $subject)?->markSent();
+            $repo = app(EmailLogRepository::class);
+            $log = $repo->findQueuedByRecipientAndSubject($addr->getAddress(), $subject);
+            if ($log) {
+                $repo->markSent($log);
+            }
         }
     }
 }
