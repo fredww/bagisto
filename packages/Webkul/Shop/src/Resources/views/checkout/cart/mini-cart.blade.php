@@ -267,7 +267,7 @@
                         <div class="b-0 grid place-items-center gap-y-5 max-md:gap-y-0">
                             <img
                                 class="max-md:h-[100px] max-md:w-[100px]"
-                                src="{{ bagisto_asset('images/thank-you.png') }}"
+                                src="{{ bagisto_asset('images/thank-you.png', 'shop') }}"
                                 loading="lazy"
                                 decoding="async"
                             >
