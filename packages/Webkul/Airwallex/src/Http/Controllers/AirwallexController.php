@@ -88,7 +88,7 @@ class AirwallexController extends Controller
         }
 
         Log::warning('test:'.printf('%s %s %s', $signingValue, $signature, $sharedSecret));
-        Log::warning('body:'.printf('%s %s %s', $body));
+        Log::warning('body:'.printf('%s', $body));
         if (! $signingValue || ! $signature || ! $sharedSecret || ! $this->service->verifyWebhookSignature($signingValue, $signature, $sharedSecret, $body)) {
             Log::warning('Airwallex webhook signature invalid');
 
