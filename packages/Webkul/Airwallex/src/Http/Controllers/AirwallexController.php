@@ -7,15 +7,15 @@ use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Webkul\Airwallex\Services\AirwallexService;
-use Webkul\Checkout\Facades\Cart;
-use Webkul\Sales\Repositories\OrderRepository;
 use Webkul\Sales\Repositories\InvoiceRepository;
+use Webkul\Sales\Repositories\OrderRepository;
 
 class AirwallexController extends Controller
 {
     protected AirwallexService $service;
 
     protected OrderRepository $orderRepository;
+
     protected InvoiceRepository $invoiceRepository;
 
     public function __construct(AirwallexService $service, OrderRepository $orderRepository, InvoiceRepository $invoiceRepository)
@@ -78,9 +78,15 @@ class AirwallexController extends Controller
 
         $event = $request->json()->all();
         $type = (string) Arr::get($event, 'type', '');
+        Log::info('Airwallex webhook received', ['type' => $type]);
 
         if ($type === 'payment_intent.succeeded') {
-            $intentId = (string) Arr::get($event, 'data.id', '');
+            $intentId = (string) (
+                Arr::get($event, 'data.id')
+                ?? Arr::get($event, 'data.object.id')
+                ?? Arr::get($event, 'source_id', '')
+            );
+            Log::info('Airwallex webhook intent id extracted', ['intentId' => $intentId]);
 
             try {
                 $intent = $intentId ? $this->service->getPaymentIntent($intentId) : ['success' => false];
@@ -92,7 +98,12 @@ class AirwallexController extends Controller
                 }
 
                 $intentData = (array) Arr::get($intent, 'data', []);
-                $orderNo = (string) (Arr::get($intentData, 'merchant_order_id') ?? Arr::get($event, 'data.merchant_order_id', ''));
+                $orderNo = (string) (
+                    Arr::get($intentData, 'merchant_order_id')
+                    ?? Arr::get($event, 'data.merchant_order_id')
+                    ?? Arr::get($event, 'data.object.merchant_order_id', '')
+                );
+                Log::info('Airwallex webhook order number resolved', ['merchant_order_id' => $orderNo]);
 
                 $order = null;
                 if ($orderNo) {
@@ -124,12 +135,15 @@ class AirwallexController extends Controller
                 }
 
                 if (! empty($items)) {
-                    $this->invoiceRepository->create([
+                    $invoice = $this->invoiceRepository->create([
                         'order_id' => $order->id,
                         'invoice'  => [
                             'items' => $items,
                         ],
                     ]);
+                    Log::info('Airwallex webhook invoice created', ['invoice_id' => $invoice->id, 'order_id' => $order->id]);
+                } else {
+                    Log::info('Airwallex webhook no items to invoice', ['order_id' => $order->id]);
                 }
 
                 return response()->json(['success' => true, 'order_id' => $order->id]);
@@ -184,7 +198,7 @@ class AirwallexController extends Controller
             $order = $orderId ? $this->orderRepository->find($orderId) : null;
         }
 
-        $intentId = (string) $request->query('payment_intent_id', '');
+        $intentId = (string) ($request->query('payment_intent_id', '') ?: $request->query('id', ''));
         if ($order && $intentId) {
             try {
                 $intent = $this->service->getPaymentIntent($intentId);
@@ -205,12 +219,15 @@ class AirwallexController extends Controller
                     }
 
                     if (! empty($items)) {
-                        $this->invoiceRepository->create([
+                        $invoice = $this->invoiceRepository->create([
                             'order_id' => $order->id,
                             'invoice'  => [
                                 'items' => $items,
                             ],
                         ]);
+                        Log::info('Airwallex callback invoice created', ['invoice_id' => $invoice->id, 'order_id' => $order->id]);
+                    } else {
+                        Log::info('Airwallex callback no items to invoice', ['order_id' => $order->id]);
                     }
                 }
             } catch (\Throwable $e) {

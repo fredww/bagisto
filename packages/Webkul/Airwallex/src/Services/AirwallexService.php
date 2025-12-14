@@ -209,11 +209,19 @@ class AirwallexService
         }
     }
 
-    public function verifyWebhookSignature(string $nonce, string $signature, string $sharedSecret): bool
+    public function verifyWebhookSignature(string $nonce, string $signature, string $sharedSecret, ?string $body = null): bool
     {
-        $mac = hash_hmac('sha256', $nonce, $sharedSecret, true);
+        $payload = $nonce.((string) ($body ?? ''));
+        $mac = hash_hmac('sha256', $payload, $sharedSecret, true);
         $expected = base64_encode($mac);
 
-        return hash_equals($expected, $signature);
+        if (hash_equals($expected, $signature)) {
+            return true;
+        }
+
+        $mac2 = hash_hmac('sha256', $nonce, $sharedSecret, true);
+        $expected2 = base64_encode($mac2);
+
+        return hash_equals($expected2, $signature);
     }
 }

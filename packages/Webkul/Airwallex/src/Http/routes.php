@@ -1,13 +1,15 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 
 Route::group(['middleware' => ['web']], function () {
     Route::get('/airwallex/redirect', [\Webkul\Airwallex\Http\Controllers\AirwallexController::class, 'redirect'])
         ->name('airwallex.redirect');
 
     Route::post('/airwallex/webhook', [\Webkul\Airwallex\Http\Controllers\AirwallexController::class, 'webhook'])
-        ->name('airwallex.webhook');
+        ->name('airwallex.webhook')
+        ->withoutMiddleware(ValidateCsrfToken::class);
 
     Route::get('/airwallex/callback', [\Webkul\Airwallex\Http\Controllers\AirwallexController::class, 'callback'])
         ->name('airwallex.callback');
