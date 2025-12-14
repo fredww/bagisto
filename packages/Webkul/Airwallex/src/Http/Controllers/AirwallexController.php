@@ -77,7 +77,11 @@ class AirwallexController extends Controller
         $tolerance = (int) (core()->getConfigData('sales.payment_methods.airwallex.webhook_tolerance_seconds') ?: env('AIRWALLEX_WEBHOOK_TOLERANCE_SECONDS', 600));
         if ($timestamp && is_numeric($timestamp) && $tolerance > 0) {
             $now = time();
-            if (abs($now - (int) $timestamp) > $tolerance) {
+            $tsVal = (int) $timestamp;
+            if ($tsVal > 10000000000) {
+                $tsVal = (int) floor($tsVal / 1000);
+            }
+            if (abs($now - $tsVal) > $tolerance) {
                 Log::warning('Airwallex webhook timestamp outside tolerance', ['timestamp' => $timestamp, 'tolerance' => $tolerance]);
                 return response()->json(['success' => false], 401);
             }

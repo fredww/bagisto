@@ -34,6 +34,24 @@ it('accepts valid webhook with timestamp signature', function () {
     $resp->assertStatus(200);
 });
 
+it('accepts valid webhook with millisecond timestamp signature', function () {
+    seedAirwallexConfigBasic();
+    putenv('AIRWALLEX_WEBHOOK_SECRET=shared_secret');
+    putenv('AIRWALLEX_WEBHOOK_TOLERANCE_SECONDS=600');
+
+    $tsMs = (string) (int) floor(microtime(true) * 1000);
+    $payload = ['type' => 'payment_intent.pending'];
+    $body = json_encode($payload);
+    $sig = hash_hmac('sha256', $tsMs.$body, 'shared_secret');
+
+    $resp = $this->postJson('/airwallex/webhook', $payload, [
+        'x-timestamp'  => $tsMs,
+        'x-signature'  => $sig,
+    ]);
+
+    $resp->assertStatus(200);
+});
+
 it('rejects webhook when timestamp outside tolerance', function () {
     seedAirwallexConfigBasic();
     putenv('AIRWALLEX_WEBHOOK_SECRET=shared_secret');
