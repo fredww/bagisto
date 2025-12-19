@@ -21,6 +21,16 @@
     <x-slot:title>
         {{ $title }}
     </x-slot>
+    @push('scripts')
+        <script>
+            if (window.PinterestIntegration) {
+                window.PinterestIntegration.trackSearch({
+                    event_id: 'search_{{ time() }}',
+                    search_query: '{{ addslashes($query ?? '') }}'
+                });
+            }
+        </script>
+    @endpush
 
     <div class="container px-[60px] max-lg:px-8 max-sm:px-4">
         @if (request()->has('image-search'))

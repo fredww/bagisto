@@ -182,5 +182,12 @@
                     : "password";
             }
         </script>
+        <script>
+            if ({{ session()->has('pinterest_signup') ? 'true' : 'false' }}) {
+                if (window.PinterestIntegration) {
+                    window.PinterestIntegration.trackSignup({ event_id: 'signup_{{ time() }}' });
+                }
+            }
+        </script>
     @endpush
 </x-shop::layouts>

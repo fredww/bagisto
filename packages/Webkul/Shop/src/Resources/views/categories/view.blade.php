@@ -22,6 +22,15 @@
     <x-slot:title>
         {{ trim($category->meta_title) != "" ? $category->meta_title : $category->name }}
     </x-slot>
+    @push('scripts')
+        <script>
+            if (window.PinterestIntegration) {
+                window.PinterestIntegration.trackViewCategory({
+                    event_id: 'viewcategory_{{ $category->id }}'
+                });
+            }
+        </script>
+    @endpush
 
     {!! view_render_event('bagisto.shop.categories.view.banner_path.before') !!}
 

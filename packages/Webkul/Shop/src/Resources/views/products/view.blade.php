@@ -758,6 +758,13 @@
                                             currency: window.__GA_CONFIG__?.currency,
                                             value: Number(lastItem?.total ?? 1)
                                         });
+                                        if (window.PinterestIntegration) {
+                                            window.PinterestIntegration.trackAddToCart({
+                                                value: Number(lastItem?.total ?? lastItem?.price ?? 0),
+                                                quantity: qty,
+                                                currency: window.__PIN_CONFIG__?.currency || 'USD'
+                                            });
+                                        }
                                     } catch (e) {
                                         window.GAIntegration && window.GAIntegration.debugLog('view.add_to_cart hook error', e);
                                     }

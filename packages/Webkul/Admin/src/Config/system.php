@@ -587,6 +587,36 @@ return [
             ],
         ],
     ], [
+        'key'    => 'general.content.pinterest',
+        'name'   => 'Pinterest Tag',
+        'info'   => 'Configure Pinterest base tag and event tracking',
+        'sort'   => 4,
+        'fields' => [
+            [
+                'name'    => 'enabled',
+                'title'   => 'Enable Pinterest Tag',
+                'type'    => 'boolean',
+                'default' => false,
+            ], [
+                'name'       => 'tag_id',
+                'title'      => 'Pinterest Tag ID (tid)',
+                'type'       => 'text',
+                'depends'    => 'enabled:true',
+                'validation' => 'max:50',
+            ], [
+                'name'       => 'send_email',
+                'title'      => 'Send customer email on load',
+                'type'       => 'boolean',
+                'depends'    => 'enabled:true',
+                'default'    => false,
+            ], [
+                'name'    => 'debug',
+                'title'   => 'Debug Mode',
+                'type'    => 'boolean',
+                'default' => false,
+            ],
+        ],
+    ], [
         'key'  => 'general.design',
         'name' => 'admin::app.configuration.index.general.design.title',
         'info' => 'admin::app.configuration.index.general.design.info',

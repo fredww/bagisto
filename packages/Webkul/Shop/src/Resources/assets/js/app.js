@@ -58,6 +58,7 @@ import Shop from "./plugins/shop";
 import VeeValidate from "./plugins/vee-validate";
 import Flatpickr from "./plugins/flatpickr";
 import Analytics from "./plugins/analytics";
+import Pinterest from "./plugins/pinterest";
 
 [
     Axios,
@@ -66,6 +67,7 @@ import Analytics from "./plugins/analytics";
     VeeValidate,
     Flatpickr,
     Analytics,
+    Pinterest,
 ].forEach((plugin) => app.use(plugin));
 
 /**

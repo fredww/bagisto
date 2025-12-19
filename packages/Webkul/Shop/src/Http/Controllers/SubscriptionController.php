@@ -56,6 +56,7 @@ class SubscriptionController extends Controller
         Event::dispatch('customer.subscription.after', $subscription);
 
         session()->flash('success', trans('shop::app.subscription.subscribe-success'));
+        session()->flash('pinterest_lead', 'Newsletter');
 
         return redirect()->back();
     }

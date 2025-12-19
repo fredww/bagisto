@@ -123,6 +123,19 @@
                     window.GAIntegration.trackAdsPurchase({ currency: currency, value: value });
                 }
 
+                try {
+                    var qtySum = 0;
+                    for (var i = 0; i < items.length; i++) { qtySum += Number(items[i].quantity || 1); }
+                    if (window.PinterestIntegration) {
+                        window.PinterestIntegration.trackCheckout({
+                            event_id: 'checkout_' + orderId,
+                            value: value,
+                            order_quantity: qtySum,
+                            currency: currency
+                        });
+                    }
+                } catch (e) {}
+
                 try { localStorage.setItem(key, '1'); } catch (_) {}
 
                 if (window.GAIntegration && window.GAIntegration.debugLog) {

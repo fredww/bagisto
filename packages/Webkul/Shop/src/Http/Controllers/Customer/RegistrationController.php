@@ -100,6 +100,7 @@ class RegistrationController extends Controller
         } else {
             session()->flash('success', trans('shop::app.customers.signup-form.success'));
         }
+        session()->flash('pinterest_signup', true);
 
         return redirect()->route('shop.customer.session.index');
     }

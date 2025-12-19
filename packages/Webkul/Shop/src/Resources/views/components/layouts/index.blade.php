@@ -372,6 +372,7 @@
 
         {{-- Inject Google Ads & GA4 tracking scripts (auto-loaded from admin config) --}}
         @include('shop::components.tracking.google')
+        @include('shop::components.tracking.pinterest')
 
         {!! view_render_event('bagisto.shop.layout.head.after') !!}
 
@@ -443,6 +444,14 @@
                 app.mount("#app");
             });
         </script>
+
+        @if (session()->has('pinterest_lead'))
+            <script>
+                if (window.PinterestIntegration) {
+                    window.PinterestIntegration.trackLead({ lead_type: 'Newsletter' });
+                }
+            </script>
+        @endif
 
         {!! view_render_event('bagisto.shop.layout.vue-app-mount.after') !!}
 
