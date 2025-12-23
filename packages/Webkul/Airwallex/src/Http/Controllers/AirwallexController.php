@@ -5,8 +5,8 @@ namespace Webkul\Airwallex\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Webkul\Airwallex\Services\AirwallexService;
 use Webkul\Sales\Repositories\InvoiceRepository;
 use Webkul\Sales\Repositories\OrderRepository;
@@ -103,6 +103,7 @@ class AirwallexController extends Controller
             return redirect()->route('shop.checkout.cart.index')->with('error', 'Invalid Airwallex intent');
         }
 
+        $viewSuccessUrl = route('airwallex.callback', ['order_no' => $orderNo, 'id' => $intentId]);
         $billing = $order->billing_address;
         $countryCode = (string) ($billing?->country ?? 'US');
         $env = $this->service->getConfig()['sandbox'] ? 'demo' : 'prod';
@@ -115,7 +116,7 @@ class AirwallexController extends Controller
             'currency'     => $currency,
             'countryCode'  => $countryCode,
             'failUrl'      => $failUrl,
-            'successUrl'   => $successUrl,
+            'successUrl'   => $viewSuccessUrl,
         ]);
     }
 
@@ -138,6 +139,7 @@ class AirwallexController extends Controller
             }
             if (abs($now - $tsVal) > $tolerance) {
                 Log::warning('Airwallex webhook timestamp outside tolerance', ['timestamp' => $timestamp, 'tolerance' => $tolerance]);
+
                 return response()->json(['success' => false], 401);
             }
         }
@@ -153,7 +155,7 @@ class AirwallexController extends Controller
         if (! is_array($event)) {
             $event = $request->json()->all();
         }
-        $type = (string) (Arr::get($event, 'type') ?: Arr::get($event, 'name') ?: Arr::get($event, 'event_type', ''));
+        $type = strtolower((string) (Arr::get($event, 'type') ?: Arr::get($event, 'name') ?: Arr::get($event, 'event_type', '')));
         Log::info('Airwallex webhook received', ['type' => $type]);
 
         if ($type === 'payment_intent.succeeded') {
@@ -286,11 +288,11 @@ class AirwallexController extends Controller
             $order = $orderId ? $this->orderRepository->find($orderId) : null;
         }
 
-        $intentId = (string) ($request->query('payment_intent_id', '') ?: $request->query('id', ''));
+        $intentId = (string) ($request->query('payment_intent_id', '') ?: $request->query('id', '') ?: $request->query('source_id', ''));
         if ($order && $intentId) {
             try {
                 $intent = $this->service->getPaymentIntent($intentId);
-                if (Arr::get($intent, 'success') && (string) Arr::get($intent, 'data.status', '') === 'succeeded') {
+                if (Arr::get($intent, 'success') && strtolower((string) Arr::get($intent, 'data.status', '')) === 'succeeded') {
                     if ($order->payment) {
                         $additional = (array) ($order->payment->additional ?? []);
                         $additional['payment_intent_id'] = $intentId;
