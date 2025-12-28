@@ -224,7 +224,7 @@
                 color: var(--btn-text) !important;
                 border: none !important;
                 border-radius: var(--radius-md) !important;
-                padding: 12px 32px !important;
+                padding: 12px 12px !important;
                 min-height: 48px !important;
                 font-weight: 600 !important;
                 letter-spacing: 0.3px !important;
